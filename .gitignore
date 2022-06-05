@@ -1,0 +1,10 @@
+timeseries.Yeo2011.mm316_original.mat
+venv/
+venv/*
+.idea/*
+.idea
+cheaha/newaumri/matfiles/dfc_2500_normal/
+.DS_Store
+cmake-build-debug
+.idea
+join
