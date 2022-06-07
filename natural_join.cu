@@ -230,59 +230,32 @@ void cpu_join_relations(char *data_path, char separator, char *output_path,
     free(data);
 }
 
-void cpu_join_relations_large() {
-    int total_employees = 412148;
-    int total_departments = 412148;
-    long long total_records = total_employees * 100;
-    int relation_columns = 2;
-    int total_columns = relation_columns + relation_columns - 1;
-    int *employee_data = get_relation_from_file("data/link.facts_412148.txt",
-                                                total_employees, relation_columns,
-                                                '\t');
-    int *department_data = get_reverse_relation(employee_data,
-                                                total_employees,
-                                                relation_columns);
-    int *data = (int *) malloc(total_records * total_columns * sizeof(int));
-    show_relation(employee_data, total_employees, relation_columns,
-                  "Employee", 10);
-    show_relation(department_data, total_departments, relation_columns,
-                  "Department", 10);
-    cpu_get_join_data(data, total_records, employee_data, total_employees,
-                      relation_columns, 0,
-                      department_data, total_departments,
-                      relation_columns, 0);
-    show_relation(data, total_records,
-                  total_columns, "join data", 10);
-    write_relation_to_file(data, total_records, total_columns,
-                           "output/join_large.txt", ',');
-}
-
 int main() {
     time_t begin_time = time(NULL);
 
-    // Small dataset
-    char *data_path = "data/employee.txt";
-    char separator = ',';
-    char *output_path = "output/join_small_cpu.txt";
-    int relation_1_records = 10;
-    int relation_2_records = 10;
-    int total_records = relation_1_records * relation_2_records;
-    int relation_columns = 2;
-    int visible_records = 10;
-    cpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
-
-    // Large dataset
-    relation_1_records = 412148;
-    relation_2_records = 412148;
-    total_records = relation_1_records * 100;
-    data_path = "data/link.facts_412148.txt";
-    output_path = "output/join_large_cpu.txt";
-    separator = '\t';
-    relation_columns = 2;
-    visible_records = 5;
-    cpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
+//    // Small dataset
+//    char *data_path = "data/employee.txt";
+//    char separator = ',';
+//    char *output_path = "output/join_small_cpu.txt";
+//    int relation_1_records = 10;
+//    int relation_2_records = 10;
+//    int total_records = relation_1_records * relation_2_records;
+//    int relation_columns = 2;
+//    int visible_records = 10;
+//    cpu_join_relations(data_path, separator, output_path, relation_columns,
+//                       relation_1_records, relation_2_records, total_records, visible_records);
+//
+//    // Large dataset
+//    relation_1_records = 412148;
+//    relation_2_records = 412148;
+//    total_records = relation_1_records * 100;
+//    data_path = "data/link.facts_412148.txt";
+//    output_path = "output/join_large_cpu.txt";
+//    separator = '\t';
+//    relation_columns = 2;
+//    visible_records = 5;
+//    cpu_join_relations(data_path, separator, output_path, relation_columns,
+//                       relation_1_records, relation_2_records, total_records, visible_records);
 
 
     time_t end_time = time(NULL);
