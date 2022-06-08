@@ -147,29 +147,27 @@ void cpu_get_join_data(int *data, long long data_max_length,
     }
 }
 
-void gpu_join_relations_small() {
-    int total_employees = 10;
-    int total_departments = 10;
-    int total_records = total_employees * total_departments;
-    int relation_columns = 2;
-    int total_columns = relation_columns + relation_columns - 1;
-    int *employee_data = get_relation_from_file("data/employee.txt",
-                                                total_employees, relation_columns,
-                                                ',');
-    int *department_data = get_relation_from_file("data/department.txt",
-                                                  total_departments, relation_columns,
-                                                  ',');
+void gpu_join_relations(char *data_path, char separator, char *output_path,
+                              int relation_columns, int relation_1_records,
+                              int relation_2_records, int total_records, int visible_records) {
 
+    int total_columns = relation_columns + relation_columns - 1;
+    int *relation_1_data = get_relation_from_file(data_path,
+                                                  relation_1_records, relation_columns,
+                                                  separator);
+    int *relation_2_data = get_reverse_relation(relation_1_data,
+                                                relation_1_records,
+                                                relation_columns);
     int *data = (int *) malloc(total_records * total_columns * sizeof(int));
 
-    int *gpu_employee_data, *gpu_department_data, *gpu_data;
-    cudaMalloc((void **) &gpu_employee_data, total_employees * relation_columns * sizeof(int));
-    cudaMalloc((void **) &gpu_department_data, total_departments * relation_columns * sizeof(int));
+    int *gpu_relation_1_data, *gpu_relation_2_data, *gpu_data;
+    cudaMalloc((void **) &gpu_relation_1_data, relation_1_records * relation_columns * sizeof(int));
+    cudaMalloc((void **) &gpu_relation_2_data, relation_2_records * relation_columns * sizeof(int));
     cudaMalloc((void **) &gpu_data, total_records * total_columns * sizeof(int));
 
-    cudaMemcpy(gpu_employee_data, employee_data, total_employees * relation_columns * sizeof(int),
+    cudaMemcpy(gpu_relation_1_data, relation_1_data, relation_1_records * relation_columns * sizeof(int),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu_department_data, department_data, total_departments * relation_columns * sizeof(int),
+    cudaMemcpy(gpu_relation_2_data, relation_2_data, relation_2_records * relation_columns * sizeof(int),
                cudaMemcpyHostToDevice);
     cudaMemcpy(gpu_data, data, total_records * total_columns * sizeof(int), cudaMemcpyHostToDevice);
 
@@ -177,28 +175,28 @@ void gpu_join_relations_small() {
     dim3 block_size = (1, 1);
 
     gpu_get_join_data<<<grid_size, block_size>>>(gpu_data, total_records,
-                                                 gpu_employee_data, total_employees,
+                                                 gpu_relation_1_data, relation_1_records,
                                                  relation_columns, 0,
-                                                 gpu_department_data, total_departments,
+                                                 gpu_relation_2_data, relation_2_records,
                                                  relation_columns, 0);
 
     cudaDeviceSynchronize();
     cudaMemcpy(data, gpu_data, total_records * total_columns * sizeof(int), cudaMemcpyDeviceToHost);
 
-    show_relation(employee_data, total_employees, relation_columns,
-                  "Employee", -1);
-    show_relation(department_data, total_departments, relation_columns,
-                  "Department", -1);
+    show_relation(relation_1_data, relation_1_records, relation_columns,
+                  "Relation 1", visible_records);
+    show_relation(relation_2_data, relation_2_records, relation_columns,
+                  "Relation 2", visible_records);
     show_relation(data, total_records,
-                  total_columns, "join data", -1);
+                  total_columns, "join data", visible_records);
     write_relation_to_file(data, total_records, total_columns,
-                           "data/gpu_join_small.txt", ',');
-    cudaFree(gpu_employee_data);
-    cudaFree(gpu_department_data);
+                           output_path, separator);
+    cudaFree(gpu_relation_1_data);
+    cudaFree(gpu_relation_2_data);
     cudaFree(gpu_data);
 
-    free(department_data);
-    free(employee_data);
+    free(relation_1_data);
+    free(relation_2_data);
 
 }
 
@@ -257,6 +255,16 @@ int main() {
 //    cpu_join_relations(data_path, separator, output_path, relation_columns,
 //                       relation_1_records, relation_2_records, total_records, visible_records);
 
+    char *data_path = "data/employee.txt";
+    char separator = ',';
+    char *output_path = "output/join_small_gpu.txt";
+    int relation_1_records = 10;
+    int relation_2_records = 10;
+    int total_records = relation_1_records * relation_2_records;
+    int relation_columns = 2;
+    int visible_records = 10;
+    gpu_join_relations(data_path, separator, output_path, relation_columns,
+                       relation_1_records, relation_2_records, total_records, visible_records);
 
     time_t end_time = time(NULL);
     cout << "\nTotal time: " << (end_time - begin_time) << " seconds\n\n" << endl;
