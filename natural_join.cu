@@ -78,39 +78,52 @@ int *get_reverse_relation(int *data, int total_records, int total_columns) {
     return reverse_data;
 }
 
+
 __global__
 void gpu_get_join_data(int *data, long long data_max_length,
                        int *relation_1, int relation_1_records, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_records, int relation_2_columns, int relation_2_index) {
-    long long row_count = 0, column_count = 0;
-    int total_columns = relation_1_columns + relation_2_columns - 1;
-    int relation_1_index_value, relation_2_index_value;
-    for (int i = 0; i < relation_1_records; i++) {
-        relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
-        for (int j = 0; j < relation_2_records; j++) {
-            relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
-            if (relation_1_index_value == relation_2_index_value) {
-                column_count = 0;
-                for (int k = 0; k < relation_1_columns; k++) {
-                    data[(row_count * total_columns) + column_count] = relation_1[(i * relation_1_columns) + k];
-                    column_count++;
-                }
-                for (int k = 0; k < relation_2_columns; k++) {
-                    if (k != relation_2_index) {
-                        data[(row_count * total_columns) + column_count] = relation_2[(j * relation_2_columns) + k];
-                        column_count++;
-                    }
-                }
-                row_count++;
-                if (row_count == data_max_length - 1) {
-                    break;
-                }
-            }
-        }
-        if (row_count == data_max_length - 1) {
-            break;
-        }
+
+    int thread_id = threadIdx.x;
+    printf("Thread ID: %d\n", thread_id);
+    printf("Relation 1: ");
+    for (int k = 0; k < relation_1_columns; k++) {
+        printf("%d ", relation_1[(thread_id * relation_1_columns) + k]);
     }
+    printf("\nRelation 2: ");
+    for (int k = 0; k < relation_2_columns; k++) {
+        printf("%d ", relation_2[(thread_id * relation_2_columns) + k]);
+    }
+    printf("\n\n");
+//    long long row_count = 0, column_count = 0;
+//    int total_columns = relation_1_columns + relation_2_columns - 1;
+//    int relation_1_index_value, relation_2_index_value;
+//    for (int i = 0; i < relation_1_records; i++) {
+//        relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
+//        for (int j = 0; j < relation_2_records; j++) {
+//            relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
+//            if (relation_1_index_value == relation_2_index_value) {
+//                column_count = 0;
+//                for (int k = 0; k < relation_1_columns; k++) {
+//                    data[(row_count * total_columns) + column_count] = relation_1[(i * relation_1_columns) + k];
+//                    column_count++;
+//                }
+//                for (int k = 0; k < relation_2_columns; k++) {
+//                    if (k != relation_2_index) {
+//                        data[(row_count * total_columns) + column_count] = relation_2[(j * relation_2_columns) + k];
+//                        column_count++;
+//                    }
+//                }
+//                row_count++;
+//                if (row_count == data_max_length - 1) {
+//                    break;
+//                }
+//            }
+//        }
+//        if (row_count == data_max_length - 1) {
+//            break;
+//        }
+//    }
 }
 
 void cpu_get_join_data(int *data, long long data_max_length,
@@ -148,8 +161,8 @@ void cpu_get_join_data(int *data, long long data_max_length,
 }
 
 void gpu_join_relations(char *data_path, char separator, char *output_path,
-                              int relation_columns, int relation_1_records,
-                              int relation_2_records, int total_records, int visible_records) {
+                        int relation_columns, int relation_1_records,
+                        int relation_2_records, int total_records, int visible_records) {
 
     int total_columns = relation_columns + relation_columns - 1;
     int *relation_1_data = get_relation_from_file(data_path,
@@ -171,8 +184,11 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
                cudaMemcpyHostToDevice);
     cudaMemcpy(gpu_data, data, total_records * total_columns * sizeof(int), cudaMemcpyHostToDevice);
 
+//    dim3 grid_size = (1, 1);
+//    dim3 block_size = 10;
+
     int grid_size = 1;
-    dim3 block_size = (1, 1);
+    int block_size = 10;
 
     gpu_get_join_data<<<grid_size, block_size>>>(gpu_data, total_records,
                                                  gpu_relation_1_data, relation_1_records,
@@ -183,14 +199,14 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
     cudaDeviceSynchronize();
     cudaMemcpy(data, gpu_data, total_records * total_columns * sizeof(int), cudaMemcpyDeviceToHost);
 
-    show_relation(relation_1_data, relation_1_records, relation_columns,
-                  "Relation 1", visible_records);
-    show_relation(relation_2_data, relation_2_records, relation_columns,
-                  "Relation 2", visible_records);
-    show_relation(data, total_records,
-                  total_columns, "join data", visible_records);
-    write_relation_to_file(data, total_records, total_columns,
-                           output_path, separator);
+//    show_relation(relation_1_data, relation_1_records, relation_columns,
+//                  "Relation 1", visible_records);
+//    show_relation(relation_2_data, relation_2_records, relation_columns,
+//                  "Relation 2", visible_records);
+//    show_relation(data, total_records,
+//                  total_columns, "Join Result", visible_records);
+//    write_relation_to_file(data, total_records, total_columns,
+//                           output_path, separator);
     cudaFree(gpu_relation_1_data);
     cudaFree(gpu_relation_2_data);
     cudaFree(gpu_data);
