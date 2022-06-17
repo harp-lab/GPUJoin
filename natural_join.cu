@@ -248,16 +248,16 @@ int main() {
     time_t begin_time = time(NULL);
 
 //    // Small dataset
-//    char *data_path = "data/employee.txt";
-//    char separator = ',';
-//    char *output_path = "output/join_small_cpu.txt";
-//    int relation_1_records = 10;
-//    int relation_2_records = 10;
-//    int total_records = relation_1_records * relation_2_records;
-//    int relation_columns = 2;
-//    int visible_records = 10;
-//    cpu_join_relations(data_path, separator, output_path, relation_columns,
-//                       relation_1_records, relation_2_records, total_records, visible_records);
+    char *data_path = "data/employee.txt";
+    char separator = ',';
+    char *output_path = "output/join_small_cpu.txt";
+    int relation_1_records = 10;
+    int relation_2_records = 10;
+    int total_records = relation_1_records * relation_2_records;
+    int relation_columns = 2;
+    int visible_records = 10;
+    cpu_join_relations(data_path, separator, output_path, relation_columns,
+                       relation_1_records, relation_2_records, total_records, visible_records);
 //
 //    // Large dataset
 //    relation_1_records = 412148;
@@ -271,18 +271,18 @@ int main() {
 //    cpu_join_relations(data_path, separator, output_path, relation_columns,
 //                       relation_1_records, relation_2_records, total_records, visible_records);
 
-    char *data_path = "data/employee.txt";
-    char separator = ',';
-    char *output_path = "output/join_small_gpu.txt";
-    int relation_1_records = 10;
-    int relation_2_records = 10;
-    int total_records = relation_1_records * relation_2_records;
-    int relation_columns = 2;
-    int visible_records = 10;
-    gpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
-
-    time_t end_time = time(NULL);
-    cout << "\nTotal time: " << (end_time - begin_time) << " seconds\n\n" << endl;
+//    char *data_path = "data/employee.txt";
+//    char separator = ',';
+//    char *output_path = "output/join_small_gpu.txt";
+//    int relation_1_records = 10;
+//    int relation_2_records = 10;
+//    int total_records = relation_1_records * relation_2_records;
+//    int relation_columns = 2;
+//    int visible_records = 10;
+//    gpu_join_relations(data_path, separator, output_path, relation_columns,
+//                       relation_1_records, relation_2_records, total_records, visible_records);
+//
+//    time_t end_time = time(NULL);
+//    cout << "\nTotal time: " << (end_time - begin_time) << " seconds\n\n" << endl;
     return 0;
 }

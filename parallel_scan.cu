@@ -1,32 +1,25 @@
 #include <stdio.h>
-#include <assert.h>
+#include <math.h>
 
+#define TOTAL_THREADS 8
 
 __global__
-void parallel_scan(int *result, int *data, int n) {
-    extern __shared__ int temp_data[];
-
+void hs_scan(int *in, int *out, int total_levels) {
     int thread_id = threadIdx.x;
-    int p_out = 0, p_in = 1;
-
-    temp_data[p_out * n + thread_id] = (thread_id > 0) ? data[thread_id - 1] : 0;
+    __shared__ int shared[TOTAL_THREADS];
+    shared[thread_id] = in[thread_id];
     __syncthreads();
-
-    for (int offset = 1; offset < 1; offset *= 2) {
-        p_out = 1 - p_out;
-        p_in = 1 - p_out;
-
-        if (thread_id >= offset) {
-            temp_data[p_out * n + thread_id] += temp_data[p_in * n + thread_id - offset];
-        } else {
-            temp_data[p_out * n + thread_id] = temp_data[p_in * n + thread_id];
+    for (int d = 1; d <= total_levels; d++) {
+        if (thread_id >= (1 << (d - 1))) {
+            shared[thread_id] += shared[thread_id - (1 << (d - 1))];
         }
         __syncthreads();
     }
-    result[thread_id] = temp_data[p_out * n + thread_id];
+    out[thread_id] = shared[thread_id];
 }
 
-void vector_add_main() {
+
+int main() {
     int n = 8;
     int *data = (int *) malloc(n * sizeof(int));
     int *result = (int *) malloc(n * sizeof(int));
@@ -45,17 +38,15 @@ void vector_add_main() {
 
     cudaMemcpy(gpu_data, data, n * sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(gpu_result, result, n * sizeof(int), cudaMemcpyHostToDevice);
-
-    parallel_scan<<<1, n>>>(gpu_data, gpu_result, n);
+    printf("Calling kernel\n");
+    hs_scan<<<1, n>>>(gpu_data, gpu_result, log2(n));
     cudaMemcpy(result, gpu_result, n * sizeof(int), cudaMemcpyDeviceToHost);
 
     for (int i = 0; i < n; i++) {
         printf("%d\n", result[i]);
     }
-
-}
-
-
-int main() {
-    vector_add_main();
+    cudaFree(gpu_result);
+    cudaFree(gpu_data);
+    free(result);
+    free(data);
 }
