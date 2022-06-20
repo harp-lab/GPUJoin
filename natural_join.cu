@@ -13,12 +13,16 @@ void show_relation(int *data, int total_records, int total_columns, const char *
     cout << "Relation name: " << relation_name << endl;
     cout << "===================================" << endl;
     for (int i = 0; i < total_records; i++) {
+        int skip = 0;
         for (int j = 0; j < total_columns; j++) {
             if (data[(i * total_columns) + j] == 0) {
-                return;
+                skip = 1;
+                continue;
             }
             cout << data[(i * total_columns) + j] << " ";
         }
+        if (skip == 1)
+            continue;
         cout << endl;
         count++;
         if (count == visible_records) {
@@ -80,21 +84,32 @@ int *get_reverse_relation(int *data, int total_records, int total_columns) {
 
 
 __global__
-void gpu_get_join_data(int *data, long long data_max_length,
+void gpu_get_join_data(int *data, int per_thread_allocation,
                        int *relation_1, int relation_1_records, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_records, int relation_2_columns, int relation_2_index) {
 
-    int thread_id = threadIdx.x;
-    printf("Thread ID: %d\n", thread_id);
-    printf("Relation 1: ");
-    for (int k = 0; k < relation_1_columns; k++) {
-        printf("%d ", relation_1[(thread_id * relation_1_columns) + k]);
+    int i = threadIdx.x;
+    int relation_1_index_value, relation_2_index_value, column_count = 0;
+    relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
+    int offset = i * per_thread_allocation;
+    printf("Thread %d, Offset %d\n", i, offset);
+    for (int j = 0; j < relation_2_records; j++) {
+        relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
+        if (relation_1_index_value == relation_2_index_value) {
+            for (int k = 0; k < relation_1_columns; k++) {
+                data[offset] = relation_1[(i * relation_1_columns) + k];
+//                printf("(offset: data[offset]) = (%d, %d)\n", offset, data[offset]);
+                offset++;
+            }
+            for (int k = 0; k < relation_2_columns; k++) {
+                if (k != relation_2_index) {
+                    data[offset] = relation_2[(j * relation_2_columns) + k];
+//                    printf("(offset: data[offset]) = (%d, %d)\n", offset, data[offset]);
+                    offset++;
+                }
+            }
+        }
     }
-    printf("\nRelation 2: ");
-    for (int k = 0; k < relation_2_columns; k++) {
-        printf("%d ", relation_2[(thread_id * relation_2_columns) + k]);
-    }
-    printf("\n\n");
 //    long long row_count = 0, column_count = 0;
 //    int total_columns = relation_1_columns + relation_2_columns - 1;
 //    int relation_1_index_value, relation_2_index_value;
@@ -187,10 +202,16 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
 //    dim3 grid_size = (1, 1);
 //    dim3 block_size = 10;
 
-    int grid_size = 1;
-    int block_size = 10;
+//    dim3 grid_size = (8, 8);
+//    dim3 block_size = (8, 8);
 
-    gpu_get_join_data<<<grid_size, block_size>>>(gpu_data, total_records,
+    int block_size = 8;
+    int grid_size = 1;
+    int per_thread_allocation = (total_records * total_columns) / block_size;
+    printf("Per thread allocation: %d\n", per_thread_allocation);
+
+
+    gpu_get_join_data<<<grid_size, block_size>>>(gpu_data, per_thread_allocation,
                                                  gpu_relation_1_data, relation_1_records,
                                                  relation_columns, 0,
                                                  gpu_relation_2_data, relation_2_records,
@@ -203,8 +224,8 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
 //                  "Relation 1", visible_records);
 //    show_relation(relation_2_data, relation_2_records, relation_columns,
 //                  "Relation 2", visible_records);
-//    show_relation(data, total_records,
-//                  total_columns, "Join Result", visible_records);
+    show_relation(data, total_records,
+                  total_columns, "Join Result", visible_records);
 //    write_relation_to_file(data, total_records, total_columns,
 //                           output_path, separator);
     cudaFree(gpu_relation_1_data);
@@ -248,16 +269,16 @@ int main() {
     time_t begin_time = time(NULL);
 
 //    // Small dataset
-    char *data_path = "data/employee.txt";
-    char separator = ',';
-    char *output_path = "output/join_small_cpu.txt";
-    int relation_1_records = 10;
-    int relation_2_records = 10;
-    int total_records = relation_1_records * relation_2_records;
-    int relation_columns = 2;
-    int visible_records = 10;
-    cpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
+//    char *data_path = "data/employee.txt";
+//    char separator = ',';
+//    char *output_path = "output/join_small_cpu.txt";
+//    int relation_1_records = 10;
+//    int relation_2_records = 10;
+//    int total_records = relation_1_records * relation_2_records;
+//    int relation_columns = 2;
+//    int visible_records = 10;
+//    cpu_join_relations(data_path, separator, output_path, relation_columns,
+//                       relation_1_records, relation_2_records, total_records, visible_records);
 //
 //    // Large dataset
 //    relation_1_records = 412148;
@@ -271,16 +292,16 @@ int main() {
 //    cpu_join_relations(data_path, separator, output_path, relation_columns,
 //                       relation_1_records, relation_2_records, total_records, visible_records);
 
-//    char *data_path = "data/employee.txt";
-//    char separator = ',';
-//    char *output_path = "output/join_small_gpu.txt";
-//    int relation_1_records = 10;
-//    int relation_2_records = 10;
-//    int total_records = relation_1_records * relation_2_records;
-//    int relation_columns = 2;
-//    int visible_records = 10;
-//    gpu_join_relations(data_path, separator, output_path, relation_columns,
-//                       relation_1_records, relation_2_records, total_records, visible_records);
+    char *data_path = "data/employee.txt";
+    char separator = ',';
+    char *output_path = "output/join_small_gpu.txt";
+    int relation_1_records = 8;
+    int relation_2_records = 8;
+    int total_records = relation_1_records * relation_2_records;
+    int relation_columns = 2;
+    int visible_records = -1;
+    gpu_join_relations(data_path, separator, output_path, relation_columns,
+                       relation_1_records, relation_2_records, total_records, visible_records);
 //
 //    time_t end_time = time(NULL);
 //    cout << "\nTotal time: " << (end_time - begin_time) << " seconds\n\n" << endl;
