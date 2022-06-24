@@ -1,3 +1,36 @@
+## Join of two relations
+### Dataset
+- Small dataset: [employee.txt](data/employee.txt)
+- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
+
+### Run program
+- Compile and run CUDA program:
+```commandline
+nvcc natural_join.cu -o join
+./join
+time ./join
+nvprof ./join
+```
+- Output using 32 blocks and 32 threads per block:
+```shell
+Relation name: GPU Join Result
+===================================
+1 1 1 
+1 1 2 
+1 1 3 
+1 1 55 
+1 1 539 
+2 1 1 
+2 1 2 
+2 1 3 
+2 1 56 
+2 1 539 
+Result cropped at record 10
+
+Wrote join result to file output/join_medium_gpu_block_thread.txt
+
+Total time: 0.114994 seconds
+```
 ## Vector addition
 
 ### Run program
@@ -36,23 +69,6 @@ nvprof ./gpu_add
 ### Notes
 - Block size should be some multiple of 32 and less than 1024
 
-## Join of two relations
-### Dataset
-- Small dataset (two relations):
-  - [department.txt](data/department.txt)
-  - [employee.txt](data/employee.txt)
-- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
-
-### Run program
-- Compile and run CUDA program:
-```commandline
-nvcc natural_join.cu -o join
-./join
-time ./join
-nvprof ./join
-```
-
-
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
 - [nVidia CUDA C programming guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
@@ -61,3 +77,6 @@ nvprof ./join
 - [Getting Started on ThetaGPU](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/getting-started-thetagpu)
 - [Submit a Job on ThetaGPU](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/submit-job-thetagpu)
 - [Running jobs at Theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
+- [Chapter 39. Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda)
+- [GPGPU introduction](https://github.com/McKizzle/Introduction-to-Concurrent-Programming/blob/master/Course/Lectures/CUDA/GPGPU_Introduction.md)
+- [CUDA 2d thread block](http://www.mathcs.emory.edu/~cheung/Courses/355/Syllabus/94-CUDA/2D-grids.html)
