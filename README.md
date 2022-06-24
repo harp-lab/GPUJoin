@@ -1,3 +1,36 @@
+## Join of two relations
+### Dataset
+- Small dataset: [employee.txt](data/employee.txt)
+- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
+
+### Run program
+- Compile and run CUDA program:
+```commandline
+nvcc natural_join.cu -o join
+./join
+time ./join
+nvprof ./join
+```
+- Output using 32 blocks and 32 threads per block:
+```shell
+Relation name: GPU Join Result
+===================================
+1 1 1 
+1 1 2 
+1 1 3 
+1 1 55 
+1 1 539 
+2 1 1 
+2 1 2 
+2 1 3 
+2 1 56 
+2 1 539 
+Result cropped at record 10
+
+Wrote join result to file output/join_medium_gpu_block_thread.txt
+
+Total time: 0.114994 seconds
+```
 ## Vector addition
 
 ### Run program
@@ -35,23 +68,6 @@ nvprof ./gpu_add
 
 ### Notes
 - Block size should be some multiple of 32 and less than 1024
-
-## Join of two relations
-### Dataset
-- Small dataset (two relations):
-  - [department.txt](data/department.txt)
-  - [employee.txt](data/employee.txt)
-- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
-
-### Run program
-- Compile and run CUDA program:
-```commandline
-nvcc natural_join.cu -o join
-./join
-time ./join
-nvprof ./join
-```
-
 
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
