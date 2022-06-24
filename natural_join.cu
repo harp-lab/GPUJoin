@@ -174,7 +174,7 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
 //    dim3 grid_size = (8, 8);
 //    dim3 block_size = (8, 8);
 
-    int block_size = 8;
+    int block_size = relation_1_records;
     int grid_size = 1;
     int per_thread_allocation = (total_records * total_columns) / block_size;
 
@@ -236,28 +236,41 @@ void cpu_join_relations(char *data_path, char separator, char *output_path,
 int main() {
     time_t begin_time = time(NULL);
     char *data_path, *output_path;
-    char separator = ',';
+    char separator = '\t';
     int relation_1_records, relation_2_records, total_records, relation_columns, visible_records;
+
+//    data_path = "data/link.facts_412148.txt";
+//    output_path = "output/join_medium_cpu.txt";
+//    relation_1_records = 1024;
+//    relation_2_records = 1024;
+//    total_records = relation_1_records * relation_2_records;
+//    relation_columns = 2;
+//    visible_records = 10;
+//    cpu_join_relations(data_path, separator, output_path, relation_columns,
+//                       relation_1_records, relation_2_records, total_records, visible_records);
+
+
+    data_path = "data/link.facts_412148.txt";
+    output_path = "output/join_medium_gpu.txt";
+    relation_1_records = 1024;
+    relation_2_records = 1024;
+    total_records = relation_1_records * relation_2_records;
+    relation_columns = 2;
+    visible_records = 10;
+    gpu_join_relations(data_path, separator, output_path, relation_columns,
+                       relation_1_records, relation_2_records, total_records, visible_records);
+
+
 //    data_path = "data/employee.txt";
-//    output_path = "output/join_small_cpu.txt";
+//    output_path = "output/join_small_gpu.txt";
+//    total_records = relation_1_records * relation_2_records;
 //    relation_1_records = 8;
 //    relation_2_records = 8;
 //    total_records = relation_1_records * relation_2_records;
 //    relation_columns = 2;
 //    visible_records = -1;
-//    cpu_join_relations(data_path, separator, output_path, relation_columns,
+//    gpu_join_relations(data_path, separator, output_path, relation_columns,
 //                       relation_1_records, relation_2_records, total_records, visible_records);
-
-    data_path = "data/employee.txt";
-    output_path = "output/join_small_gpu.txt";
-    total_records = relation_1_records * relation_2_records;
-    relation_1_records = 8;
-    relation_2_records = 8;
-    total_records = relation_1_records * relation_2_records;
-    relation_columns = 2;
-    visible_records = -1;
-    gpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
 
 //
 //    // Large dataset
