@@ -12,14 +12,16 @@
 
 using namespace std;
 
-void show_relation(int *data, int total_records, int total_columns, const char *relation_name, int visible_records) {
+void show_relation(int *data, int total_records,
+                   int total_columns, const char *relation_name,
+                   int visible_records, int skip_zero) {
     int count = 0;
     cout << "Relation name: " << relation_name << endl;
     cout << "===================================" << endl;
     for (int i = 0; i < total_records; i++) {
         int skip = 0;
         for (int j = 0; j < total_columns; j++) {
-            if (data[(i * total_columns) + j] == 0) {
+            if ((skip_zero == 1) && (data[(i * total_columns) + j] == 0)) {
                 skip = 1;
                 continue;
             }
@@ -114,6 +116,26 @@ void gpu_get_join_data(int *data, int per_thread_allocation,
     }
 }
 
+__global__
+void gpu_get_join_size_per_thread(int *join_size,
+                                  int *relation_1, int relation_1_records, int relation_1_columns, int relation_1_index,
+                                  int *relation_2, int relation_2_records, int relation_2_columns,
+                                  int relation_2_index) {
+
+    int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    int total_columns = relation_1_columns + relation_2_columns - 1;
+    int count = 0;
+    int relation_1_index_value, relation_2_index_value;
+    relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
+    for (int j = 0; j < relation_2_records; j++) {
+        relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
+        if (relation_1_index_value == relation_2_index_value) {
+            count += total_columns;
+        }
+    }
+    join_size[i] = count;
+}
+
 void cpu_get_join_data(int *data, long long data_max_length,
                        int *relation_1, int relation_1_records, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_records, int relation_2_columns, int relation_2_index) {
@@ -190,11 +212,11 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
     cudaMemcpy(data, gpu_data, total_records * total_columns * sizeof(int), cudaMemcpyDeviceToHost);
 
     show_relation(relation_1_data, relation_1_records, relation_columns,
-                  "Relation 1", visible_records);
+                  "Relation 1", visible_records, 1);
     show_relation(relation_2_data, relation_2_records, relation_columns,
-                  "Relation 2", visible_records);
+                  "Relation 2", visible_records, 1);
     show_relation(data, total_records,
-                  total_columns, "GPU Join Result", visible_records);
+                  total_columns, "GPU Join Result", visible_records, 1);
     write_relation_to_file(data, total_records, total_columns,
                            output_path, separator);
     cudaFree(gpu_relation_1_data);
@@ -205,6 +227,56 @@ void gpu_join_relations(char *data_path, char separator, char *output_path,
     free(relation_2_data);
 
 }
+
+void gpu_join_relations_2_pass(char *data_path, char separator, char *output_path,
+                               int relation_1_records, int relation_1_columns,
+                               int relation_2_records, int relation_2_columns, int visible_records) {
+    int *relation_1 = get_relation_from_file(data_path,
+                                             relation_1_records, relation_1_columns,
+                                             separator);
+    int *relation_2 = get_reverse_relation(relation_1,
+                                           relation_1_records,
+                                           relation_2_columns);
+    int *join_size_per_thread = (int *) malloc(relation_1_records * sizeof(int));
+    int *gpu_relation_1, *gpu_relation_2, *gpu_join_size_per_thread;
+    cudaMalloc((void **) &gpu_relation_1, relation_1_records * relation_1_columns * sizeof(int));
+    cudaMalloc((void **) &gpu_relation_2, relation_2_records * relation_2_columns * sizeof(int));
+    cudaMalloc((void **) &gpu_join_size_per_thread, relation_1_records * sizeof(int));
+
+    cudaMemcpy(gpu_relation_1, relation_1, relation_1_records * relation_1_columns * sizeof(int),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu_relation_2, relation_2, relation_2_records * relation_2_columns * sizeof(int),
+               cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu_join_size_per_thread, join_size_per_thread, relation_1_records * sizeof(int),
+               cudaMemcpyHostToDevice);
+//    dim3 grid_size = (1, 1);
+//    dim3 block_size = 10;
+    int block_size = sqrt(relation_1_records);
+    int grid_size = sqrt(relation_1_records);
+    gpu_get_join_size_per_thread<<<grid_size, block_size>>>(gpu_join_size_per_thread,
+                                                            gpu_relation_1, relation_1_records,
+                                                            relation_1_columns, 0,
+                                                            gpu_relation_2, relation_2_records,
+                                                            relation_2_columns, 0);
+    cudaDeviceSynchronize();
+    cudaMemcpy(join_size_per_thread, gpu_join_size_per_thread, relation_1_records * sizeof(int),
+               cudaMemcpyDeviceToHost);
+    show_relation(relation_1, relation_1_records, relation_1_columns,
+                  "Relation 1", visible_records, 1);
+    show_relation(relation_2, relation_2_records, relation_2_columns,
+                  "Relation 2", visible_records, 1);
+    show_relation(join_size_per_thread, relation_1_records,
+                  1, "GPU Join Per Thread Size", visible_records, 0);
+//    write_relation_to_file(join_size_per_thread, relation_1_records, 1,
+//                           output_path, separator);
+    cudaFree(gpu_relation_1);
+    cudaFree(gpu_relation_2);
+    cudaFree(gpu_join_size_per_thread);
+    free(join_size_per_thread);
+    free(relation_1);
+    free(relation_2);
+}
+
 
 void cpu_join_relations(char *data_path, char separator, char *output_path,
                         int relation_columns, int relation_1_records,
@@ -218,15 +290,15 @@ void cpu_join_relations(char *data_path, char separator, char *output_path,
                                                 relation_columns);
     int *data = (int *) malloc(total_records * total_columns * sizeof(int));
     show_relation(relation_1_data, relation_1_records, relation_columns,
-                  "Relation 1", visible_records);
+                  "Relation 1", visible_records, 1);
     show_relation(relation_2_data, relation_2_records, relation_columns,
-                  "Relation 2", visible_records);
+                  "Relation 2", visible_records, 1);
     cpu_get_join_data(data, total_records, relation_1_data, relation_1_records,
                       relation_columns, 0,
                       relation_2_data, relation_2_records,
                       relation_columns, 0);
     show_relation(data, total_records,
-                  total_columns, "CPU Join Result", visible_records);
+                  total_columns, "CPU Join Result", visible_records, 1);
     write_relation_to_file(data, total_records, total_columns,
                            output_path, separator);
     free(relation_1_data);
@@ -238,7 +310,8 @@ int main() {
     std::chrono::high_resolution_clock::time_point t1 = std::chrono::high_resolution_clock::now();
     char *data_path, *output_path;
     char separator = '\t';
-    int relation_1_records, relation_2_records, total_records, relation_columns, visible_records;
+    int relation_1_records, relation_1_columns, relation_2_records, relation_2_columns,
+            total_records, relation_columns, visible_records;
 
 //    data_path = "data/link.facts_412148.txt";
 //    output_path = "output/join_medium_cpu.txt";
@@ -252,39 +325,16 @@ int main() {
 //
 
     data_path = "data/link.facts_412148.txt";
-    output_path = "output/join_medium_gpu_block_thread.txt";
-    relation_1_records = 1024;
-    relation_2_records = 1024;
-    total_records = relation_1_records * relation_2_records;
-    relation_columns = 2;
-    visible_records = 10;
-    gpu_join_relations(data_path, separator, output_path, relation_columns,
-                       relation_1_records, relation_2_records, total_records, visible_records);
-
-
-//    data_path = "data/employee.txt";
-//    output_path = "output/join_small_gpu.txt";
-//    total_records = relation_1_records * relation_2_records;
-//    relation_1_records = 8;
-//    relation_2_records = 8;
-//    total_records = relation_1_records * relation_2_records;
-//    relation_columns = 2;
-//    visible_records = -1;
-//    gpu_join_relations(data_path, separator, output_path, relation_columns,
-//                       relation_1_records, relation_2_records, total_records, visible_records);
-
-//
-//    // Large dataset
-//    relation_1_records = 412148;
-//    relation_2_records = 412148;
-//    total_records = relation_1_records * 100;
-//    data_path = "data/link.facts_412148.txt";
-//    output_path = "output/join_large_cpu.txt";
-//    separator = '\t';
-//    relation_columns = 2;
-//    visible_records = 5;
-//    cpu_join_relations(data_path, separator, output_path, relation_columns,
-//                       relation_1_records, relation_2_records, total_records, visible_records);
+    output_path = "output/join_medium_gpu_size.txt";
+    relation_1_records = 16;
+    relation_2_records = 16;
+    relation_1_columns = 2;
+    relation_2_columns = 2;
+    visible_records = 16;
+    gpu_join_relations_2_pass(data_path, separator, output_path,
+                              relation_1_records, relation_1_columns,
+                              relation_2_records, relation_2_columns, visible_records);
+    // 262144
 
     std::chrono::high_resolution_clock::time_point t2 = std::chrono::high_resolution_clock::now();
 
