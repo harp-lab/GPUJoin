@@ -3,6 +3,24 @@
 - Small dataset: [employee.txt](data/employee.txt)
 - Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
 
+### CPU implementation
+- Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the number of total columns
+- Use a nested loop to compute and store the join result in `join_result`
+
+### GPU 2 pass implementation
+- Number of blocks = `sqrt(n)` where `n` is the number of rows in relation 1
+- Number of threads per block = `sqrt(n)` where `n` is the number of rows in relation 1
+- Pass 1:
+  - Create an array `join_size_per_thread` of size `n`, where `n` is the number of rows in relation 1
+  - Count the total number of join results for each row of relation 1 and store them in `join_size_per_thread`
+- CPU operation:
+  - Calculate `total_size` which is the sum of the array `join_size_per_thread`
+  - Declare the join result array `join_result` with size `total_size` 
+  - Calculate `offset` array with size `n`, where `n` is the number of rows in relation 1 from `join_size_per_thread`. It defines which portion of the `join_result` array each thread can use. 
+- Pass 2:
+  - Each thread computes the join result and insert them in `join_result`
+
+
 ### Run program
 - Compile and run CUDA program:
 ```commandline
@@ -11,25 +29,55 @@ nvcc natural_join.cu -o join
 time ./join
 nvprof ./join
 ```
-- Output using 32 blocks and 32 threads per block:
-```shell
-Relation name: GPU Join Result
+- Output using CPU for 16384 rows:
+```
+CPU join operation
 ===================================
-1 1 1 
-1 1 2 
-1 1 3 
-1 1 55 
-1 1 539 
-2 1 1 
-2 1 2 
-2 1 3 
-2 1 56 
-2 1 539 
-Result cropped at record 10
+Relation 1: rows: 16384, columns: 2
+Relation 2: rows: 16384, columns: 2
 
-Wrote join result to file output/join_medium_gpu_block_thread.txt
+Read relations: 0.0148251 seconds
 
-Total time: 0.114994 seconds
+CPU join operation: 0.473366 seconds
+
+Wrote join result (148604 rows) to file: output/join_cpu_16384.txt
+
+Write result: 2.09653 seconds
+
+Main method: 2.59259 seconds
+```
+- Output using GPU for 16384 rows:
+```
+GPU join operation (128 blocks, 128 threads per block)
+===================================
+Relation 1: rows: 16384, columns: 2
+Relation 2: rows: 16384, columns: 2
+
+Read relations: 0.0112004 seconds
+
+GPU Pass 1 copy data to device: 0.118518 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.00145154 seconds
+
+GPU Pass 1 copy result to host: 4.8354e-05 seconds
+
+CPU calculate offset: 5.9601e-05 seconds
+
+GPU Pass 2 copy data to device: 0.000493044 seconds
+
+GPU Pass 2 join operation: 0.00518987 seconds
+
+GPU Pass 2 copy result to host: 0.000927745 seconds
+
+Wrote join result (148604 rows) to file: output/join_gpu_16384.txt
+
+Write result: 0.0463801 seconds
+
+Main method: 0.184608 seconds
+```
+- Result test for CPU and GPU:
+```
+diff output/join_cpu_16384.txt output/join_gpu_16384.txt
 ```
 ## Vector addition
 
