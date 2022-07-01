@@ -130,6 +130,7 @@ void gpu_get_join_size_per_thread(int *join_size,
                                   int relation_2_index) {
 
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (i >= relation_1_rows) return;
     int total_columns = relation_1_columns + relation_2_columns - 1;
     int count = 0;
     int relation_1_index_value, relation_2_index_value;
@@ -149,6 +150,7 @@ void gpu_get_join_data_dynamic(int *data, int *offsets,
                                int *relation_2, int relation_2_rows, int relation_2_columns, int relation_2_index) {
 
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (i >= relation_1_rows) return;
     int relation_1_index_value, relation_2_index_value;
     relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
     int offset = offsets[i];
@@ -263,12 +265,9 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     std::chrono::high_resolution_clock::time_point time_point_end;
     int total_columns = relation_1_columns + relation_2_columns - 1;
     int block_size, grid_size;
-    block_size = sqrt(relation_1_rows);
-    grid_size = sqrt(relation_1_rows);
-    if (relation_1_rows == 412148) {
-        block_size = 986; // 116, 187, 209, 319, 323, 374, 418, 493, 551, 638, 646, 748, 836, 986
-        grid_size = relation_1_rows / block_size;
-    }
+    block_size = 512;
+    grid_size = ceil((double) relation_1_rows / block_size);
+    cout << block_size << grid_size << endl;
     cout << "GPU join operation (" << grid_size << " blocks, " << block_size << " threads per block)" << endl;
     cout << "===================================" << endl;
     cout << "Relation 1: rows: " << relation_1_rows << ", columns: " << relation_1_columns << endl;
@@ -403,9 +402,9 @@ int main() {
     int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns, total_rows, visible_rows;
 
 //    data_path = "data/link.facts_412148.txt";
-//    output_path = "output/join_cpu_16384.txt";
-//    relation_1_rows = 16384;
-//    relation_2_rows = 16384;
+//    output_path = "output/join_cpu_10000.txt";
+//    relation_1_rows = 10000;
+//    relation_2_rows = 10000;
 //    total_rows = relation_1_rows * relation_2_rows;
 //    relation_1_columns = 2;
 //    relation_2_columns = 2;
