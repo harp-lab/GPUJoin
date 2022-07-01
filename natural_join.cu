@@ -4,8 +4,6 @@
 #include <cstdio>
 #include <string>
 #include <iostream>
-#include <ctime>
-#include <ratio>
 #include <chrono>
 #include <math.h>
 
@@ -264,8 +262,13 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     int total_columns = relation_1_columns + relation_2_columns - 1;
-    int block_size = sqrt(relation_1_rows);
-    int grid_size = sqrt(relation_1_rows);
+    int block_size, grid_size;
+    block_size = sqrt(relation_1_rows);
+    grid_size = sqrt(relation_1_rows);
+    if (relation_1_rows == 412148) {
+        block_size = 986; // 116, 187, 209, 319, 323, 374, 418, 493, 551, 638, 646, 748, 836, 986
+        grid_size = relation_1_rows / block_size;
+    }
     cout << "GPU join operation (" << grid_size << " blocks, " << block_size << " threads per block)" << endl;
     cout << "===================================" << endl;
     cout << "Relation 1: rows: " << relation_1_rows << ", columns: " << relation_1_columns << endl;
@@ -315,6 +318,7 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
         offset[i] = offset[i - 1] + join_size_per_thread[i - 1];
         total_size += join_size_per_thread[i];
     }
+    cout << "Total size of the join result: " << total_size << endl;
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("CPU calculate offset", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
@@ -410,10 +414,11 @@ int main() {
 //                       relation_2_rows, relation_2_columns, total_rows, visible_rows);
 
 
+
     data_path = "data/link.facts_412148.txt";
-    output_path = "output/join_gpu_16384.txt";
-    relation_1_rows = 16384;
-    relation_2_rows = 16384;
+    output_path = "output/join_gpu_412148.txt";
+    relation_1_rows = 412148;
+    relation_2_rows = 412148;
     relation_1_columns = 2;
     relation_2_columns = 2;
     visible_rows = 10;
@@ -421,6 +426,8 @@ int main() {
                               relation_1_rows, relation_1_columns,
                               relation_2_rows, relation_2_columns, visible_rows);
     // 262144
+    // 412148
+    // 409600
 
     chrono::high_resolution_clock::time_point time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Main method", time_point_begin, time_point_end);

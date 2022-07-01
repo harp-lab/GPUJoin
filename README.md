@@ -1,7 +1,9 @@
 ## Join of two relations
 ### Dataset
 - Small dataset: [employee.txt](data/employee.txt)
-- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt)
+- Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt):
+  - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
+  - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
 ### CPU implementation
 - Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the number of total columns
@@ -79,6 +81,222 @@ Main method: 0.184608 seconds
 ```
 diff output/join_cpu_16384.txt output/join_gpu_16384.txt
 ```
+- Large dataset with GPU:
+```
+GPU join operation (640 blocks, 640 threads per block)
+===================================
+Relation 1: rows: 409600, columns: 2
+Relation 2: rows: 409600, columns: 2
+
+Read relations: 0.101444 seconds
+
+GPU Pass 1 copy data to device: 0.085718 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.797152 seconds
+
+GPU Pass 1 copy result to host: 0.000864188 seconds
+
+CPU calculate offset: 0.00205248 seconds
+
+GPU Pass 2 copy data to device: 0.00827425 seconds
+
+GPU Pass 2 join operation: 2.3003 seconds
+
+GPU Pass 2 copy result to host: 0.0179542 seconds
+
+Wrote join result (3195197 rows) to file: output/join_gpu_409600.txt
+
+Write result: 1.01812 seconds
+
+Main method: 4.3329 seconds
+```
+- Full dataset with different number of blocks and threads:
+```
+GPU join operation (3553 blocks, 116 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.0924817 seconds
+
+GPU Pass 1 copy data to device: 0.0822414 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.784415 seconds
+
+GPU Pass 1 copy result to host: 0.000874025 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.00167406 seconds
+
+GPU Pass 2 copy data to device: 0.0080948 seconds
+
+GPU Pass 2 join operation: 2.44124 seconds
+
+GPU Pass 2 copy result to host: 0.0179879 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.05628 seconds
+
+Main method: 4.48628 seconds
+
+GPU join operation (2204 blocks, 187 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.0950981 seconds
+
+GPU Pass 1 copy data to device: 0.0753626 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.773314 seconds
+
+GPU Pass 1 copy result to host: 0.000869406 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.00165804 seconds
+
+GPU Pass 2 copy data to device: 0.00778849 seconds
+
+GPU Pass 2 join operation: 2.4202 seconds
+
+GPU Pass 2 copy result to host: 0.017805 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.05863 seconds
+
+Main method: 4.4517 seconds
+
+GPU join operation (1972 blocks, 209 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.094193 seconds
+
+GPU Pass 1 copy data to device: 0.0750269 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.927935 seconds
+
+GPU Pass 1 copy result to host: 0.000901576 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.0017113 seconds
+
+GPU Pass 2 copy data to device: 0.00798163 seconds
+
+GPU Pass 2 join operation: 2.3176 seconds
+
+GPU Pass 2 copy result to host: 0.0177586 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.11116 seconds
+
+Main method: 4.55523 seconds
+
+
+GPU join operation (551 blocks, 748 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.0969464 seconds
+
+GPU Pass 1 copy data to device: 0.0902934 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.772574 seconds
+
+GPU Pass 1 copy result to host: 0.000869624 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.00168334 seconds
+
+GPU Pass 2 copy data to device: 0.0079812 seconds
+
+GPU Pass 2 join operation: 3.32428 seconds
+
+GPU Pass 2 copy result to host: 0.0177908 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.15607 seconds
+
+Main method: 5.46954 seconds
+
+GPU join operation (493 blocks, 836 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.0959166 seconds
+
+GPU Pass 1 copy data to device: 0.117206 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.743906 seconds
+
+GPU Pass 1 copy result to host: 0.000859272 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.00168168 seconds
+
+GPU Pass 2 copy data to device: 0.00812121 seconds
+
+GPU Pass 2 join operation: 2.70597 seconds
+
+GPU Pass 2 copy result to host: 0.0177454 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.11257 seconds
+
+Main method: 4.80494 seconds
+
+GPU join operation (418 blocks, 986 threads per block)
+===================================
+Relation 1: rows: 412148, columns: 2
+Relation 2: rows: 412148, columns: 2
+
+Read relations: 0.0894555 seconds
+
+GPU Pass 1 copy data to device: 0.0768916 seconds
+
+GPU Pass 1 get join size per row in relation 1: 0.798028 seconds
+
+GPU Pass 1 copy result to host: 0.000926315 seconds
+
+Total size of the join result: 9698151
+CPU calculate offset: 0.00177671 seconds
+
+GPU Pass 2 copy data to device: 0.00908701 seconds
+
+GPU Pass 2 join operation: 2.21296 seconds
+
+GPU Pass 2 copy result to host: 0.0178165 seconds
+
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+
+Write result: 1.17632 seconds
+
+Main method: 4.38426 seconds
+```
+
+
+### Performance comparison
+`natural_join.cu` performance comparison for different grid and block size:
+
+| N      | Grid size | Block size | Get join size | Join operation | Main     |
+|--------|-----------|------------|---------------|----------------|----------|
+| 409600 | 640       | 640        | 0.797152s     | 2.3003s        | 4.3329s  |
+| 412148 | 3553      | 116        | 0.784415s     | 2.44124s       | 4.48628s |
+| 412148 | 2204      | 187        | 0.773314s     | 2.4202s        | 4.4517s  |
+| 412148 | 1972      | 209        | 0.927935s     | 2.3176s        | 4.55523s |
+| 412148 | 551       | 748        | 0.772574s     | 3.32428s       | 5.46954s |
+| 412148 | 493       | 836        | 0.743906s     | 2.70597s       | 4.80494s |
+| 412148 | 418       | 986        | 0.798028s     | 2.21296s       | 4.38426s |
+
+
 ## Vector addition
 
 ### Run program
@@ -100,7 +318,7 @@ nvprof ./gpu_add
 ```
 
 ### Performance comparison
-- `vector_add.cu` performance comparison for different grid and block size:
+`vector_add.cu` performance comparison for different grid and block size:
 
 | N       | Grid size | Block size | GPU time  |
 |---------|-----------|------------|-----------|
