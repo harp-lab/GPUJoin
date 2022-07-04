@@ -264,11 +264,12 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     int total_columns = relation_1_columns + relation_2_columns - 1;
-    int block_size, grid_size;
-    block_size = 512;
-    grid_size = ceil((double) relation_1_rows / block_size);
-    cout << block_size << grid_size << endl;
-    cout << "GPU join operation (" << grid_size << " blocks, " << block_size << " threads per block)" << endl;
+    int threads_per_block, blocks_per_grid;
+    threads_per_block = 512;
+    blocks_per_grid = ceil((double) relation_1_rows / threads_per_block);
+    cout << threads_per_block << blocks_per_grid << endl;
+    cout << "GPU join operation (" << blocks_per_grid << " blocks, " << threads_per_block << " threads per block)"
+         << endl;
     cout << "===================================" << endl;
     cout << "Relation 1: rows: " << relation_1_rows << ", columns: " << relation_1_columns << endl;
     cout << "Relation 2: rows: " << relation_2_rows << ", columns: " << relation_2_columns << "\n" << endl;
@@ -298,11 +299,11 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 copy data to device", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    gpu_get_join_size_per_thread<<<grid_size, block_size>>>(gpu_join_size_per_thread,
-                                                            gpu_relation_1, relation_1_rows,
-                                                            relation_1_columns, 0,
-                                                            gpu_relation_2, relation_2_rows,
-                                                            relation_2_columns, 0);
+    gpu_get_join_size_per_thread<<<blocks_per_grid, threads_per_block>>>(gpu_join_size_per_thread,
+                                                                         gpu_relation_1, relation_1_rows,
+                                                                         relation_1_columns, 0,
+                                                                         gpu_relation_2, relation_2_rows,
+                                                                         relation_2_columns, 0);
     cudaDeviceSynchronize();
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 get join size per row in relation 1", time_point_begin, time_point_end);
@@ -328,11 +329,11 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 2 copy data to device", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    gpu_get_join_data_dynamic<<<grid_size, block_size>>>(gpu_join_result, gpu_offset,
-                                                         gpu_relation_1, relation_1_rows,
-                                                         relation_1_columns, 0,
-                                                         gpu_relation_2, relation_2_rows,
-                                                         relation_2_columns, 0);
+    gpu_get_join_data_dynamic<<<blocks_per_grid, threads_per_block>>>(gpu_join_result, gpu_offset,
+                                                                      gpu_relation_1, relation_1_rows,
+                                                                      relation_1_columns, 0,
+                                                                      gpu_relation_2, relation_2_rows,
+                                                                      relation_2_columns, 0);
     cudaDeviceSynchronize();
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 2 join operation", time_point_begin, time_point_end);
