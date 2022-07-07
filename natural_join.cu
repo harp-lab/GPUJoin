@@ -170,27 +170,24 @@ void gpu_get_join_data_dynamic(int *data, int *offsets,
 }
 
 __global__
-void gpu_get_join_size_per_thread_atomic(int *join_size,
-                                         int *relation_1, int relation_1_rows, int relation_1_columns,
-                                         int relation_1_index,
-                                         int *relation_2, int relation_2_rows, int relation_2_columns,
-                                         int relation_2_index) {
+void gpu_get_total_join_size(int *total_size, int total_columns,
+                             int *relation_1, int relation_1_rows, int relation_1_columns,
+                             int relation_1_index,
+                             int *relation_2, int relation_2_rows, int relation_2_columns,
+                             int relation_2_index) {
 
     int i = (blockIdx.y * blockDim.y) + threadIdx.y;
     int j = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (i >= relation_1_rows || j >= relation_2_rows) return;
-    int total_columns = relation_1_columns + relation_2_columns - 1;
-    int relation_1_index_value, relation_2_index_value;
-    relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
-    relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
+    int relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
+    int relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
     if (relation_1_index_value == relation_2_index_value) {
-        atomicAdd(&join_size[i], total_columns);
+        atomicAdd(total_size, total_columns);
     }
-    __syncthreads();
 }
 
 __global__
-void gpu_get_join_data_dynamic_atomic(int *data, int *offsets,
+void gpu_get_join_data_dynamic_atomic(int *data, int *position, int total_columns,
                                       int *relation_1, int relation_1_rows, int relation_1_columns,
                                       int relation_1_index,
                                       int *relation_2, int relation_2_rows, int relation_2_columns,
@@ -198,28 +195,21 @@ void gpu_get_join_data_dynamic_atomic(int *data, int *offsets,
 
     int i = (blockIdx.y * blockDim.y) + threadIdx.y;
     int j = (blockIdx.x * blockDim.x) + threadIdx.x;
-//    int total_columns = relation_1_columns + relation_2_columns - 1;
     if (i >= relation_1_rows || j >= relation_2_rows) return;
     int relation_1_index_value, relation_2_index_value;
     relation_1_index_value = relation_1[(i * relation_1_columns) + relation_1_index];
     relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
-//    int offset = offsets[i];
     if (relation_1_index_value == relation_2_index_value) {
+        int start_position = atomicAdd(position, total_columns);
         for (int k = 0; k < relation_1_columns; k++) {
-            data[offsets[i]] = relation_1[(i * relation_1_columns) + k];
-            atomicAdd(&offsets[i], 1);
-            __syncthreads();
+            data[start_position++] = relation_1[(i * relation_1_columns) + k];
         }
         for (int k = 0; k < relation_2_columns; k++) {
             if (k != relation_2_index) {
-                data[offsets[i]] = relation_2[(j * relation_2_columns) + k];
-                atomicAdd(&offsets[i], 1);
-                __syncthreads();
+                data[start_position++] = relation_2[(j * relation_2_columns) + k];
             }
         }
-//        atomicAdd(&offsets[i], total_columns);
     }
-    __syncthreads();
 }
 
 void cpu_get_join_data(int *data, long long data_max_length,
@@ -435,53 +425,47 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Read relations", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    int *join_size_per_thread = (int *) malloc(relation_1_rows * sizeof(int));
-    int *offset = (int *) malloc(relation_1_rows * sizeof(int));
-    int *gpu_relation_1, *gpu_relation_2, *gpu_join_size_per_thread, *gpu_offset, *gpu_join_result;
+    int total_size = 0;
+    int *gpu_relation_1, *gpu_relation_2, *gpu_total_size, *gpu_join_result;
     cudaMalloc((void **) &gpu_relation_1, relation_1_rows * relation_1_columns * sizeof(int));
     cudaMalloc((void **) &gpu_relation_2, relation_2_rows * relation_2_columns * sizeof(int));
-    cudaMalloc((void **) &gpu_join_size_per_thread, relation_1_rows * sizeof(int));
-    cudaMalloc((void **) &gpu_offset, relation_1_rows * sizeof(int));
+    cudaMalloc((void **) &gpu_total_size, sizeof(int));
     cudaMemcpy(gpu_relation_1, relation_1, relation_1_rows * relation_1_columns * sizeof(int),
                cudaMemcpyHostToDevice);
     cudaMemcpy(gpu_relation_2, relation_2, relation_2_rows * relation_2_columns * sizeof(int),
                cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu_join_size_per_thread, join_size_per_thread, relation_1_rows * sizeof(int),
-               cudaMemcpyHostToDevice);
+    cudaMemcpy(gpu_total_size, &total_size, sizeof(int), cudaMemcpyHostToDevice);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 copy data to device", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    gpu_get_join_size_per_thread_atomic<<<grid_dimension, block_dimension>>>(gpu_join_size_per_thread,
-                                                                             gpu_relation_1, relation_1_rows,
-                                                                             relation_1_columns, 0,
-                                                                             gpu_relation_2, relation_2_rows,
-                                                                             relation_2_columns, 0);
+    gpu_get_total_join_size<<<grid_dimension, block_dimension>>>(gpu_total_size,
+                                                                 total_columns,
+                                                                 gpu_relation_1, relation_1_rows,
+                                                                 relation_1_columns, 0,
+                                                                 gpu_relation_2, relation_2_rows,
+                                                                 relation_2_columns, 0);
     cudaDeviceSynchronize();
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 get join size per row in relation 1", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    cudaMemcpy(join_size_per_thread, gpu_join_size_per_thread, relation_1_rows * sizeof(int),
-               cudaMemcpyDeviceToHost);
+    cudaMemcpy(&total_size, gpu_total_size, sizeof(int), cudaMemcpyDeviceToHost);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 copy result to host", time_point_begin, time_point_end);
-    time_point_begin = chrono::high_resolution_clock::now();
-    int total_size = join_size_per_thread[0];
-    for (int i = 1; i < relation_1_rows; i++) {
-        offset[i] = offset[i - 1] + join_size_per_thread[i - 1];
-        total_size += join_size_per_thread[i];
-    }
     cout << "Total size of the join result: " << total_size << endl;
-    time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("CPU calculate offset", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    cudaMemcpy(gpu_offset, offset, relation_1_rows * sizeof(int), cudaMemcpyHostToDevice);
     int *join_result = (int *) malloc(total_size * sizeof(int));
     cudaMalloc((void **) &gpu_join_result, total_size * sizeof(int));
     cudaMemcpy(gpu_join_result, join_result, total_size * sizeof(int), cudaMemcpyHostToDevice);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 2 copy data to device", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    gpu_get_join_data_dynamic_atomic<<<grid_dimension, block_dimension>>>(gpu_join_result, gpu_offset,
+    int position = 0;
+    int *gpu_position;
+    cudaMalloc((void **) &gpu_position, sizeof(int));
+    cudaMemcpy(gpu_position, &position, sizeof(int), cudaMemcpyHostToDevice);
+    gpu_get_join_data_dynamic_atomic<<<grid_dimension, block_dimension>>>(gpu_join_result,
+                                                                          gpu_position,
+                                                                          total_columns,
                                                                           gpu_relation_1, relation_1_rows,
                                                                           relation_1_columns, 0,
                                                                           gpu_relation_2, relation_2_rows,
@@ -508,10 +492,10 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
     show_time_spent("Write result", time_point_begin, time_point_end);
     cudaFree(gpu_relation_1);
     cudaFree(gpu_relation_2);
-    cudaFree(gpu_join_size_per_thread);
-    free(join_size_per_thread);
+    cudaFree(gpu_join_result);
     free(relation_1);
     free(relation_2);
+    free(join_result);
 }
 
 void cpu_join_relations(const char *data_path, char separator, const char *output_path,
@@ -561,9 +545,9 @@ int main() {
     int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns, total_rows, visible_rows;
 
 //    data_path = "data/link.facts_412148.txt";
-//    output_path = "output/join_cpu_10000.txt";
-//    relation_1_rows = 10000;
-//    relation_2_rows = 10000;
+//    output_path = "output/join_cpu_16.txt";
+//    relation_1_rows = 16;
+//    relation_2_rows = 16;
 //    total_rows = relation_1_rows * relation_2_rows;
 //    relation_1_columns = 2;
 //    relation_2_columns = 2;
@@ -587,7 +571,7 @@ int main() {
 
 
     data_path = "data/link.facts_412148.txt";
-    output_path = "output/join_gpu_16384_2.txt";
+    output_path = "output/join_gpu_16384_atomic.txt";
     relation_1_rows = 16384;
     relation_2_rows = 16384;
     relation_1_columns = 2;
