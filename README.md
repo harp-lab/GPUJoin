@@ -1,37 +1,61 @@
 ## Join of two relations
+
 ### Dataset
+
 - Small dataset: [employee.txt](data/employee.txt)
 - Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt):
-  - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
-  - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
+    - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
+    - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
 ### CPU implementation
-- Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the number of total columns
+
+- Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the
+  number of total columns
 - Use a nested loop to compute and store the join result in `join_result`
 
 ### GPU 2 pass implementation
-- Number of blocks = `sqrt(n)` where `n` is the number of rows in relation 1
-- Number of threads per block = `sqrt(n)` where `n` is the number of rows in relation 1
-- Pass 1:
-  - Create an array `join_size_per_thread` of size `n`, where `n` is the number of rows in relation 1
-  - Count the total number of join results for each row of relation 1 and store them in `join_size_per_thread`
-- CPU operation:
-  - Calculate `total_size` which is the sum of the array `join_size_per_thread`
-  - Declare the join result array `join_result` with size `total_size` 
-  - Calculate `offset` array with size `n`, where `n` is the number of rows in relation 1 from `join_size_per_thread`. It defines which portion of the `join_result` array each thread can use. 
-- Pass 2:
-  - Each thread computes the join result and insert them in `join_result`
 
+- Number of threads per block = 512
+- Number of blocks = `CEIL(n/512)` where `n` is the number of rows in relation 1
+- Pass 1:
+    - Create an array `join_size_per_thread` of size `n`, where `n` is the number of rows in relation 1
+    - Count the total number of join results for each row of relation 1 and store them in `join_size_per_thread`
+- CPU operation:
+    - Calculate `total_size` which is the sum of the array `join_size_per_thread`
+    - Declare the join result array `join_result` with size `total_size`
+    - Calculate `offset` array with size `n`, where `n` is the number of rows in relation 1 from `join_size_per_thread`.
+      It defines which portion of the `join_result` array each thread can use.
+- Pass 2:
+    - Each thread computes the join result and insert them in `join_result`
+
+### GPU 2 pass implementation using atomic operation
+
+- Block dimension = `dim3(32, 32, 1)`
+- Grid dimension = `dim3(CEIL(n/512), CEIL(n/512), 1)` where `n` is the number of rows in relation 1
+- Pass 1:
+    - Initialize a variable `total_size` with `0`
+    - Cross product each row of relation 1 with each row of relation 2
+    - If there is same value in the selected index, atomically increase the value of `total_size` by `total_column`
+- Pass 2:
+    - Declare the join result array `join_result` with size `total_size`
+    - Initialize a variable `position` with `0`
+    - Cross product each row of relation 1 with each row of relation 2
+    - If there is same value in the selected index atomically increase the value of `position` by `total_column` and
+      insert the rows in `join_result`
 
 ### Run program
+
 - Compile and run CUDA program:
+
 ```commandline
 nvcc natural_join.cu -o join
 ./join
 time ./join
 nvprof ./join
 ```
+
 - Output using CPU for 16384 rows:
+
 ```
 CPU join operation
 ===================================
@@ -48,7 +72,9 @@ Write result: 2.09653 seconds
 
 Main method: 2.59259 seconds
 ```
+
 - Output using GPU for 16384 rows:
+
 ```
 GPU join operation (128 blocks, 128 threads per block)
 ===================================
@@ -77,40 +103,41 @@ Write result: 0.0463801 seconds
 
 Main method: 0.184608 seconds
 ```
-- Result test for CPU and GPU:
+
+- Output using GPU atomic operation for 16384 rows:
+
 ```
-diff output/join_cpu_16384.txt output/join_gpu_16384.txt
-```
-- Large dataset with GPU:
-```
-GPU join operation (640 blocks, 640 threads per block)
+Block dimension: (512, 512, 1)
+Thread dimension: (32, 32, 1)
+GPU join operation
 ===================================
-Relation 1: rows: 409600, columns: 2
-Relation 2: rows: 409600, columns: 2
+Relation 1: rows: 16384, columns: 2
+Relation 2: rows: 16384, columns: 2
 
-Read relations: 0.101444 seconds
+Read relations: 0.00303931 seconds
 
-GPU Pass 1 copy data to device: 0.085718 seconds
+GPU Pass 1 copy data to device: 0.0904396 seconds
 
-GPU Pass 1 get join size per row in relation 1: 0.797152 seconds
+GPU Pass 1 get join size per row in relation 1: 0.0105779 seconds
 
-GPU Pass 1 copy result to host: 0.000864188 seconds
+GPU Pass 1 copy result to host: 1.1978e-05 seconds
 
-CPU calculate offset: 0.00205248 seconds
+Total size of the join result: 445812
+GPU Pass 2 copy data to device: 0.000357539 seconds
 
-GPU Pass 2 copy data to device: 0.00827425 seconds
+GPU Pass 2 join operation: 0.0122224 seconds
 
-GPU Pass 2 join operation: 2.3003 seconds
+GPU Pass 2 copy result to host: 0.000882285 seconds
 
-GPU Pass 2 copy result to host: 0.0179542 seconds
+Wrote join result (148604 rows) to file: output/join_gpu_16384_atomic.txt
 
-Wrote join result (3195197 rows) to file: output/join_gpu_409600.txt
+Write result: 0.0435737 seconds
 
-Write result: 1.01812 seconds
-
-Main method: 4.3329 seconds
+Main method: 0.161287 seconds
 ```
+
 - Full dataset with different number of blocks and threads:
+
 ```
 GPU join operation (3553 blocks, 116 threads per block)
 ===================================
@@ -282,8 +309,8 @@ Write result: 1.17632 seconds
 Main method: 4.38426 seconds
 ```
 
-
 ### Performance comparison
+
 `natural_join.cu` performance comparison for different grid and block size:
 
 | N      | Grid size | Block size | Get join size | Join operation | Main     |
@@ -296,11 +323,33 @@ Main method: 4.38426 seconds
 | 412148 | 493       | 836        | 0.743906s     | 2.70597s       | 4.80494s |
 | 412148 | 418       | 986        | 0.798028s     | 2.21296s       | 4.38426s |
 
+`natural_join.cu` performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
+in seconds:
+
+| Iteration | Non atomic time | Atomic time |
+| --- |-----------------| --- |
+| 1 | 4.17074         | 10.5337 |
+| 2 | 4.0646          | 10.311 |
+| 3 | 4.08155         | 10.9682 |
+| 4 | 4.02258         | 9.6254 |
+| 5 | 4.07658         | 9.80148 |
+| 6 | 4.05023         | 10.0818 |
+| 7 | 4.10445         | 10.125 |
+| 8 | 4.16558         | 9.93842 |
+| 9 | 4.35868         | 10.1388 |
+| 10 | 4.41577         | 9.88823 |
+
+- Total non atomic time: 41.5108s
+- Average non atomic time: 4.15108s
+- Total atomic time: 101.412s
+- Average atomic time: 10.1412s
 
 ## Vector addition
 
 ### Run program
+
 - Compile and run C / C++ program:
+
 ```commandline
 gcc vector_add.c -o vadd
 ./vadd
@@ -310,6 +359,7 @@ g++ cpu_join.cpp -o join
 ```
 
 - Compile and run CUDA program:
+
 ```commandline
 nvcc vector_add.cu -o gpu_add
 ./gpu_add
@@ -318,6 +368,7 @@ nvprof ./gpu_add
 ```
 
 ### Performance comparison
+
 `vector_add.cu` performance comparison for different grid and block size:
 
 | N       | Grid size | Block size | GPU time  |
@@ -331,11 +382,12 @@ nvprof ./gpu_add
 | 1000000 | 1954      | 512        | 159.52 us |
 | 1000000 | 977       | 1024       | 151.87 us |
 
-
 ### Notes
+
 - Block size should be some multiple of 32 and less than 1024
 
 ### References
+
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
 - [nVidia CUDA C programming guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
 - [Theta GPU nodes](https://www.alcf.anl.gov/support-center/theta-gpu-nodes)
