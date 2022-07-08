@@ -323,6 +323,27 @@ Main method: 4.38426 seconds
 | 412148 | 493       | 836        | 0.743906s     | 2.70597s       | 4.80494s |
 | 412148 | 418       | 986        | 0.798028s     | 2.21296s       | 4.38426s |
 
+`natural_join.cu` performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
+in seconds:
+
+| Iteration | Non atomic time | Atomic time |
+| --- |-----------------| --- |
+| 1 | 4.17074         | 10.5337 |
+| 2 | 4.0646          | 10.311 |
+| 3 | 4.08155         | 10.9682 |
+| 4 | 4.02258         | 9.6254 |
+| 5 | 4.07658         | 9.80148 |
+| 6 | 4.05023         | 10.0818 |
+| 7 | 4.10445         | 10.125 |
+| 8 | 4.16558         | 9.93842 |
+| 9 | 4.35868         | 10.1388 |
+| 10 | 4.41577         | 9.88823 |
+
+- Total non atomic time: 41.5108s
+- Average non atomic time: 4.15108s
+- Total atomic time: 101.412s
+- Average atomic time: 10.1412s
+
 ## Vector addition
 
 ### Run program
