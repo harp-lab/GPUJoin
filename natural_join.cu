@@ -99,7 +99,7 @@ int *get_reverse_relation(int *data, int total_rows, int total_columns) {
 
 
 __global__
-void gpu_get_join_data(int *data, int per_thread_allocation,
+void gpu_get_join_data(int *result, int per_thread_allocation,
                        int *relation_1, int relation_1_rows, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_rows, int relation_2_columns, int relation_2_index) {
 
@@ -111,11 +111,11 @@ void gpu_get_join_data(int *data, int per_thread_allocation,
         relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
         if (relation_1_index_value == relation_2_index_value) {
             for (int k = 0; k < relation_1_columns; k++) {
-                data[offset++] = relation_1[(i * relation_1_columns) + k];
+                result[offset++] = relation_1[(i * relation_1_columns) + k];
             }
             for (int k = 0; k < relation_2_columns; k++) {
                 if (k != relation_2_index) {
-                    data[offset++] = relation_2[(j * relation_2_columns) + k];
+                    result[offset++] = relation_2[(j * relation_2_columns) + k];
                 }
             }
         }
@@ -145,7 +145,7 @@ void gpu_get_join_size_per_thread(int *join_size,
 }
 
 __global__
-void gpu_get_join_data_dynamic(int *data, int *offsets,
+void gpu_get_join_data_dynamic(int *result, int *offsets,
                                int *relation_1, int relation_1_rows, int relation_1_columns, int relation_1_index,
                                int *relation_2, int relation_2_rows, int relation_2_columns, int relation_2_index) {
 
@@ -158,11 +158,11 @@ void gpu_get_join_data_dynamic(int *data, int *offsets,
         relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
         if (relation_1_index_value == relation_2_index_value) {
             for (int k = 0; k < relation_1_columns; k++) {
-                data[offset++] = relation_1[(i * relation_1_columns) + k];
+                result[offset++] = relation_1[(i * relation_1_columns) + k];
             }
             for (int k = 0; k < relation_2_columns; k++) {
                 if (k != relation_2_index) {
-                    data[offset++] = relation_2[(j * relation_2_columns) + k];
+                    result[offset++] = relation_2[(j * relation_2_columns) + k];
                 }
             }
         }
@@ -187,7 +187,7 @@ void gpu_get_total_join_size(int *total_size, int total_columns,
 }
 
 __global__
-void gpu_get_join_data_dynamic_atomic(int *data, int *position, int total_columns,
+void gpu_get_join_data_dynamic_atomic(int *result, int *position, int total_columns,
                                       int *relation_1, int relation_1_rows, int relation_1_columns,
                                       int relation_1_index,
                                       int *relation_2, int relation_2_rows, int relation_2_columns,
@@ -202,17 +202,17 @@ void gpu_get_join_data_dynamic_atomic(int *data, int *position, int total_column
     if (relation_1_index_value == relation_2_index_value) {
         int start_position = atomicAdd(position, total_columns);
         for (int k = 0; k < relation_1_columns; k++) {
-            data[start_position++] = relation_1[(i * relation_1_columns) + k];
+            result[start_position++] = relation_1[(i * relation_1_columns) + k];
         }
         for (int k = 0; k < relation_2_columns; k++) {
             if (k != relation_2_index) {
-                data[start_position++] = relation_2[(j * relation_2_columns) + k];
+                result[start_position++] = relation_2[(j * relation_2_columns) + k];
             }
         }
     }
 }
 
-void cpu_get_join_data(int *data, long long data_max_length,
+void cpu_get_join_data(int *result, long long data_max_length,
                        int *relation_1, int relation_1_rows, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_rows, int relation_2_columns, int relation_2_index) {
     long long row_count = 0, column_count = 0;
@@ -225,12 +225,12 @@ void cpu_get_join_data(int *data, long long data_max_length,
             if (relation_1_index_value == relation_2_index_value) {
                 column_count = 0;
                 for (int k = 0; k < relation_1_columns; k++) {
-                    data[(row_count * total_columns) + column_count] = relation_1[(i * relation_1_columns) + k];
+                    result[(row_count * total_columns) + column_count] = relation_1[(i * relation_1_columns) + k];
                     column_count++;
                 }
                 for (int k = 0; k < relation_2_columns; k++) {
                     if (k != relation_2_index) {
-                        data[(row_count * total_columns) + column_count] = relation_2[(j * relation_2_columns) + k];
+                        result[(row_count * total_columns) + column_count] = relation_2[(j * relation_2_columns) + k];
                         column_count++;
                     }
                 }
