@@ -73,241 +73,39 @@ Write result: 2.09653 seconds
 Main method: 2.59259 seconds
 ```
 
-- Output using GPU for 16384 rows:
+- Output using GPU non-atomic and atomic operation for 412148 rows:
 
 ```
-GPU join operation (128 blocks, 128 threads per block)
-===================================
-Relation 1: rows: 16384, columns: 2
-Relation 2: rows: 16384, columns: 2
+GPU join operation (non-atomic): (412148, 2) x (412148, 2)
+Blocks per grid: 805, Threads per block: 512
+Read relations: 0.0694554 seconds
+GPU Pass 1 copy data to device: 0.0012737 seconds
+GPU Pass 1 get join size per row in relation 1: 0.771185 seconds
+GPU Pass 1 copy result to host: 0.000280451 seconds
+Total size of the join result: 9698151
+CPU calculate offset: 0.00158603 seconds
+GPU Pass 2 copy data to device: 0.00829426 seconds
+GPU Pass 2 join operation: 2.21021 seconds
+GPU Pass 2 copy result to host: 0.0193851 seconds
+Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
+Write result: 1.27996 seconds
+Iteration 10: 4.36212 seconds
 
-Read relations: 0.0112004 seconds
-
-GPU Pass 1 copy data to device: 0.118518 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.00145154 seconds
-
-GPU Pass 1 copy result to host: 4.8354e-05 seconds
-
-CPU calculate offset: 5.9601e-05 seconds
-
-GPU Pass 2 copy data to device: 0.000493044 seconds
-
-GPU Pass 2 join operation: 0.00518987 seconds
-
-GPU Pass 2 copy result to host: 0.000927745 seconds
-
-Wrote join result (148604 rows) to file: output/join_gpu_16384.txt
-
-Write result: 0.0463801 seconds
-
-Main method: 0.184608 seconds
+GPU join operation (atomic): (412148, 2) x (412148, 2)
+Block dimension: (25760, 25760, 1), Thread dimension: (16, 16, 1)
+Read relations: 0.0619123 seconds
+GPU Pass 1 copy data to device: 0.00110362 seconds
+GPU Pass 1 get join size per row in relation 1: 4.37862 seconds
+GPU Pass 1 copy result to host: 2.7127e-05 seconds
+Total size of the join result: 9698151
+GPU Pass 2 copy data to device: 0.010487 seconds
+GPU Pass 2 join operation: 4.33421 seconds
+GPU Pass 2 copy result to host: 0.0177943 seconds
+Wrote join result (3232717 rows) to file: output/join_gpu_412148_atomic.txt
+Write result: 1.39106 seconds
+Iteration 1: 10.197 seconds
 ```
 
-- Output using GPU atomic operation for 16384 rows:
-
-```
-Block dimension: (512, 512, 1)
-Thread dimension: (32, 32, 1)
-GPU join operation
-===================================
-Relation 1: rows: 16384, columns: 2
-Relation 2: rows: 16384, columns: 2
-
-Read relations: 0.00303931 seconds
-
-GPU Pass 1 copy data to device: 0.0904396 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.0105779 seconds
-
-GPU Pass 1 copy result to host: 1.1978e-05 seconds
-
-Total size of the join result: 445812
-GPU Pass 2 copy data to device: 0.000357539 seconds
-
-GPU Pass 2 join operation: 0.0122224 seconds
-
-GPU Pass 2 copy result to host: 0.000882285 seconds
-
-Wrote join result (148604 rows) to file: output/join_gpu_16384_atomic.txt
-
-Write result: 0.0435737 seconds
-
-Main method: 0.161287 seconds
-```
-
-- Full dataset with different number of blocks and threads:
-
-```
-GPU join operation (3553 blocks, 116 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.0924817 seconds
-
-GPU Pass 1 copy data to device: 0.0822414 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.784415 seconds
-
-GPU Pass 1 copy result to host: 0.000874025 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.00167406 seconds
-
-GPU Pass 2 copy data to device: 0.0080948 seconds
-
-GPU Pass 2 join operation: 2.44124 seconds
-
-GPU Pass 2 copy result to host: 0.0179879 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.05628 seconds
-
-Main method: 4.48628 seconds
-
-GPU join operation (2204 blocks, 187 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.0950981 seconds
-
-GPU Pass 1 copy data to device: 0.0753626 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.773314 seconds
-
-GPU Pass 1 copy result to host: 0.000869406 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.00165804 seconds
-
-GPU Pass 2 copy data to device: 0.00778849 seconds
-
-GPU Pass 2 join operation: 2.4202 seconds
-
-GPU Pass 2 copy result to host: 0.017805 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.05863 seconds
-
-Main method: 4.4517 seconds
-
-GPU join operation (1972 blocks, 209 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.094193 seconds
-
-GPU Pass 1 copy data to device: 0.0750269 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.927935 seconds
-
-GPU Pass 1 copy result to host: 0.000901576 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.0017113 seconds
-
-GPU Pass 2 copy data to device: 0.00798163 seconds
-
-GPU Pass 2 join operation: 2.3176 seconds
-
-GPU Pass 2 copy result to host: 0.0177586 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.11116 seconds
-
-Main method: 4.55523 seconds
-
-
-GPU join operation (551 blocks, 748 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.0969464 seconds
-
-GPU Pass 1 copy data to device: 0.0902934 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.772574 seconds
-
-GPU Pass 1 copy result to host: 0.000869624 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.00168334 seconds
-
-GPU Pass 2 copy data to device: 0.0079812 seconds
-
-GPU Pass 2 join operation: 3.32428 seconds
-
-GPU Pass 2 copy result to host: 0.0177908 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.15607 seconds
-
-Main method: 5.46954 seconds
-
-GPU join operation (493 blocks, 836 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.0959166 seconds
-
-GPU Pass 1 copy data to device: 0.117206 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.743906 seconds
-
-GPU Pass 1 copy result to host: 0.000859272 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.00168168 seconds
-
-GPU Pass 2 copy data to device: 0.00812121 seconds
-
-GPU Pass 2 join operation: 2.70597 seconds
-
-GPU Pass 2 copy result to host: 0.0177454 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.11257 seconds
-
-Main method: 4.80494 seconds
-
-GPU join operation (418 blocks, 986 threads per block)
-===================================
-Relation 1: rows: 412148, columns: 2
-Relation 2: rows: 412148, columns: 2
-
-Read relations: 0.0894555 seconds
-
-GPU Pass 1 copy data to device: 0.0768916 seconds
-
-GPU Pass 1 get join size per row in relation 1: 0.798028 seconds
-
-GPU Pass 1 copy result to host: 0.000926315 seconds
-
-Total size of the join result: 9698151
-CPU calculate offset: 0.00177671 seconds
-
-GPU Pass 2 copy data to device: 0.00908701 seconds
-
-GPU Pass 2 join operation: 2.21296 seconds
-
-GPU Pass 2 copy result to host: 0.0178165 seconds
-
-Wrote join result (3232717 rows) to file: output/join_gpu_412148.txt
-
-Write result: 1.17632 seconds
-
-Main method: 4.38426 seconds
-```
 
 ### Performance comparison
 
@@ -323,26 +121,50 @@ Main method: 4.38426 seconds
 | 412148 | 493       | 836        | 0.743906s     | 2.70597s       | 4.80494s |
 | 412148 | 418       | 986        | 0.798028s     | 2.21296s       | 4.38426s |
 
+
+
 `natural_join.cu` performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
 in seconds:
 
-| Iteration | Non atomic time | Atomic time |
-| --- |-----------------| --- |
-| 1 | 4.17074         | 10.5337 |
-| 2 | 4.0646          | 10.311 |
-| 3 | 4.08155         | 10.9682 |
-| 4 | 4.02258         | 9.6254 |
-| 5 | 4.07658         | 9.80148 |
-| 6 | 4.05023         | 10.0818 |
-| 7 | 4.10445         | 10.125 |
-| 8 | 4.16558         | 9.93842 |
-| 9 | 4.35868         | 10.1388 |
-| 10 | 4.41577         | 9.88823 |
 
-- Total non atomic time: 41.5108s
-- Average non atomic time: 4.15108s
-- Total atomic time: 101.412s
-- Average atomic time: 10.1412s
+Using Theta GPU:
+
+| Iteration | Non atomic time | Atomic time |
+| --- | --- | --- |
+| 1 | 1.70872 | 1.95206 |
+| 2 | 1.20449 | 1.90028 |
+| 3 | 1.17924 | 1.92544 |
+| 4 | 1.18081 | 1.89726 |
+| 5 | 1.15981 | 1.91118 |
+| 6 | 1.18962 | 1.88493 |
+| 7 | 1.16373 | 1.90593 |
+| 8 | 1.23125 | 1.90627 |
+| 9 | 1.15892 | 1.90183 |
+| 10 | 1.44259 | 1.90935 |
+
+- Total non atomic time: 12.6192
+- Average non atomic time: 1.26192
+- Total atomic time: 19.0945
+- Average atomic time: 1.90945
+
+Using local machine:
+
+| Iteration | Non atomic time | Atomic time |
+| --- | --- | --- |
+| 1 | 4.257 | 10.197 |
+| 2 | 4.06486 | 10.1083 |
+| 3 | 4.1186 | 9.77071 |
+| 4 | 4.13143 | 9.7588 |
+| 5 | 4.14765 | 10.1358 |
+| 6 | 4.17057 | 10.0676 |
+| 7 | 4.26724 | 9.84792 |
+| 8 | 4.15788 | 9.86398 |
+| 9 | 4.1543 | 10.083 |
+| 10 | 4.36212 | 10.671 |
+- Total non atomic time: 41.8316
+- Average non atomic time: 4.18316
+- Total atomic time: 100.504
+- Average atomic time: 10.0504
 
 ## Vector addition
 

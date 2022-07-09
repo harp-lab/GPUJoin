@@ -310,7 +310,7 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     int threads_per_block, blocks_per_grid;
     threads_per_block = 512;
     blocks_per_grid = ceil((double) relation_1_rows / threads_per_block);
-    cout << "GPU join operation (dynamic): ";
+    cout << "GPU join operation (non-atomic): ";
     cout << "(" << relation_1_rows << ", " << relation_1_columns << ")";
     cout << " x (" << relation_2_rows << ", " << relation_2_columns << ")" << endl;
     cout << "Blocks per grid: " << blocks_per_grid;
@@ -389,7 +389,6 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
                            output_path, separator);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Write result", time_point_begin, time_point_end);
-    cout << endl;
     cudaFree(gpu_relation_1);
     cudaFree(gpu_relation_2);
     cudaFree(gpu_join_size_per_thread);
@@ -490,7 +489,6 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
                            output_path, separator);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Write result", time_point_begin, time_point_end);
-    cout << endl;
     cudaFree(gpu_relation_1);
     cudaFree(gpu_relation_2);
     cudaFree(gpu_join_result);
@@ -572,6 +570,8 @@ int main() {
                                   relation_2_rows, relation_2_columns, visible_rows);
         time_point_end = chrono::high_resolution_clock::now();
         chrono::duration<double> time_span = time_point_end - time_point_begin;
+        show_time_spent(("Iteration " + to_string(i)).c_str(), time_point_begin, time_point_end);
+        cout << endl;
         dynamic_time[i] = time_span.count();
         total_dynamic_time += dynamic_time[i];
     }
@@ -586,22 +586,24 @@ int main() {
                                          relation_2_rows, relation_2_columns, visible_rows);
         time_point_end = chrono::high_resolution_clock::now();
         chrono::duration<double> time_span = time_point_end - time_point_begin;
+        show_time_spent(("Iteration " + to_string(i+1)).c_str(), time_point_begin, time_point_end);
+        cout << endl;
         atomic_time[i] = time_span.count();
         total_atomic_time += atomic_time[i];
     }
     avg_atomic_time = total_atomic_time / 10.0;
 
     cout << "| Iteration | Non atomic time | Atomic time |" << endl;
-
+    cout << "| --- | --- | --- |" << endl;
     for (int i = 0; i < 10; i++) {
         cout << "| " << (i + 1) << " | " << dynamic_time[i] << " | " << atomic_time[i] << " |" << endl;
     }
 
-    cout << "Total non atomic time: " << total_dynamic_time << endl;
-    cout << "Average non atomic time: " << avg_dynamic_time << endl;
+    cout << "- Total non atomic time: " << total_dynamic_time << endl;
+    cout << "- Average non atomic time: " << avg_dynamic_time << endl;
 
-    cout << "Total atomic time: " << total_atomic_time << endl;
-    cout << "Average atomic time: " << avg_atomic_time << endl;
+    cout << "- Total atomic time: " << total_atomic_time << endl;
+    cout << "- Average atomic time: " << avg_atomic_time << endl;
 
 //    data_path = "data/link.facts_412148.txt";
 //    output_path = "output/join_gpu_412148_atomic.txt";
