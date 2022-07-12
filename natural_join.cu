@@ -551,14 +551,9 @@ int main() {
     double dynamic_time[10], atomic_time[10];
     double total_dynamic_time = 0.0, total_atomic_time = 0.0;
     double avg_dynamic_time, avg_atomic_time;
-//    data_path = "data/link.facts_412148.txt";
+
 //    output_path = "output/join_cpu_16.txt";
-//    relation_1_rows = 16;
-//    relation_2_rows = 16;
 //    int total_rows = relation_1_rows * relation_2_rows;
-//    relation_1_columns = 2;
-//    relation_2_columns = 2;
-//    visible_rows = 10;
 //    cpu_join_relations(data_path, separator, output_path, relation_1_rows, relation_1_columns,
 //                       relation_2_rows, relation_2_columns, total_rows, visible_rows);
 
@@ -577,7 +572,6 @@ int main() {
     }
     avg_dynamic_time = total_dynamic_time / 10.0;
 
-
     for (int i = 0; i < 10; i++) {
         time_point_begin = chrono::high_resolution_clock::now();
         output_path = "output/join_gpu_412148_atomic.txt";
@@ -586,7 +580,7 @@ int main() {
                                          relation_2_rows, relation_2_columns, visible_rows);
         time_point_end = chrono::high_resolution_clock::now();
         chrono::duration<double> time_span = time_point_end - time_point_begin;
-        show_time_spent(("Iteration " + to_string(i+1)).c_str(), time_point_begin, time_point_end);
+        show_time_spent(("Iteration " + to_string(i + 1)).c_str(), time_point_begin, time_point_end);
         cout << endl;
         atomic_time[i] = time_span.count();
         total_atomic_time += atomic_time[i];
@@ -599,22 +593,9 @@ int main() {
         cout << "| " << (i + 1) << " | " << dynamic_time[i] << " | " << atomic_time[i] << " |" << endl;
     }
 
-    cout << "- Total non atomic time: " << total_dynamic_time << endl;
+    cout << "\n- Total non atomic time: " << total_dynamic_time << endl;
     cout << "- Average non atomic time: " << avg_dynamic_time << endl;
-
     cout << "- Total atomic time: " << total_atomic_time << endl;
     cout << "- Average atomic time: " << avg_atomic_time << endl;
-
-//    data_path = "data/link.facts_412148.txt";
-//    output_path = "output/join_gpu_412148_atomic.txt";
-//    relation_1_rows = 412148;
-//    relation_2_rows = 412148;
-//    relation_1_columns = 2;
-//    relation_2_columns = 2;
-//    visible_rows = 10;
-//    gpu_join_relations_2_pass_atomic(data_path, separator, output_path,
-//                                     relation_1_rows, relation_1_columns,
-//                                     relation_2_rows, relation_2_columns, visible_rows);
-
     return 0;
 }
