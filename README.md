@@ -48,7 +48,7 @@
 - Compile and run CUDA program:
 
 ```commandline
-nvcc natural_join.cu -o join
+nvcc nested_loop_join.cu -o join
 ./join
 time ./join
 nvprof ./join
