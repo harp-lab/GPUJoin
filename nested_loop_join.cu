@@ -24,7 +24,7 @@ void performance_comparison(int total_iterations) {
     relation_1_rows = 412148;
     relation_2_rows = 412148;
     data_path = "data/link.facts_412148.txt";
-    double dynamic_time[total_iterations], atomic_time[total_iterations];
+    double dynamic_time[10], atomic_time[10];
     double total_dynamic_time = 0.0, total_atomic_time = 0.0;
     double avg_dynamic_time, avg_atomic_time;
 
