@@ -7,6 +7,17 @@
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
+### CUDF and pandas operation
+| Number of rows | CUDF time (s) | Pandas time (s) |
+| --- | --- | --- |
+| 100000 | 0.050974 | 0.284527 |
+| 150000 | 0.098933 | 0.992928 |
+
+Error for `n=200000`:
+```
+std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
+```
+
 ### CPU implementation
 
 - Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the
