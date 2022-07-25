@@ -24,14 +24,14 @@ def generate_datasets():
     n = 100000
     count = 0
     while count < 20:
-        filename = f"data/data_{n}.txt"
+        filename = f"../data/data_{n}.txt"
         generate_csv(filename, n)
         n += increment
         count += 1
 
 
 if __name__ == "__main__":
-    # n = 100000
-    # filename = f"data/data_{n}.txt"
-    # generate_csv(filename, n)
-    generate_datasets()
+    n = 100000
+    filename = f"../data/data_{n}.txt"
+    generate_csv(filename, n)
+    # generate_datasets()

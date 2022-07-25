@@ -11,7 +11,7 @@ def get_merge_result(relation_1, relation_2, COLUMN_NAMES):
 
 
 def generate_cudf_merge(filename, iterations=10):
-    output_filename = "output/cudf_" + filename.split("/")[1]
+    output_filename = "output/cudf_" + filename.split("/")[-1]
     nrows = int(re.search('\d+|$', filename).group())
     COLUMN_NAMES = ['column 1', 'column 2']
     relation_1 = cudf.read_csv(filename, sep='\t', header=None,
@@ -31,7 +31,7 @@ def generate_cudf_merge(filename, iterations=10):
 
 
 def generate_pandas_merge(filename, iterations=10):
-    output_filename = "output/pandas_" + filename.split("/")[1]
+    output_filename = "output/pandas_" + filename.split("/")[-1]
     nrows = int(re.search('\d+|$', filename).group())
     COLUMN_NAMES = ['column 1', 'column 2']
     relation_1 = pd.read_csv(filename, sep='\t', header=None,
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     count = 0
     while count < 20:
         try:
-            dataset = f"data/data_{n}.txt"
+            dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())
             cudf_merge_time = generate_cudf_merge(dataset)
             pandas_merge_time = generate_pandas_merge(dataset)
