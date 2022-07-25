@@ -99,6 +99,31 @@ int *get_reverse_relation(int *data, int total_rows, int total_columns) {
     return reverse_data;
 }
 
+
+void get_relation_from_file_gpu(int *data, const char *file_path, int total_rows, int total_columns, char separator) {
+    FILE *data_file = fopen(file_path, "r");
+    for (int i = 0; i < total_rows; i++) {
+        for (int j = 0; j < total_columns; j++) {
+            if (j != (total_columns - 1)) {
+                fscanf(data_file, "%d%c", &data[(i * total_columns) + j], &separator);
+            } else {
+                fscanf(data_file, "%d", &data[(i * total_columns) + j]);
+            }
+        }
+    }
+}
+
+
+void get_reverse_relation_gpu(int *reverse_data, int *data, int total_rows, int total_columns) {
+    for (int i = 0; i < total_rows; i++) {
+        int pos = total_columns - 1;
+        for (int j = 0; j < total_columns; j++) {
+            reverse_data[(i * total_columns) + j] = data[(i * total_columns) + pos];
+            pos--;
+        }
+    }
+}
+
 void cpu_get_join_data(int *result, long long data_max_length,
                        int *relation_1, int relation_1_rows, int relation_1_columns, int relation_1_index,
                        int *relation_2, int relation_2_rows, int relation_2_columns, int relation_2_index) {

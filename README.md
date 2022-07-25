@@ -7,16 +7,33 @@
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
-### CUDF and pandas operation
+### Comparison with CUDF and pandas
+
+```shell
+CUDF join (n=100000) size: 20000986
+Pandas join (n=100000) size: 20000986
+CUDF join (n=150000) size: 44995231
+Pandas join (n=150000) size: 44995231
+```
+
+
 | Number of rows | CUDF time (s) | Pandas time (s) |
 | --- | --- | --- |
-| 100000 | 0.050974 | 0.284527 |
-| 150000 | 0.098933 | 0.992928 |
+| 100000 | 0.052770 | 0.282879 |
+| 150000 | 0.105069 | 0.912774 |
 
 Error for `n=200000`:
 ```
 std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
 ```
+- `nested_loop_join_dynamic_size.cu`
+
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 100000 | 196 | 512 | 20000986 | 0.0433023 | 0.000323834 | 0.15379 | 0.197416 |
+| 100000 | 98 | 1024 | 20000986 | 0.0473048 | 0.000349723 | 0.169904 | 0.217558 |
+| 150000 | 293 | 512 | 44995231 | 0.0917667 | 0.000335558 | 0.34609 | 0.438192 |
+| 150000 | 147 | 1024 | 44995231 | 0.115846 | 0.00314425 | 0.378974 | 0.497964 |
 
 ### CPU implementation
 
@@ -83,7 +100,19 @@ Write result: 2.09653 seconds
 
 Main method: 2.59259 seconds
 ```
-
+- Output for non-atomic for 412148 rows using unified memory:
+```shell
+nvcc nested_loop_join_dynamic_size.cu -o join -run 
+GPU join operation (non-atomic): (412148, 2) x (412148, 2)
+Blocks per grid: 403, Threads per block: 1024
+GPU Pass 1 get join size per row in relation 1: 0.702593 seconds
+Total size of the join result: 9698151
+CPU calculate offset: 0.00216889 seconds
+GPU Pass 2 join operation: 2.1935 seconds
+Wrote join result (3232717 rows) to file: output/join_gpu_412148_atomic.txt
+Write result: 1.10033 seconds
+Total time: 4.13685 seconds
+```
 - Output using GPU non-atomic and atomic operation for 412148 rows:
 
 ```
@@ -194,3 +223,4 @@ Using local machine:
 - [Chapter 39. Parallel Prefix Sum (Scan) with CUDA](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda)
 - [GPGPU introduction](https://github.com/McKizzle/Introduction-to-Concurrent-Programming/blob/master/Course/Lectures/CUDA/GPGPU_Introduction.md)
 - [CUDA 2d thread block](http://www.mathcs.emory.edu/~cheung/Courses/355/Syllabus/94-CUDA/2D-grids.html)
+- [CUB](https://nvlabs.github.io/cub/structcub_1_1_device_scan.html#details)
