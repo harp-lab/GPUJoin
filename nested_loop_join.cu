@@ -10,7 +10,7 @@
 #include "nested_loop_join_dynamic_size.cu"
 #include "nested_loop_join_dynamic_atomic.cu"
 
-#define TOTAL_ITERATIONS 10
+#define TOTAL_ITERATIONS 1
 using namespace std;
 
 void performance_comparison(int total_iterations) {
