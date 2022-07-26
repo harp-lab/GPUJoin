@@ -1,6 +1,9 @@
 ## Day 2 Progress
 - Generated datasets:
   - 100000 to 1000000, interval 50000
+
+## Comparison between Rapids cudf, pandas df, and nested loop join
+
 ### Rapids
 - Implemented two versions using `rapids` `cudf` and `pandas` `df`.
 
@@ -8,6 +11,16 @@
 | --- | --- | --- |
 | 100000 | 0.052770 | 0.282879 |
 | 150000 | 0.105069 | 0.912774 |
+
+Our nested loop join performance:
+
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 100000 | 196 | 512 | 20000986 | 0.0433023 | 0.000323834 | 0.15379 | 0.197416 |
+| 100000 | 98 | 1024 | 20000986 | 0.0473048 | 0.000349723 | 0.169904 | 0.217558 |
+| 150000 | 293 | 512 | 44995231 | 0.0917667 | 0.000335558 | 0.34609 | 0.438192 |
+| 150000 | 147 | 1024 | 44995231 | 0.115846 | 0.00314425 | 0.378974 | 0.497964 |
+
 
 Error for `n=200000`:
 ```
