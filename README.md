@@ -66,6 +66,157 @@ nvcc nested_loop_join_dynamic_size.cu -o join -run
 | 150000 | 293 | 512 | 44995231 | 0.0917667 | 0.000335558 | 0.34609 | 0.438192 |
 | 150000 | 147 | 1024 | 44995231 | 0.115846 | 0.00314425 | 0.378974 | 0.497964 |
 
+
+### Profiling
+- Using `nvprof` with threads per block 1024
+```shell
+ nvprof ./join                                
+GPU join operation (non-atomic): (500000, 2) x (500000, 2)
+Blocks per grid: 489, Threads per block: 1024
+==69548== NVPROF is profiling process 69548, command: ./join
+GPU Pass 1 get join size per row in relation 1: 1.03881 seconds
+Total size of the join result: 1499895627
+Thrust calculate offset: 0.000433121 seconds
+GPU Pass 2 join operation: 4.41225 seconds
+Total time (pass 1 + offset + pass 2): 5.45149
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 500000 | 489 | 1024 | 499965209 | 1.03881 | 0.000433121 | 4.41225 | 5.45149 |
+
+==69548== Profiling application: ./join
+==69548== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   80.94%  4.41223s         1  4.41223s  4.41223s  4.41223s  gpu_get_join_data_dynamic(int*, int*, int*, int, int, int, int*, int, int, int)
+                   19.06%  1.03876s         1  1.03876s  1.03876s  1.03876s  gpu_get_join_size_per_thread(int*, int*, int, int, int, int*, int, int, int)
+                    0.00%  29.792us         1  29.792us  29.792us  29.792us  void cub::DeviceScanKernel<cub::DeviceScanPolicy<int>::Policy600, int*, int*, cub::ScanTileState<int, bool=1>, thrust::plus<void>, cub::detail::InputValue<int, int*>, int>(cub::DeviceScanPolicy<int>::Policy600, int*, int*, int, int, bool=1, cub::ScanTileState<int, bool=1>)
+                    0.00%  16.831us         1  16.831us  16.831us  16.831us  void cub::DeviceReduceKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>>(int, int, int, cub::GridEvenShare<int>, thrust::plus<int>)
+                    0.00%  3.8080us         1  3.8080us  3.8080us  3.8080us  void cub::DeviceReduceSingleTileKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>, int>(int, int, int, thrust::plus<int>, cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600)
+                    0.00%  2.1120us         1  2.1120us  2.1120us  2.1120us  void cub::DeviceScanInitKernel<cub::ScanTileState<int, bool=1>>(int, int)
+                    0.00%     961ns         1     961ns     961ns     961ns  [CUDA memcpy DtoH]
+      API calls:   98.14%  5.45101s         2  2.72550s  1.03876s  4.41224s  cudaDeviceSynchronize
+                    1.84%  102.19ms         4  25.548ms  13.844us  102.10ms  cudaMallocManaged
+                    0.02%  893.35us         5  178.67us  39.549us  396.77us  cudaFree
+                    0.00%  166.51us         2  83.257us  57.877us  108.64us  cudaMalloc
+                    0.00%  77.436us       101     766ns     105ns  33.159us  cuDeviceGetAttribute
+                    0.00%  75.389us         6  12.564us  4.2940us  30.328us  cudaLaunchKernel
+                    0.00%  46.990us         3  15.663us  1.0500us  30.646us  cudaStreamSynchronize
+                    0.00%  24.301us         1  24.301us  24.301us  24.301us  cudaMemcpyAsync
+                    0.00%  21.091us         1  21.091us  21.091us  21.091us  cuDeviceGetName
+                    0.00%  12.270us         1  12.270us  12.270us  12.270us  cuDeviceGetPCIBusId
+                    0.00%  8.4830us         1  8.4830us  8.4830us  8.4830us  cudaFuncGetAttributes
+                    0.00%  6.5520us         3  2.1840us     813ns  4.5290us  cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
+                    0.00%  5.3840us        54      99ns      91ns     239ns  cudaGetLastError
+                    0.00%  4.8910us         9     543ns     212ns  2.0480us  cudaGetDevice
+                    0.00%  2.1450us         3     715ns     165ns  1.6500us  cuDeviceGetCount
+                    0.00%  2.1080us         3     702ns     396ns  1.1340us  cudaDeviceGetAttribute
+                    0.00%     961ns         8     120ns      93ns     190ns  cudaPeekAtLastError
+                    0.00%     620ns         1     620ns     620ns     620ns  cuModuleGetLoadingMode
+                    0.00%     514ns         2     257ns     141ns     373ns  cuDeviceGet
+                    0.00%     333ns         1     333ns     333ns     333ns  cuDeviceTotalMem
+                    0.00%     227ns         1     227ns     227ns     227ns  cudaGetDeviceCount
+                    0.00%     152ns         1     152ns     152ns     152ns  cuDeviceGetUuid
+
+==69548== Unified Memory profiling result:
+Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
+   Count  Avg Size  Min Size  Max Size  Total Size  Total Time  Name
+     284  42.873KB  4.0000KB  0.9961MB  11.89063MB  1.132222ms  Host To Device
+      85  1.9486MB  4.0000KB  2.0000MB  165.6328MB  13.45680ms  Device To Host
+   23837         -         -         -           -  497.1857ms  Gpu page fault groups
+Total CPU Page faults: 24
+```
+- Using `nvprof` with threads per block 512
+```shell
+nvprof ./join
+GPU join operation (non-atomic): (500000, 2) x (500000, 2)
+Blocks per grid: 977, Threads per block: 512
+==68675== NVPROF is profiling process 68675, command: ./join
+GPU Pass 1 get join size per row in relation 1: 1.22781 seconds
+Total size of the join result: 1499895627
+Thrust calculate offset: 0.00044341 seconds
+GPU Pass 2 join operation: 4.3111 seconds
+Wrote join result (499965209 rows) to file: output/join_gpu_500000.txt
+Total time (pass 1 + offset + pass 2): 5.53936
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 500000 | 977 | 512 | 499965209 | 1.22781 | 0.00044341 | 4.3111 | 5.53936 |
+
+==68675== Profiling application: ./join
+==68675== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   77.83%  4.31109s         1  4.31109s  4.31109s  4.31109s  gpu_get_join_data_dynamic(int*, int*, int*, int, int, int, int*, int, int, int)
+                   22.17%  1.22770s         1  1.22770s  1.22770s  1.22770s  gpu_get_join_size_per_thread(int*, int*, int, int, int, int*, int, int, int)
+                    0.00%  30.112us         1  30.112us  30.112us  30.112us  void cub::DeviceScanKernel<cub::DeviceScanPolicy<int>::Policy600, int*, int*, cub::ScanTileState<int, bool=1>, thrust::plus<void>, cub::detail::InputValue<int, int*>, int>(cub::DeviceScanPolicy<int>::Policy600, int*, int*, int, int, bool=1, cub::ScanTileState<int, bool=1>)
+                    0.00%  17.184us         1  17.184us  17.184us  17.184us  void cub::DeviceReduceKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>>(int, int, int, cub::GridEvenShare<int>, thrust::plus<int>)
+                    0.00%  3.7440us         1  3.7440us  3.7440us  3.7440us  void cub::DeviceReduceSingleTileKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>, int>(int, int, int, thrust::plus<int>, cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600)
+                    0.00%  2.0800us         1  2.0800us  2.0800us  2.0800us  void cub::DeviceScanInitKernel<cub::ScanTileState<int, bool=1>>(int, int)
+                    0.00%     960ns         1     960ns     960ns     960ns  [CUDA memcpy DtoH]
+      API calls:   97.65%  5.53885s         2  2.76943s  1.22776s  4.31109s  cudaDeviceSynchronize
+                    2.31%  130.91ms         4  32.727ms  14.874us  130.81ms  cudaMallocManaged
+                    0.03%  1.5148ms         5  302.95us  39.748us  1.0897ms  cudaFree
+                    0.00%  238.11us       101  2.3570us     190ns  156.36us  cuDeviceGetAttribute
+                    0.00%  164.44us         2  82.221us  56.818us  107.63us  cudaMalloc
+                    0.00%  81.800us         6  13.633us  3.9830us  37.347us  cudaLaunchKernel
+                    0.00%  47.764us         3  15.921us  1.1680us  31.035us  cudaStreamSynchronize
+                    0.00%  26.583us         1  26.583us  26.583us  26.583us  cudaMemcpyAsync
+                    0.00%  25.274us         1  25.274us  25.274us  25.274us  cuDeviceGetName
+                    0.00%  9.5610us         1  9.5610us  9.5610us  9.5610us  cudaFuncGetAttributes
+                    0.00%  8.1540us         1  8.1540us  8.1540us  8.1540us  cuDeviceGetPCIBusId
+                    0.00%  6.4880us         3  2.1620us     811ns  4.8020us  cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
+                    0.00%  5.7210us        54     105ns      90ns     259ns  cudaGetLastError
+                    0.00%  4.8890us         9     543ns     204ns  1.9900us  cudaGetDevice
+                    0.00%  2.4720us         3     824ns     271ns  1.8680us  cuDeviceGetCount
+                    0.00%  2.2820us         3     760ns     516ns  1.1680us  cudaDeviceGetAttribute
+                    0.00%     963ns         8     120ns      94ns     171ns  cudaPeekAtLastError
+                    0.00%     923ns         2     461ns     198ns     725ns  cuDeviceGet
+                    0.00%     567ns         1     567ns     567ns     567ns  cuDeviceTotalMem
+                    0.00%     383ns         1     383ns     383ns     383ns  cuModuleGetLoadingMode
+                    0.00%     331ns         1     331ns     331ns     331ns  cuDeviceGetUuid
+                    0.00%     201ns         1     201ns     201ns     201ns  cudaGetDeviceCount
+
+==68675== Unified Memory profiling result:
+Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
+   Count  Avg Size  Min Size  Max Size  Total Size  Total Time  Name
+     253  48.126KB  4.0000KB  0.9961MB  11.89063MB  1.147322ms  Host To Device
+   33684  174.35KB  4.0000KB  2.0000MB  5.600807GB  896.2786ms  Device To Host
+   24517         -         -         -           -  530.5817ms  Gpu page fault groups
+Total CPU Page faults: 16890
+```
+
+- Using `nsys`
+```shell
+nsys profile --stats=true ./join
+```
+```shell
+CUDA Kernel Statistics:
+
+ Time (%)  Total Time (ns)  Instances     Avg (ns)         Med (ns)        Min (ns)       Max (ns)     StdDev (ns)                                                  Name                                                
+ --------  ---------------  ---------  ---------------  ---------------  -------------  -------------  -----------  ----------------------------------------------------------------------------------------------------
+     80.8    4,261,112,682          1  4,261,112,682.0  4,261,112,682.0  4,261,112,682  4,261,112,682          0.0  gpu_get_join_data_dynamic(int *, int *, int *, int, int, int, int *, int, int, int)                 
+     19.2    1,015,684,940          1  1,015,684,940.0  1,015,684,940.0  1,015,684,940  1,015,684,940          0.0  gpu_get_join_size_per_thread(int *, int *, int, int, int, int *, int, int, int)                     
+      0.0           30,592          1         30,592.0         30,592.0         30,592         30,592          0.0  void cub::DeviceScanKernel<cub::DeviceScanPolicy<int>::Policy600, int *, int *, cub::ScanTileState<…
+      0.0           17,247          1         17,247.0         17,247.0         17,247         17,247          0.0  void cub::DeviceReduceKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, …
+      0.0            3,839          1          3,839.0          3,839.0          3,839          3,839          0.0  void cub::DeviceReduceSingleTileKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::P…
+      0.0            2,080          1          2,080.0          2,080.0          2,080          2,080          0.0  void cub::DeviceScanInitKernel<cub::ScanTileState<int, (bool)1>>(T1, int)                           
+
+[7/8] Executing 'gpumemtimesum' stats report
+
+CUDA Memory Operation Statistics (by time):
+
+ Time (%)  Total Time (ns)  Count  Avg (ns)   Med (ns)   Min (ns)  Max (ns)  StdDev (ns)              Operation            
+ --------  ---------------  -----  ---------  ---------  --------  --------  -----------  ---------------------------------
+     91.0       11,550,832     74  156,092.3  160,223.0       801   198,559     25,850.0  [CUDA Unified Memory memcpy DtoH]
+      9.0        1,141,517    297    3,843.5    1,279.0       831    81,664     10,266.5  [CUDA Unified Memory memcpy HtoD]
+      0.0              992      1      992.0      992.0       992       992          0.0  [CUDA memcpy DtoH]               
+
+[8/8] Executing 'gpumemsizesum' stats report
+
+CUDA Memory Operation Statistics (by size):
+
+ Total (MB)  Count  Avg (MB)  Med (MB)  Min (MB)  Max (MB)  StdDev (MB)              Operation            
+ ----------  -----  --------  --------  --------  --------  -----------  ---------------------------------
+    150.610     74     2.035     2.097     0.004     2.097        0.333  [CUDA Unified Memory memcpy DtoH]
+     12.468    297     0.042     0.008     0.004     1.044        0.133  [CUDA Unified Memory memcpy HtoD]
+      0.000      1     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy DtoH]    
+```
+
 ### CPU implementation
 
 - Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the

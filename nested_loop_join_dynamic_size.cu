@@ -79,7 +79,7 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     std::chrono::duration<double> time_span;
     int total_columns = relation_1_columns + relation_2_columns - 1;
     int threads_per_block, blocks_per_grid;
-    threads_per_block = 512;
+    threads_per_block = 1024;
     blocks_per_grid = ceil((double) relation_1_rows / threads_per_block);
     cout << "GPU join operation (non-atomic): ";
     cout << "(" << relation_1_rows << ", " << relation_1_columns << ")";
@@ -132,8 +132,8 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     pass_2_time = time_span.count();
     show_time_spent("GPU Pass 2 join operation", time_point_begin, time_point_end);
 //    time_point_begin = chrono::high_resolution_clock::now();
-    write_relation_to_file(gpu_join_result, total_size / 3, total_columns,
-                           output_path, separator);
+//    write_relation_to_file(gpu_join_result, total_size / 3, total_columns,
+//                           output_path, separator);
 //    time_point_end = chrono::high_resolution_clock::now();
 //    show_time_spent("Write result", time_point_begin, time_point_end);
     total_time = pass_1_time + offset_time + pass_2_time;
@@ -160,35 +160,35 @@ int main() {
 //    data_path = "data/link.facts_412148.txt";
 //    output_path = "output/join_gpu_412148_atomic.txt";
 
-//    relation_1_rows = 100000;
-//    relation_2_rows = 100000;
-//    data_path = "data/data_100000.txt";
-//    output_path = "output/join_gpu_100000.txt";
+    relation_1_rows = 500000;
+    relation_2_rows = 500000;
+    const char *data_path = "data/data_500000.txt";
+    const char *output_path = "output/join_gpu_500000.txt";
+    gpu_join_relations_2_pass(data_path, separator, output_path,
+                              relation_1_rows, relation_1_columns,
+                              relation_2_rows, relation_2_columns);
+    cout << endl;
 
-    int n = 100000;
-    int increment = 50000;
-    int count = 0;
+//    int n = 100000;
+//    int increment = 50000;
+//    int count = 0;
+//
+//    while (count < 19) {
+//        relation_1_rows = n;
+//        relation_2_rows = n;
+//        string a = "data/data_" + std::to_string(n) + ".txt";
+//        string b = "output/join_gpu_" + std::to_string(n) + ".txt";
+//        const char *data_path = a.c_str();
+//        const char *output_path = b.c_str();
+//
+//        gpu_join_relations_2_pass(data_path, separator, output_path,
+//                                  relation_1_rows, relation_1_columns,
+//                                  relation_2_rows, relation_2_columns);
+//
+//        cout << endl;
+//        n += increment;
+//        count++;
+//    }
 
-    while (count < 19) {
-        relation_1_rows = n;
-        relation_2_rows = n;
-        string a = "data/data_" + std::to_string(n) + ".txt";
-        string b = "output/join_gpu_" + std::to_string(n) + ".txt";
-        const char *data_path = a.c_str();
-        const char *output_path = b.c_str();
-
-        gpu_join_relations_2_pass(data_path, separator, output_path,
-                                  relation_1_rows, relation_1_columns,
-                                  relation_2_rows, relation_2_columns);
-
-        cout << endl;
-        n += increment;
-        count++;
-    }
-
-//    gpu_join_relations_2_pass(data_path, separator, output_path,
-//                              relation_1_rows, relation_1_columns,
-//                              relation_2_rows, relation_2_columns);
-//    cout << endl;
     return 0;
 }
