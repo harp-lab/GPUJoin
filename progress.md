@@ -22,7 +22,7 @@ Our nested loop join performance:
 | 150000 | 147 | 1024 | 44995231 | 0.115846 | 0.00314425 | 0.378974 | 0.497964 |
 
 
-Error for `n=200000`:
+For cudf we are getting error for `n=200000`:
 ```
 std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
 ```
