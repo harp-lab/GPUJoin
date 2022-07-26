@@ -33,7 +33,7 @@ void performance_comparison(int total_iterations) {
         output_path = "output/join_gpu_412148.txt";
         gpu_join_relations_2_pass(data_path, separator, output_path,
                                   relation_1_rows, relation_1_columns,
-                                  relation_2_rows, relation_2_columns, visible_rows);
+                                  relation_2_rows, relation_2_columns);
         time_point_end = chrono::high_resolution_clock::now();
         chrono::duration<double> time_span = time_point_end - time_point_begin;
         show_time_spent(("Iteration " + to_string(i)).c_str(), time_point_begin, time_point_end);
@@ -48,7 +48,7 @@ void performance_comparison(int total_iterations) {
         output_path = "output/join_gpu_412148_atomic.txt";
         gpu_join_relations_2_pass_atomic(data_path, separator, output_path,
                                          relation_1_rows, relation_1_columns,
-                                         relation_2_rows, relation_2_columns, visible_rows);
+                                         relation_2_rows, relation_2_columns);
         time_point_end = chrono::high_resolution_clock::now();
         chrono::duration<double> time_span = time_point_end - time_point_begin;
         show_time_spent(("Iteration " + to_string(i + 1)).c_str(), time_point_begin, time_point_end);

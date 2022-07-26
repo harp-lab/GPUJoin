@@ -72,7 +72,7 @@ void gpu_get_join_data_dynamic(int *result, int *offsets,
 
 void gpu_join_relations_2_pass(const char *data_path, char separator, const char *output_path,
                                int relation_1_rows, int relation_1_columns,
-                               int relation_2_rows, int relation_2_columns, int visible_rows) {
+                               int relation_2_rows, int relation_2_columns) {
     double total_time, pass_1_time, pass_2_time, offset_time;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
@@ -149,10 +149,9 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
 }
 
 int main() {
-    const char *data_path, *output_path;
+
     char separator = '\t';
-    int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns, visible_rows;
-    visible_rows = 10;
+    int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns;
     relation_1_columns = 2;
     relation_2_columns = 2;
 
@@ -166,14 +165,30 @@ int main() {
 //    data_path = "data/data_100000.txt";
 //    output_path = "output/join_gpu_100000.txt";
 
-    relation_1_rows = 150000;
-    relation_2_rows = 150000;
-    data_path = "data/data_150000.txt";
-    output_path = "output/join_gpu_150000.txt";
+    int n = 100000;
+    int increment = 50000;
+    int count = 0;
 
-    gpu_join_relations_2_pass(data_path, separator, output_path,
-                              relation_1_rows, relation_1_columns,
-                              relation_2_rows, relation_2_columns, visible_rows);
-    cout << endl;
+    while (count < 19) {
+        relation_1_rows = n;
+        relation_2_rows = n;
+        string a = "data/data_" + std::to_string(n) + ".txt";
+        string b = "output/join_gpu_" + std::to_string(n) + ".txt";
+        const char *data_path = a.c_str();
+        const char *output_path = b.c_str();
+
+        gpu_join_relations_2_pass(data_path, separator, output_path,
+                                  relation_1_rows, relation_1_columns,
+                                  relation_2_rows, relation_2_columns);
+
+        cout << endl;
+        n += increment;
+        count++;
+    }
+
+//    gpu_join_relations_2_pass(data_path, separator, output_path,
+//                              relation_1_rows, relation_1_columns,
+//                              relation_2_rows, relation_2_columns);
+//    cout << endl;
     return 0;
 }

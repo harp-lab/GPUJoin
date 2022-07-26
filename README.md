@@ -27,6 +27,9 @@ Error for `n=200000`:
 std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
 ```
 - `nested_loop_join_dynamic_size.cu`
+```shell
+nvcc nested_loop_join_dynamic_size.cu -o join -run
+```
 
 | Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
 | --- | --- | --- | --- | --- | --- | --- | --- |

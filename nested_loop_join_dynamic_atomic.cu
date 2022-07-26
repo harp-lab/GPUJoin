@@ -56,7 +56,7 @@ void gpu_get_join_data_dynamic_atomic(int *result, int *position, int total_colu
 
 void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, const char *output_path,
                                       int relation_1_rows, int relation_1_columns,
-                                      int relation_2_rows, int relation_2_columns, int visible_rows) {
+                                      int relation_2_rows, int relation_2_columns) {
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     int total_columns = relation_1_columns + relation_2_columns - 1;
@@ -171,7 +171,7 @@ void dynamic_atomic_driver() {
     output_path = "output/join_gpu_412148_atomic.txt";
     gpu_join_relations_2_pass_atomic(data_path, separator, output_path,
                                      relation_1_rows, relation_1_columns,
-                                     relation_2_rows, relation_2_columns, visible_rows);
+                                     relation_2_rows, relation_2_columns);
     time_point_end = chrono::high_resolution_clock::now();
     chrono::duration<double> time_span = time_point_end - time_point_begin;
     show_time_spent("Total time", time_point_begin, time_point_end);

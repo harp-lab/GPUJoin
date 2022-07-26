@@ -44,6 +44,9 @@ qsub -A YourProject -n 256  -t 30  \
 qsub -A dist_relational_alg -n 1 -t 5 -q single-gpu \
 --attrs mcdram=flat:filesystems=home -O gpu_join_out gpu_join natural_join
 
+qsub -A dist_relational_alg -n 1 -t 5 -q single-gpu \
+--attrs mcdram=flat:filesystems=home -O nested_loop_out join nested_unified
+
 Job routed to queue "single-gpu".
 ```
 - Show all jobs from user:
@@ -58,6 +61,7 @@ qdel 10076390
 - Check output:
 ```commandline
 cat gpu_join_out.output 
+cat nested_loop_out.output
 ```
 ### (Bonus) C++ run script example for theta
 ```shell
