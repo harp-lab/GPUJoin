@@ -63,6 +63,15 @@ qdel 10076390
 cat gpu_join_out.output 
 cat nested_loop_out.output
 ```
+
+- Interactive job on theta
+```shell
+ssh thetagpusn1
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
+qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg
+nvcc nested_loop_join_dynamic_size.cu -o join -run
+```
+
 ### (Bonus) C++ run script example for theta
 ```shell
 #!/bin/bash
@@ -85,8 +94,7 @@ aprun -n 512 -N 64 ./ata
 - Loaded `miniconda` and tried to create an environment
 ```
 module load miniconda-3
-conda create -p /envs/gpujoin_env --clone $CONDA_PREFIX
-
+conda create -p /envs/gpujoin_env_2 --clone $CONDA_PREFIX
 ```
 Got the following error:
 ```shell
@@ -106,3 +114,4 @@ Files: 117276
 - [Getting Started on ThetaGPU](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/getting-started-thetagpu)
 - [Submit a Job on ThetaGPU](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/submit-job-thetagpu)
 - [Running jobs at Theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
+- [Interactive job on theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
