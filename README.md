@@ -70,7 +70,7 @@ nvcc nested_loop_join_dynamic_size.cu -o join -run
 ### Profiling
 - Using `nvprof` with threads per block 1024
 ```shell
- nvprof ./join                                
+nvprof ./join                                
 GPU join operation (non-atomic): (500000, 2) x (500000, 2)
 Blocks per grid: 489, Threads per block: 1024
 ==69548== NVPROF is profiling process 69548, command: ./join
