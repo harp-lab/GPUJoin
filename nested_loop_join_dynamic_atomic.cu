@@ -6,9 +6,18 @@
 #include <iostream>
 #include <chrono>
 #include <math.h>
+#include <assert.h>
 #include "utils.h"
 
 using namespace std;
+
+inline cudaError_t checkCuda(cudaError_t result) {
+    if (result != cudaSuccess) {
+        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
+        assert(result == cudaSuccess);
+    }
+    return result;
+}
 
 __global__
 void gpu_get_total_join_size(int *total_size, int total_columns,
@@ -71,28 +80,25 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
     cout << " x (" << relation_2_rows << ", " << relation_2_columns << ")" << endl;
     cout << "Block dimension: (" << grid_dimension.x << ", " << grid_dimension.y << ", 1)";
     cout << ", Thread dimension: (" << block_dimension.x << ", " << block_dimension.y << ", 1)" << endl;
-    time_point_begin = chrono::high_resolution_clock::now();
-    int *relation_1 = get_relation_from_file(data_path,
-                                             relation_1_rows, relation_1_columns,
-                                             separator);
-    int *relation_2 = get_reverse_relation(relation_1,
-                                           relation_1_rows,
-                                           relation_2_columns);
-    time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("Read relations", time_point_begin, time_point_end);
-    time_point_begin = chrono::high_resolution_clock::now();
+
     int total_size = 0;
     int *gpu_relation_1, *gpu_relation_2, *gpu_total_size, *gpu_join_result;
-    cudaMalloc((void **) &gpu_relation_1, relation_1_rows * relation_1_columns * sizeof(int));
-    cudaMalloc((void **) &gpu_relation_2, relation_2_rows * relation_2_columns * sizeof(int));
-    cudaMalloc((void **) &gpu_total_size, sizeof(int));
-    cudaMemcpy(gpu_relation_1, relation_1, relation_1_rows * relation_1_columns * sizeof(int),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu_relation_2, relation_2, relation_2_rows * relation_2_columns * sizeof(int),
-               cudaMemcpyHostToDevice);
-    cudaMemcpy(gpu_total_size, &total_size, sizeof(int), cudaMemcpyHostToDevice);
+    checkCuda(cudaMallocManaged(&gpu_relation_1, relation_1_rows * relation_1_columns * sizeof(int)));
+    checkCuda(cudaMallocManaged(&gpu_relation_2, relation_2_rows * relation_2_columns * sizeof(int)));
+    checkCuda(cudaMallocManaged(&gpu_total_size, sizeof(int)));
+
+
+    time_point_begin = chrono::high_resolution_clock::now();
+
+    get_relation_from_file_gpu(gpu_relation_1, data_path,
+                               relation_1_rows, relation_1_columns,
+                               separator);
+    get_reverse_relation_gpu(gpu_relation_2, gpu_relation_1,
+                             relation_1_rows,
+                             relation_2_columns);
+
     time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("GPU Pass 1 copy data to device", time_point_begin, time_point_end);
+    show_time_spent("Read relations", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
     gpu_get_total_join_size<<<grid_dimension, block_dimension>>>(gpu_total_size,
                                                                  total_columns,
@@ -100,25 +106,20 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
                                                                  relation_1_columns, 0,
                                                                  gpu_relation_2, relation_2_rows,
                                                                  relation_2_columns, 0);
-    cudaDeviceSynchronize();
+    checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 get join size per row in relation 1", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
-    cudaMemcpy(&total_size, gpu_total_size, sizeof(int), cudaMemcpyDeviceToHost);
+    checkCuda(cudaMemcpy(&total_size, gpu_total_size, sizeof(int), cudaMemcpyDeviceToHost));
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 1 copy result to host", time_point_begin, time_point_end);
     cout << "Total size of the join result: " << total_size << endl;
-    time_point_begin = chrono::high_resolution_clock::now();
-    int *join_result = (int *) malloc(total_size * sizeof(int));
-    cudaMalloc((void **) &gpu_join_result, total_size * sizeof(int));
-    cudaMemcpy(gpu_join_result, join_result, total_size * sizeof(int), cudaMemcpyHostToDevice);
-    time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("GPU Pass 2 copy data to device", time_point_begin, time_point_end);
+    checkCuda(cudaMallocManaged(&gpu_join_result, total_size * sizeof(int)));
     time_point_begin = chrono::high_resolution_clock::now();
     int position = 0;
     int *gpu_position;
-    cudaMalloc((void **) &gpu_position, sizeof(int));
-    cudaMemcpy(gpu_position, &position, sizeof(int), cudaMemcpyHostToDevice);
+    checkCuda(cudaMallocManaged((void **) &gpu_position, sizeof(int)));
+    checkCuda(cudaMemcpy(gpu_position, &position, sizeof(int), cudaMemcpyHostToDevice));
     gpu_get_join_data_dynamic_atomic<<<grid_dimension, block_dimension>>>(gpu_join_result,
                                                                           gpu_position,
                                                                           total_columns,
@@ -126,53 +127,47 @@ void gpu_join_relations_2_pass_atomic(const char *data_path, char separator, con
                                                                           relation_1_columns, 0,
                                                                           gpu_relation_2, relation_2_rows,
                                                                           relation_2_columns, 0);
-    cudaDeviceSynchronize();
-    // check for error
-    cudaError_t error = cudaGetLastError();
-    if (error != cudaSuccess) {
-        // print the CUDA error message and exit
-        printf("CUDA error: %s\n", cudaGetErrorString(error));
-        exit(-1);
-    }
+    checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("GPU Pass 2 join operation", time_point_begin, time_point_end);
-    time_point_begin = chrono::high_resolution_clock::now();
-    cudaMemcpy(join_result, gpu_join_result, total_size * sizeof(int), cudaMemcpyDeviceToHost);
-    time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("GPU Pass 2 copy result to host", time_point_begin, time_point_end);
+//    time_point_begin = chrono::high_resolution_clock::now();
+//    cudaMemcpy(join_result, gpu_join_result, total_size * sizeof(int), cudaMemcpyDeviceToHost);
+//    time_point_end = chrono::high_resolution_clock::now();
+//    show_time_spent("GPU Pass 2 copy result to host", time_point_begin, time_point_end);
 
-    time_point_begin = chrono::high_resolution_clock::now();
-    write_relation_to_file(join_result, total_size / 3, total_columns,
-                           output_path, separator);
-    time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("Write result", time_point_begin, time_point_end);
+//    time_point_begin = chrono::high_resolution_clock::now();
+//    write_relation_to_file(join_result, total_size / 3, total_columns,
+//                           output_path, separator);
+//    time_point_end = chrono::high_resolution_clock::now();
+//    show_time_spent("Write result", time_point_begin, time_point_end);
     cudaFree(gpu_relation_1);
     cudaFree(gpu_relation_2);
     cudaFree(gpu_join_result);
-    free(relation_1);
-    free(relation_2);
-    free(join_result);
+//    free(relation_1);
+//    free(relation_2);
+//    free(join_result);
 }
 
 
-void dynamic_atomic_driver() {
-    chrono::high_resolution_clock::time_point time_point_begin, time_point_end;
-    const char *data_path, *output_path;
+int main() {
+
     char separator = '\t';
-    int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns, visible_rows;
-    visible_rows = 10;
+    int relation_1_rows, relation_1_columns, relation_2_rows, relation_2_columns;
     relation_1_columns = 2;
     relation_2_columns = 2;
-    relation_1_rows = 412148;
-    relation_2_rows = 412148;
-    data_path = "data/link.facts_412148.txt";
 
-    time_point_begin = chrono::high_resolution_clock::now();
-    output_path = "output/join_gpu_412148_atomic.txt";
+//    relation_1_rows = 412148;
+//    relation_2_rows = 412148;
+//    data_path = "data/link.facts_412148.txt";
+//    output_path = "output/join_gpu_412148_atomic.txt";
+
+    relation_1_rows = 300000;
+    relation_2_rows = 300000;
+    const char *data_path = "data/data_300000.txt";
+    const char *output_path = "output/join_gpu_300000.txt";
     gpu_join_relations_2_pass_atomic(data_path, separator, output_path,
                                      relation_1_rows, relation_1_columns,
                                      relation_2_rows, relation_2_columns);
-    time_point_end = chrono::high_resolution_clock::now();
-    chrono::duration<double> time_span = time_point_end - time_point_begin;
-    show_time_spent("Total time", time_point_begin, time_point_end);
+    cout << endl;
+    return 0;
 }

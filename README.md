@@ -217,6 +217,89 @@ CUDA Memory Operation Statistics (by size):
       0.000      1     0.000     0.000     0.000     0.000        0.000  [CUDA memcpy DtoH]    
 ```
 
+- `nvprof` on atomic for `n=300000` (`n=500000`: `CUDA Runtime Error: out of memory`):
+```shell
+# thread 8 x 8
+nvprof ./join
+GPU join operation (atomic): (300000, 2) x (300000, 2)
+Block dimension: (37500, 37500, 1), Thread dimension: (8, 8, 1)
+==71403== NVPROF is profiling process 71403, command: ./join
+Read relations: 0.0418668 seconds
+GPU Pass 1 get join size per row in relation 1: 3.85068 seconds
+GPU Pass 1 copy result to host: 8.3583e-05 seconds
+Total size of the join result: 539975202
+GPU Pass 2 join operation: 4.51339 seconds
+
+==71403== Profiling application: ./join
+==71403== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   53.96%  4.51335s         1  4.51335s  4.51335s  4.51335s  gpu_get_join_data_dynamic_atomic(int*, int*, int, int*, int, int, int, int*, int, int, int)
+                   46.04%  3.85063s         1  3.85063s  3.85063s  3.85063s  gpu_get_total_join_size(int*, int, int*, int, int, int, int*, int, int, int)
+                    0.00%  2.5600us         1  2.5600us  2.5600us  2.5600us  [CUDA memcpy HtoD]
+                    0.00%  2.1440us         1  2.1440us  2.1440us  2.1440us  [CUDA memcpy DtoH]
+      API calls:   97.78%  8.36400s         2  4.18200s  3.85064s  4.51336s  cudaDeviceSynchronize
+                    1.43%  121.90ms         5  24.381ms  5.9590us  121.80ms  cudaMallocManaged
+                    0.79%  67.433ms         3  22.478ms  140.75us  67.085ms  cudaFree
+                    0.00%  209.75us       101  2.0760us     318ns  84.321us  cuDeviceGetAttribute
+                    0.00%  97.933us         2  48.966us  16.086us  81.847us  cudaMemcpy
+                    0.00%  43.277us         1  43.277us  43.277us  43.277us  cuDeviceGetName
+                    0.00%  40.609us         2  20.304us  8.8210us  31.788us  cudaLaunchKernel
+                    0.00%  11.987us         1  11.987us  11.987us  11.987us  cuDeviceGetPCIBusId
+                    0.00%  3.2030us         3  1.0670us     506ns  2.0800us  cuDeviceGetCount
+                    0.00%  1.8310us         2     915ns     317ns  1.5140us  cuDeviceGet
+                    0.00%     921ns         1     921ns     921ns     921ns  cuDeviceTotalMem
+                    0.00%     636ns         1     636ns     636ns     636ns  cuModuleGetLoadingMode
+                    0.00%     584ns         1     584ns     584ns     584ns  cuDeviceGetUuid
+
+==71403== Unified Memory profiling result:
+Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
+   Count  Avg Size  Min Size  Max Size  Total Size  Total Time  Name
+      36  130.22KB  4.0000KB  0.9961MB  4.578125MB  398.1410us  Host To Device
+    6198         -         -         -           -  612.7544ms  Gpu page fault groups
+Total CPU Page faults: 18
+
+
+# thread 16 x 16
+nvprof ./join                                  
+GPU join operation (atomic): (300000, 2) x (300000, 2)
+Block dimension: (18750, 18750, 1), Thread dimension: (16, 16, 1)
+==71601== NVPROF is profiling process 71601, command: ./join
+Read relations: 0.0416101 seconds
+GPU Pass 1 get join size per row in relation 1: 3.28788 seconds
+GPU Pass 1 copy result to host: 4.2952e-05 seconds
+Total size of the join result: 539975202
+GPU Pass 2 join operation: 4.39805 seconds
+
+==71601== Profiling application: ./join
+==71601== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   57.22%  4.39801s         1  4.39801s  4.39801s  4.39801s  gpu_get_join_data_dynamic_atomic(int*, int*, int, int*, int, int, int, int*, int, int, int)
+                   42.78%  3.28783s         1  3.28783s  3.28783s  3.28783s  gpu_get_total_join_size(int*, int, int*, int, int, int, int*, int, int, int)
+                    0.00%  2.4320us         1  2.4320us  2.4320us  2.4320us  [CUDA memcpy HtoD]
+                    0.00%  2.1440us         1  2.1440us  2.1440us  2.1440us  [CUDA memcpy DtoH]
+      API calls:   97.66%  7.68586s         2  3.84293s  3.28784s  4.39802s  cudaDeviceSynchronize
+                    1.49%  117.10ms         5  23.421ms  6.9740us  116.99ms  cudaMallocManaged
+                    0.85%  66.890ms         3  22.297ms  165.78us  66.514ms  cudaFree
+                    0.00%  200.37us       101  1.9830us     121ns  143.67us  cuDeviceGetAttribute
+                    0.00%  56.836us         2  28.418us  16.048us  40.788us  cudaMemcpy
+                    0.00%  39.676us         2  19.838us  9.0260us  30.650us  cudaLaunchKernel
+                    0.00%  19.166us         1  19.166us  19.166us  19.166us  cuDeviceGetName
+                    0.00%  9.2680us         1  9.2680us  9.2680us  9.2680us  cuDeviceGetPCIBusId
+                    0.00%  1.3760us         3     458ns     197ns     942ns  cuDeviceGetCount
+                    0.00%     483ns         2     241ns     115ns     368ns  cuDeviceGet
+                    0.00%     382ns         1     382ns     382ns     382ns  cuDeviceTotalMem
+                    0.00%     258ns         1     258ns     258ns     258ns  cuModuleGetLoadingMode
+                    0.00%     220ns         1     220ns     220ns     220ns  cuDeviceGetUuid
+
+==71601== Unified Memory profiling result:
+Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
+   Count  Avg Size  Min Size  Max Size  Total Size  Total Time  Name
+      36  130.22KB  4.0000KB  0.9961MB  4.578125MB  410.0150us  Host To Device
+    6198         -         -         -           -  380.5318ms  Gpu page fault groups
+Total CPU Page faults: 18
+
+```
+
 ### CPU implementation
 
 - Declare a result array `join_result` with size `n*n*p`, where `n` is the number of rows in relation 1, `p` is the
