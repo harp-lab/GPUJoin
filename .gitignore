@@ -9,5 +9,4 @@ cmake-build-debug
 .idea
 join
 build/
-rapids_implementation/output/
 rapids_implementation/cufile.log

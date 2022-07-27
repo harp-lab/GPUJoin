@@ -46,31 +46,31 @@ def generate_pandas_merge(filename, iterations=10):
 
 if __name__ == "__main__":
 
-    dataset = f"../data/data_200000.txt"
-    n = int(re.search('\d+|$', dataset).group())
-    cudf_merge_time = generate_cudf_merge(dataset)
-    print(cudf_merge_time)
-    # pandas_merge_time = generate_pandas_merge(dataset)
+    # dataset = f"../data/data_200000.txt"
+    # n = int(re.search('\d+|$', dataset).group())
+    # cudf_merge_time = generate_cudf_merge(dataset)
+    # print(cudf_merge_time)
+    # # pandas_merge_time = generate_pandas_merge(dataset)
 
 
-    # result = []
-    # increment = 50000
-    # n = 100000
-    # count = 0
-    # while count < 20:
-    #     try:
-    #         dataset = f"../data/data_{n}.txt"
-    #         n = int(re.search('\d+|$', dataset).group())
-    #         cudf_merge_time = generate_cudf_merge(dataset)
-    #         pandas_merge_time = generate_pandas_merge(dataset)
-    #         result.append([n, cudf_merge_time, pandas_merge_time])
-    #         n += increment
-    #     except Exception as ex:
-    #         print(str(ex))
-    #         break
-    #     count += 1
-    # print("\n")
-    # print("| Number of rows | CUDF time (s) | Pandas time (s) |")
-    # print("| --- | --- | --- |")
-    # for record in result:
-    #     print(f"| {record[0]} | {record[1]:.6f} | {record[2]:.6f} |")
+    result = []
+    increment = 50000
+    n = 100000
+    count = 0
+    while count < 10:
+        try:
+            dataset = f"../data/data_{n}.txt"
+            n = int(re.search('\d+|$', dataset).group())
+            cudf_merge_time = generate_cudf_merge(dataset)
+            pandas_merge_time = generate_pandas_merge(dataset)
+            result.append([n, cudf_merge_time, pandas_merge_time])
+            n += increment
+        except Exception as ex:
+            print(str(ex))
+            break
+        count += 1
+    print("\n")
+    print("| Number of rows | CUDF time (s) | Pandas time (s) |")
+    print("| --- | --- | --- |")
+    for record in result:
+        print(f"| {record[0]} | {record[1]:.6f} | {record[2]:.6f} |")
