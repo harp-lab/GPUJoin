@@ -7,28 +7,81 @@
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
-### Comparison with CUDF and pandas
-
+### Comparison between CUDF, pandas, and nested loop join
+- Theta GPU (NVIDIA A100-SXM4-40GB - 40536MiB) result:
 ```shell
+python data_merge.py 
 CUDF join (n=100000) size: 20000986
 Pandas join (n=100000) size: 20000986
 CUDF join (n=150000) size: 44995231
 Pandas join (n=150000) size: 44995231
+CUDF join (n=200000) size: 80002265
+Pandas join (n=200000) size: 80002265
+CUDF join (n=250000) size: 125000004
+Pandas join (n=250000) size: 125000004
+CUDF join (n=300000) size: 179991734
+Pandas join (n=300000) size: 179991734
+CUDF join (n=350000) size: 245006327
+Pandas join (n=350000) size: 245006327
+CUDF join (n=400000) size: 319977044
+Pandas join (n=400000) size: 319977044
+CUDF join (n=450000) size: 404982983
+Pandas join (n=450000) size: 404982983
+CUDF join (n=500000) size: 499965209
+Pandas join (n=500000) size: 499965209
+CUDF join (n=550000) size: 605010431
+Pandas join (n=550000) size: 605010431
+std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
 ```
 
+- Using Theta GPU (NVIDIA A100 - 40536MiB) result for using Rapids (`cudf`) and Pandas (`df`):
 
 | Number of rows | CUDF time (s) | Pandas time (s) |
 | --- | --- | --- |
-| 100000 | 0.052770 | 0.282879 |
-| 150000 | 0.105069 | 0.912774 |
+| 100000 | 0.034978 | 0.294990 |
+| 150000 | 0.023296 | 0.655962 |
+| 200000 | 0.031487 | 1.152136 |
+| 250000 | 0.036887 | 1.785033 |
+| 300000 | 0.039247 | 2.559597 |
+| 350000 | 0.057324 | 3.469027 |
+| 400000 | 0.073785 | 4.536874 |
+| 450000 | 0.088625 | 5.866922 |
+| 500000 | 0.107790 | 7.016265 |
+| 550000 | 0.125129 | 8.476868 |
 
-Error for `n=200000`:
-```
-std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
-```
-- `nested_loop_join_dynamic_size.cu`
 
-- Using theta gpu:
+- Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_size.cu`:
+
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 100000 | 98 | 1024 | 20000986 | 0.00728293 | 0.00155869 | 0.0287826 | 0.0376242 |
+| 150000 | 147 | 1024 | 44995231 | 0.0200516 | 0.00146178 | 0.0721115 | 0.0936249 |
+| 200000 | 196 | 1024 | 80002265 | 0.025782 | 0.00148748 | 0.105717 | 0.132986 |
+| 250000 | 245 | 1024 | 125000004 | 0.0378728 | 0.00147928 | 0.149159 | 0.188511 |
+| 300000 | 293 | 1024 | 179991734 | 0.045733 | 0.00149265 | 0.197326 | 0.244552 |
+| 350000 | 342 | 1024 | 245006327 | 0.0704528 | 0.00152981 | 0.258077 | 0.330059 |
+| 400000 | 391 | 1024 | 319977044 | 0.0807149 | 0.00183633 | 0.333223 | 0.415774 |
+| 450000 | 440 | 1024 | 404982983 | 0.112455 | 0.00172126 | 0.395609 | 0.509785 |
+| 500000 | 489 | 1024 | 499965209 | 0.125456 | 0.00176208 | 0.47409 | 0.601308 |
+| 550000 | 538 | 1024 | 605010431 | 0.138507 | 0.00185872 | 0.554933 | 0.695299 |
+
+
+- Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_atomic.cu`:
+
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 100000 | 3125 x 3125 | 32 x 32 | 20000986 | 0.0326351 | 3.676e-05 | 0.0912985 | 0.12397 |
+| 150000 | 4688 x 4688 | 32 x 32 | 44995381 | 0.0668192 | 2.085e-05 | 0.175562 | 0.242402 |
+| 200000 | 6250 x 6250 | 32 x 32 | 80002288 | 0.10098 | 2.2623e-05 | 0.311574 | 0.412577 |
+| 250000 | 7813 x 7813 | 32 x 32 | 125000004 | 0.157802 | 2.129e-05 | 0.486814 | 0.644637 |
+| 300000 | 9375 x 9375 | 32 x 32 | 179991734 | 0.232257 | 5.3171e-05 | 0.769122 | 1.00143 |
+| 350000 | 10938 x 10938 | 32 x 32 | 245006327 | 0.307065 | 3.0778e-05 | 0.955728 | 1.26282 |
+| 400000 | 12500 x 12500 | 32 x 32 | 319977044 | 0.402273 | 3.6008e-05 | 1.25115 | 1.65346 |
+| 450000 | 14063 x 14063 | 32 x 32 | 404982983 | 0.508222 | 4.6889e-05 | 1.58239 | 2.09066 |
+| 500000 | 15625 x 15625 | 32 x 32 | 499965209 | 0.626641 | 4.8672e-05 | 1.95498 | 2.58167 |
+| 550000 | 17188 x 17188 | 32 x 32 | 605010431 | 0.757276 | 6.2097e-05 | 2.33137 | 3.08871 |
+
+- Using theta gpu job submission with 512 threads per block for nested loop join:
 ```shell
 qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesystems=home -O nested_loop_out join nested_unified
 ```
@@ -55,17 +108,45 @@ Total size of the join result: -2135009041
 Thrust calculate offset: 0.00207949 seconds
 ```
 
+#### Local result
+- Local setup: NVIDIA GeForce GTX 1060 with Max-Q Design - 6144MiB 
+- CUDF and pandas:
+
+```shell
+CUDF join (n=100000) size: 20000986
+Pandas join (n=100000) size: 20000986
+CUDF join (n=150000) size: 44995231
+Pandas join (n=150000) size: 44995231
+CUDF join (n=200000) size: 80002265
+Pandas join (n=200000) size: 80002265
+```
+
+| Number of rows | CUDF time (s) | Pandas time (s) |
+| --- | --- | --- |
+| 100000 | 0.039079 | 1.443562 |
+| 150000 | 0.078298 | 3.711782 |
+| 200000 | 0.211207 | 11.871658 |
+
+
+Error for `n=250000`:
+```
+std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
+```
+
 ```shell
 nvcc nested_loop_join_dynamic_size.cu -o join -run
 ```
 
 | Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 100000 | 196 | 512 | 20000986 | 0.0433023 | 0.000323834 | 0.15379 | 0.197416 |
-| 100000 | 98 | 1024 | 20000986 | 0.0473048 | 0.000349723 | 0.169904 | 0.217558 |
-| 150000 | 293 | 512 | 44995231 | 0.0917667 | 0.000335558 | 0.34609 | 0.438192 |
-| 150000 | 147 | 1024 | 44995231 | 0.115846 | 0.00314425 | 0.378974 | 0.497964 |
-
+| 100000 | 98 | 1024 | 20000986 | 0.0422773 | 0.000791339 | 0.147426 | 0.190495 |
+| 150000 | 147 | 1024 | 44995231 | 0.0918371 | 0.00044723 | 0.350052 | 0.442336 |
+| 200000 | 196 | 1024 | 80002265 | 0.164065 | 0.00042808 | 0.581562 | 0.746055 |
+| 250000 | 245 | 1024 | 125000004 | 0.257465 | 0.000507826 | 0.931161 | 1.18913 |
+| 300000 | 293 | 1024 | 179991734 | 0.377683 | 0.000541065 | 1.31541 | 1.69363 |
+| 350000 | 342 | 1024 | 245006327 | 0.51732 | 0.000397259 | 2.14485 | 2.66257 |
+| 400000 | 391 | 1024 | 319977044 | 0.668371 | 0.0058857 | 2.94693 | 3.62118 |
+| 450000 | 440 | 1024 | 404982983 | 0.839768 | 0.00467816 | 3.78764 | 4.63209 |
 
 ### Profiling
 - Using `nvprof` with threads per block 1024

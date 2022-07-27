@@ -57,7 +57,7 @@ if __name__ == "__main__":
     increment = 50000
     n = 100000
     count = 0
-    while count < 10:
+    while count < 15:
         try:
             dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())

@@ -68,9 +68,10 @@ cat nested_loop_out.output
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
 ssh thetagpusn1
-cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
 qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
 nvcc nested_loop_join_dynamic_size.cu -o join -run
+nsys profile --stats=true ./join
 ```
 - Running hashgraph on theta
 ```shell
@@ -195,6 +196,32 @@ cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/rapids_implementat
 mkdir output
 python data_merge.py
 ```
+- Running hashgraph (python) on theta
+```shell
+ssh USERNAME@theta.alcf.anl.gov
+ssh thetagpusn1
+qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg
+exit
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/rapids_implementation/
+module load conda/2022-07-01
+conda activate /home/arsho/gpujoinenv
+python hg.py 
+```
+```
+Time taken = 2.805170e+00 seconds
+Rate = 9.56931e+07 keys/sec
+
+Time taken = 1.044507e-01 seconds
+Rate = 2.56997e+09 keys/sec
+
+Time taken = 8.341455e-02 seconds
+Rate = 3.21809e+09 keys/sec
+
+Time taken = 8.331728e-02 seconds
+Rate = 3.22185e+09 keys/sec
+```
+
+
 #### Basic conda commands:
 - List the environments:
 ```shell
@@ -224,6 +251,13 @@ The following packages cannot be cloned out of the root environment:
 Packages: 175
 Files: 117276
 ```
+
+### Misc commands
+- See full gpu name:
+```shell
+nvidia-smi -L
+```
+
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
 - [nVidia CUDA C programming guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)

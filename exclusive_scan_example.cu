@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <iostream>
 #include <cub/cub.cuh>
+
 using namespace std;
+
 int main() {
-    int num_items = 7;      // e.g., 7
+    int num_items = 7;
     int *d_in;          // e.g., [8, 6, 7, 5, 3, 0, 9]
     int *d_out;         // e.g., [ ,  ,  ,  ,  ,  ,  ]
 
@@ -24,7 +26,8 @@ int main() {
     cudaMalloc(&d_temp_storage, temp_storage_bytes);
 // Run exclusive prefix sum
     cub::DeviceScan::ExclusiveSum(d_temp_storage, temp_storage_bytes, d_in, d_out, num_items);
-// d_out s<-- [0, 8, 14, 21, 26, 29, 29]
+    cudaDeviceSynchronize();
+    // d_out s<-- [0, 8, 14, 21, 26, 29, 29]
     for (int i = 0; i < num_items; i++) {
         cout << i << " " << d_in[i] << " " << d_out[i] << endl;
     }

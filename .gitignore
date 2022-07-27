@@ -10,3 +10,4 @@ cmake-build-debug
 join
 build/
 rapids_implementation/cufile.log
+rapids_implementation/rmm_log.txt

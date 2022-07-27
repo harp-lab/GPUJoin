@@ -73,6 +73,9 @@ void gpu_get_join_data_dynamic(int *result, int *offsets,
 void gpu_join_relations_2_pass(const char *data_path, char separator, const char *output_path,
                                int relation_1_rows, int relation_1_columns,
                                int relation_2_rows, int relation_2_columns) {
+    int deviceId;
+    cudaGetDevice(&deviceId);
+
     double total_time, pass_1_time, pass_2_time, offset_time;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
@@ -88,9 +91,14 @@ void gpu_join_relations_2_pass(const char *data_path, char separator, const char
     cout << ", Threads per block: " << threads_per_block << endl;
     time_point_begin = chrono::high_resolution_clock::now();
     int *gpu_relation_1, *gpu_relation_2, *gpu_offset, *gpu_join_result;
-    checkCuda(cudaMallocManaged(&gpu_relation_1, relation_1_rows * relation_1_columns * sizeof(int)));
-    checkCuda(cudaMallocManaged(&gpu_relation_2, relation_2_rows * relation_2_columns * sizeof(int)));
+    size_t relation_1_size = relation_1_rows * relation_1_columns * sizeof(int);
+    size_t relation_2_size = relation_2_rows * relation_2_columns * sizeof(int);
+    checkCuda(cudaMallocManaged(&gpu_relation_1, relation_1_size));
+    checkCuda(cudaMallocManaged(&gpu_relation_2, relation_2_size));
     checkCuda(cudaMallocManaged(&gpu_offset, relation_1_rows * sizeof(int)));
+    checkCuda(cudaMemPrefetchAsync(gpu_relation_1, relation_1_size, deviceId));
+    checkCuda(cudaMemPrefetchAsync(gpu_relation_2, relation_2_size, deviceId));
+
 
     get_relation_from_file_gpu(gpu_relation_1, data_path,
                                relation_1_rows, relation_1_columns,
@@ -155,15 +163,10 @@ int main() {
     relation_1_columns = 2;
     relation_2_columns = 2;
 
-//    relation_1_rows = 412148;
-//    relation_2_rows = 412148;
-//    data_path = "data/link.facts_412148.txt";
-//    output_path = "output/join_gpu_412148_atomic.txt";
-
-    relation_1_rows = 500000;
-    relation_2_rows = 500000;
-    const char *data_path = "data/data_500000.txt";
-    const char *output_path = "output/join_gpu_500000.txt";
+    relation_1_rows = 550000;
+    relation_2_rows = 550000;
+    const char *data_path = "data/data_550000.txt";
+    const char *output_path = "output/join_gpu_550000.txt";
     gpu_join_relations_2_pass(data_path, separator, output_path,
                               relation_1_rows, relation_1_columns,
                               relation_2_rows, relation_2_columns);
@@ -173,7 +176,7 @@ int main() {
 //    int increment = 50000;
 //    int count = 0;
 //
-//    while (count < 19) {
+//    while (count < 12) {
 //        relation_1_rows = n;
 //        relation_2_rows = n;
 //        string a = "data/data_" + std::to_string(n) + ".txt";

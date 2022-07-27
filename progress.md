@@ -208,3 +208,9 @@ Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
 Total CPU Page faults: 18
 ```
 - Runtime error at `n=500000`: `CUDA Runtime Error: out of memory`
+
+### Day 3 progress
+- Run benchmark for 10 datasets (100000 - 550000) for Rapids (`cudf`), Pandas (`df`), our CUDA implementations
+- Added cudaMemPrefetchAsync for both CUDA implementations
+- Run `nsys` for same dataset for cuda implementations to optimize CUDA api calls for different `#blocks` and `#threads`
+- Atomic implementation creates lots of barrier synchronization than the non atomic version
