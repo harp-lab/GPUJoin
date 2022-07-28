@@ -27,7 +27,8 @@ def get_projection(result, column_names=['column 1', 'column 2']):
 
 
 def get_union(relation_1, relation_2):
-    return cudf.concat([relation_1, relation_2], ignore_index=True)
+    return cudf.concat([relation_1, relation_2],
+                       ignore_index=True).drop_duplicates()
 
 
 def get_dataset(filename, column_names=['column 1', 'column 2'],
@@ -42,23 +43,27 @@ def get_dataset(filename, column_names=['column 1', 'column 2'],
 
 def get_transitive_closure(dataset, show_timing=False, rows=None):
     COLUMN_NAMES = ['column 1', 'column 2']
-    n = int(re.search('\d+|$', dataset).group())
+    if rows == None:
+        n = int(re.search('\d+|$', dataset).group())
+    else:
+        n = rows
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
+    # print(f"Input: \n{relation_1}")
     relation_2 = get_reverse(relation_1, COLUMN_NAMES)
     result = relation_1
     start_time_outer = time.perf_counter()
     i = 0
     while True:
         if show_timing:
-            if len(result) < 50:
-                print(result)
             start_time_inner = time.perf_counter()
         temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
         temp_projection = get_projection(temp_join, COLUMN_NAMES)
         projection_size = len(temp_projection)
-        if projection_size == 0:
-            break
+        previous_result_size = len(result)
         result = get_union(result, temp_projection)
+        current_result_size = len(result)
+        if previous_result_size == current_result_size:
+            break
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
         if show_timing:
             end_time_inner = time.perf_counter()
@@ -67,6 +72,9 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
         i += 1
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
+    if show_timing:
+        print(f"Total iterations: {i}")
+    # print(f"Output: \n{result}")
     return n, len(result), time_took
 
 
@@ -109,5 +117,9 @@ def generate_benchmark():
 
 if __name__ == "__main__":
     # generate_benchmark()
-    dataset = "../data/data_5.txt"
-    generate_single_tc(dataset=dataset, rows=5)
+    dataset = "../data/data_412148.txt"
+    generate_single_tc(dataset=dataset, rows=412148)
+    # dataset = "../data/data_3.txt"
+    # generate_single_tc(dataset=dataset, rows=3)
+    # dataset = "../data/data_4.txt"
+    # generate_single_tc(dataset=dataset, rows=4)

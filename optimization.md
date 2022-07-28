@@ -213,3 +213,60 @@ CUDA Memory Operation Statistics (by size):
       0.000      1         0.000         0.000         0.000        0.000  [CUDA memcpy HtoD]               
 ```
 
+- Different threads in non atomic version in Theta gpu:
+```shell
+ldyken53@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/landon/GPUJoin$ ./thread64
+GPU join operation (non-atomic): (550000, 2) x (550000, 2)
+Blocks per grid: 8594, Threads per block: 64
+GPU Pass 1 get join size per row in relation 1: 0.167814 seconds
+Total size of the join result: 1815031293
+Thrust calculate offset: 0.00177992 seconds
+GPU Pass 2 join operation: 0.554116 seconds
+Total time (pass 1 + offset + pass 2): 0.72371
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 550000 | 8594 | 64 | 605010431 | 0.167814 | 0.00177992 | 0.554116 | 0.72371 |
+
+ldyken53@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/landon/GPUJoin$ ./thread128
+GPU join operation (non-atomic): (550000, 2) x (550000, 2)
+Blocks per grid: 4297, Threads per block: 128
+GPU Pass 1 get join size per row in relation 1: 0.181085 seconds
+Total size of the join result: 1815031293
+Thrust calculate offset: 0.00168487 seconds
+1GPU Pass 2 join operation: 0.549306 seconds
+Total time (pass 1 + offset + pass 2): 0.732076
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 550000 | 4297 | 128 | 605010431 | 0.181085 | 0.00168487 | 0.549306 | 0.732076 |
+
+ldyken53@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/landon/GPUJoin$ ./thread256
+GPU join operation (non-atomic): (550000, 2) x (550000, 2)
+Blocks per grid: 2149, Threads per block: 256
+GPU Pass 1 get join size per row in relation 1: 0.173532 seconds
+Total size of the join result: 1815031293
+Thrust calculate offset: 0.00166867 seconds
+GPU Pass 2 join operation: 0.545732 seconds
+Total time (pass 1 + offset + pass 2): 0.720933
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 550000 | 2149 | 256 | 605010431 | 0.173532 | 0.00166867 | 0.545732 | 0.720933 |
+
+ldyken53@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/landon/GPUJoin$ ./thread512
+GPU join operation (non-atomic): (550000, 2) x (550000, 2)
+Blocks per grid: 1075, Threads per block: 512
+GPU Pass 1 get join size per row in relation 1: 0.177913 seconds
+Total size of the join result: 1815031293
+Thrust calculate offset: 0.00177223 seconds
+GPU Pass 2 join operation: 0.549719 seconds
+Total time (pass 1 + offset + pass 2): 0.729405
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 550000 | 1075 | 512 | 605010431 | 0.177913 | 0.00177223 | 0.549719 | 0.729405 |
+
+ldyken53@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/landon/GPUJoin$ ./thread1024
+GPU join operation (non-atomic): (550000, 2) x (550000, 2)
+Blocks per grid: 538, Threads per block: 1024
+GPU Pass 1 get join size per row in relation 1: 0.17582 seconds
+Total size of the join result: 1815031293
+Thrust calculate offset: 0.00166037 seconds
+GPU Pass 2 join operation: 0.561509 seconds
+Total time (pass 1 + offset + pass 2): 0.738989
+| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
+| 550000 | 538 | 1024 | 605010431 | 0.17582 | 0.00166037 | 0.561509 | 0.738989 |
+```
