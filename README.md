@@ -99,7 +99,7 @@ qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesys
 | 500000 | 977 | 512 | 499965209 | 0.158912 | 0.00191387 | 0.485484 | 0.64631 |
 | 550000 | 1075 | 512 | 605010431 | 0.168123 | 0.00201475 | 0.558216 | 0.728353 |
 
-- Different number of threads and blocks
+- Different number of threads and blocks on Theta GPU (NVIDIA A100 - 40536MiB) for `nested_loop_join_dynamic_atomic.cu`:
 
 | Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -109,7 +109,17 @@ qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesys
 | 550000 | 1075 | 512 | 605010431 | 0.177913 | 0.00177223 | 0.549719 | 0.729405 |
 | 550000 | 538 | 1024 | 605010431 | 0.17582 | 0.00166037 | 0.561509 | 0.738989 |
 
+- Transitive closure for string graph on Theta:
 
+| Number of rows | TC size | Iterations | Time (s) |
+| --- | --- | --- | --- |
+| 333 | 55611 | 333 | 1.546973 |
+| 990 | 490545 | 990 | 11.516639 |
+| 2990 | 4471545 | 2990 | 48.859073 |
+| 4444 | 9876790 | 4444 | 98.355756 |
+| 4990 | 12452545 | 4990 | 121.888416 |
+| 6990 | 24433545 | 6990 | 263.082299 |
+| 8990 | 40414545 | 8990 | 536.293174 |
 
 Overflow at `n=600000`
 ```shell

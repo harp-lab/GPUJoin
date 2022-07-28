@@ -96,14 +96,18 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
 
 def generate_benchmark():
     result = []
-    increment = 1000
-    n = 990
+    increment = 2000
+    n = 10990
     count = 0
-    while n < 50000:
+    print("| Number of rows | TC size | Iterations | Time (s) |")
+    print("| --- | --- | --- | --- |")
+    while n < 15000:
         try:
             dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())
-            result.append(get_transitive_closure(dataset))
+            record = get_transitive_closure(dataset)
+            result.append(record)
+            print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
             n += increment
         except Exception as ex:
             print(str(ex))
