@@ -40,24 +40,9 @@ def generate_datasets():
 
 
 if __name__ == "__main__":
-    n = 666666
-    filename = f"../data/data_{n}.txt"
-    generate_csv(filename, n, string_graph=True)
 
-    n = 55555
-    filename = f"../data/data_{n}.txt"
-    generate_csv(filename, n, string_graph=True)
-
-    n = 4444
-    filename = f"../data/data_{n}.txt"
-    generate_csv(filename, n, string_graph=True)
-
-    n = 333
-    filename = f"../data/data_{n}.txt"
-    generate_csv(filename, n, string_graph=True)
-
-    n = 22
-    filename = f"../data/data_{n}.txt"
-    generate_csv(filename, n, string_graph=True)
+    for i in range(990, 50000, 1000):
+        filename = f"../data/data_{i}.txt"
+        generate_csv(filename, i, string_graph=True)
 
     # generate_datasets()

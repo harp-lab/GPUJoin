@@ -96,10 +96,10 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
 
 def generate_benchmark():
     result = []
-    increment = 50000
-    n = 100000
+    increment = 1000
+    n = 990
     count = 0
-    while count < 9:
+    while n < 50000:
         try:
             dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())
@@ -117,7 +117,7 @@ def generate_benchmark():
 
 
 if __name__ == "__main__":
-    # generate_benchmark()
-    dataset = "../data/data_555555.txt"
-    n = int(re.search('\d+|$', dataset).group())
-    generate_single_tc(dataset=dataset, rows=n)
+    generate_benchmark()
+    # dataset = "../data/data_555555.txt"
+    # n = int(re.search('\d+|$', dataset).group())
+    # generate_single_tc(dataset=dataset, rows=n)
