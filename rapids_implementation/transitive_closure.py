@@ -50,7 +50,7 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
     # print(f"Input: \n{relation_1}")
     relation_2 = get_reverse(relation_1, COLUMN_NAMES)
-    result = relation_1
+    temp_result = relation_1
     start_time_outer = time.perf_counter()
     i = 0
     while True:
@@ -59,23 +59,24 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
         temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
         temp_projection = get_projection(temp_join, COLUMN_NAMES)
         projection_size = len(temp_projection)
-        previous_result_size = len(result)
-        result = get_union(result, temp_projection)
-        current_result_size = len(result)
+        previous_result_size = len(temp_result)
+        temp_result = get_union(temp_result, temp_projection)
+        current_result_size = len(temp_result)
         if previous_result_size == current_result_size:
+            i += 1
             break
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
         if show_timing:
             end_time_inner = time.perf_counter()
-            message = f"Iteration {i}, Projection size {projection_size}, Time"
+            message = f"Iteration {i}, Projection size {projection_size}, " \
+                      f"Result size {current_result_size}, Time"
             display_time(start_time_inner, end_time_inner, message)
         i += 1
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
     if show_timing:
         print(f"Total iterations: {i}")
-    # print(f"Output: \n{result}")
-    return n, len(result), time_took
+    return n, len(temp_result), i, time_took
 
 
 def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
@@ -87,10 +88,10 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
     except Exception as ex:
         print(str(ex))
     print("\n")
-    print("| Number of rows | TC size | Time (s) |")
-    print("| --- | --- | --- |")
+    print("| Number of rows | TC size | Iterations | Time (s) |")
+    print("| --- | --- | --- | --- |")
     for record in result:
-        print(f"| {record[0]} | {record[1]} | {record[2]:.6f} |")
+        print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
 
 
 def generate_benchmark():
@@ -98,7 +99,7 @@ def generate_benchmark():
     increment = 50000
     n = 100000
     count = 0
-    while count < 15:
+    while count < 9:
         try:
             dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())
@@ -109,17 +110,14 @@ def generate_benchmark():
             break
         count += 1
     print("\n")
-    print("| Number of rows | TC size | Time (s) |")
-    print("| --- | --- | --- |")
+    print("| Number of rows | TC size | Iterations | Time (s) |")
+    print("| --- | --- | --- | --- |")
     for record in result:
-        print(f"| {record[0]} | {record[1]} | {record[2]:.6f} |")
+        print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
 
 
 if __name__ == "__main__":
-    # generate_benchmark()
-    dataset = "../data/data_412148.txt"
-    generate_single_tc(dataset=dataset, rows=412148)
-    # dataset = "../data/data_3.txt"
-    # generate_single_tc(dataset=dataset, rows=3)
-    # dataset = "../data/data_4.txt"
-    # generate_single_tc(dataset=dataset, rows=4)
+    generate_benchmark()
+    # dataset = "../data/data_5.txt"
+    # n = int(re.search('\d+|$', dataset).group())
+    # generate_single_tc(dataset=dataset, rows=n)
