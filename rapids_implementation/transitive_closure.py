@@ -3,6 +3,11 @@ import cudf
 import time
 
 
+def display_time(time_start, time_end, message):
+    time_took = time_end - time_start
+    print(f"Debug: {message}: {time_took:.6f}s")
+
+
 def get_reverse(relation, column_names=['column 1', 'column 2']):
     reverse_relation = relation[relation.columns[::-1]]
     reverse_relation.columns = column_names
@@ -25,35 +30,52 @@ def get_union(relation_1, relation_2):
     return cudf.concat([relation_1, relation_2], ignore_index=True)
 
 
-def get_dataset(filename, column_names=['column 1', 'column 2']):
-    nrows = int(re.search('\d+|$', filename).group())
+def get_dataset(filename, column_names=['column 1', 'column 2'],
+                rows=None):
+    if rows != None:
+        nrows = rows
+    else:
+        nrows = int(re.search('\d+|$', filename).group())
     return cudf.read_csv(filename, sep='\t', header=None,
                          names=column_names, nrows=nrows)
 
 
-def get_transitive_closure(dataset):
+def get_transitive_closure(dataset, show_timing=False, rows=None):
     COLUMN_NAMES = ['column 1', 'column 2']
     n = int(re.search('\d+|$', dataset).group())
-    relation_1 = get_dataset(dataset, COLUMN_NAMES)
+    relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
     relation_2 = get_reverse(relation_1, COLUMN_NAMES)
     result = relation_1
-    start_time = time.perf_counter()
+    start_time_outer = time.perf_counter()
+    i = 0
     while True:
+        if show_timing:
+            if len(result) < 50:
+                print(result)
+            start_time_inner = time.perf_counter()
         temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
         temp_projection = get_projection(temp_join, COLUMN_NAMES)
-        if len(temp_projection) == 0:
+        projection_size = len(temp_projection)
+        if projection_size == 0:
             break
         result = get_union(result, temp_projection)
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
-    end_time = time.perf_counter()
-    time_took = end_time - start_time
+        if show_timing:
+            end_time_inner = time.perf_counter()
+            message = f"Iteration {i}, Projection size {projection_size}, Time"
+            display_time(start_time_inner, end_time_inner, message)
+        i += 1
+    end_time_outer = time.perf_counter()
+    time_took = end_time_outer - start_time_outer
     return n, len(result), time_took
 
 
-def generate_single_tc(dataset="../data/data_550000.txt"):
+def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
     result = []
     try:
-        result.append(get_transitive_closure(dataset))
+        result.append(get_transitive_closure(dataset,
+                                             show_timing=True,
+                                             rows=rows))
     except Exception as ex:
         print(str(ex))
     print("\n")
@@ -86,5 +108,6 @@ def generate_benchmark():
 
 
 if __name__ == "__main__":
-    generate_benchmark()
-    # generate_single_tc() # dataset="../data/data_5.txt"
+    # generate_benchmark()
+    dataset = "../data/data_5.txt"
+    generate_single_tc(dataset=dataset, rows=5)
