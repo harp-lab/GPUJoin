@@ -105,6 +105,11 @@ mkdir output
 python data_merge.py
 ```
 ### Submitting a job for rapids:
+- Login to theta gpu node:
+```shell
+ssh USERNAME@theta.alcf.anl.gov
+ssh thetagpusn1
+```
 - Create a job script `submit.sh`:
 ```shell
 #!/bin/bash
@@ -123,6 +128,7 @@ chmod u+x submit.sh
 - Submit the job:
 ```shell
 qsub -q single-gpu -o transitive_closure.output -e transitive_closure.error submit.sh
+qsub -q single-gpu -o transitive_closure_pandas.output -e transitive_closure_pandas.error submit.sh
 ```
 
 
