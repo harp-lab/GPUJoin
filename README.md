@@ -121,6 +121,16 @@ qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesys
 | 6990 | 24433545 | 6990 | 263.082299 |
 | 8990 | 40414545 | 8990 | 536.293174 |
 
+
+- Transitive closure using pandas on Theta `python transitive_closure_pandas.py` :
+
+
+| Number of rows | TC size | Iterations | Time (s) |
+| --- | --- | --- | --- |
+| 990 | 490545 | 990 | 17.646939 |
+| 1990 | 1981045 | 1990 | 164.124526 |
+| 2990 | 4471545 | 2990 | 803.840488 |
+
 Overflow at `n=600000`
 ```shell
 GPU join operation (non-atomic): (600000, 2) x (600000, 2)

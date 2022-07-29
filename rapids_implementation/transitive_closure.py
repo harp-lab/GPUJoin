@@ -1,6 +1,7 @@
 import re
 import cudf
 import time
+import json
 
 
 def display_time(time_start, time_end, message):
@@ -92,22 +93,25 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+    with open('transitive_closure.json', 'w') as f:
+        json.dump(result, f)
 
 
 def generate_benchmark():
     result = []
-    increment = 2000
-    n = 10990
+    increment = 1000
+    n = 990
     count = 0
     print("| Number of rows | TC size | Iterations | Time (s) |")
     print("| --- | --- | --- | --- |")
-    while n < 15000:
+    while n < 11000:
         try:
             dataset = f"../data/data_{n}.txt"
             n = int(re.search('\d+|$', dataset).group())
             record = get_transitive_closure(dataset)
             result.append(record)
-            print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+            print(
+                f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
             n += increment
         except Exception as ex:
             print(str(ex))
@@ -118,10 +122,13 @@ def generate_benchmark():
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+    with open('transitive_closure.json', 'w') as f:
+        json.dump(result, f)
 
 
 if __name__ == "__main__":
     generate_benchmark()
-    # dataset = "../data/data_555555.txt"
+    # dataset = "../data/data_5.txt"
     # n = int(re.search('\d+|$', dataset).group())
     # generate_single_tc(dataset=dataset, rows=n)
+    # generate_single_tc(dataset=dataset, rows=25)
