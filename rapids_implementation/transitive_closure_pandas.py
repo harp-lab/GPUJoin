@@ -127,7 +127,7 @@ def generate_benchmark():
 
 
 if __name__ == "__main__":
-    generate_benchmark()
-    # dataset = "../data/data_5533214.txt"
-    # # n = int(re.search('\d+|$', dataset).group())
-    # generate_single_tc(dataset=dataset, rows=25)
+    # generate_benchmark()
+    dataset = "../data/data_5533214.txt"
+    n = int(re.search('\d+|$', dataset).group())
+    generate_single_tc(dataset=dataset, rows=n)
