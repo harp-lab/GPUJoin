@@ -109,6 +109,7 @@ python data_merge.py
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
 ssh thetagpusn1
+vim 
 ```
 - Create a job script `submit.sh`:
 ```shell
@@ -128,9 +129,12 @@ chmod u+x submit.sh
 - Submit the job:
 ```shell
 qsub -q single-gpu -o transitive_closure.output -e transitive_closure.error submit.sh
-qsub -q single-gpu -o transitive_closure_pandas.output -e transitive_closure_pandas.error submit.sh
+qsub -q single-gpu -o p.output -e p.error submit.sh
 ```
-
+- Show queue:
+```shell
+qstat -u $USER
+```
 
 - Running hashgraph (python) on theta
 ```shell

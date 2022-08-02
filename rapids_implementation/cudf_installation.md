@@ -24,6 +24,8 @@ conda activate gpu_env
 ```
 conda install -c rapidsai -c nvidia -c numba -c conda-forge \
     cudf=22.06 python=3.9 cudatoolkit=11.2
+conda install -c rapidsai -c nvidia -c numba -c conda-forge \
+    cudf=22.06 cugraph python=3.9 cudatoolkit=11.2    
 ```
 - Create a test script `example.py`:
 ```
@@ -41,3 +43,4 @@ python example.py
 - [cudf installation docs](https://github.com/rapidsai/cudf)
 - [nvidia rapids kit cheatsheet](https://images.nvidia.com/aem-dam/Solutions/ai-data-science/rapids-kit/accelerated-data-science-print-getting-started-cheat-sheets.pdf)
 - [blog article on conda usage](https://carpentries-incubator.github.io/introduction-to-conda-for-data-scientists/02-working-with-environments/index.html)
+- [cugraph installation docs](https://github.com/rapidsai/cugraph#conda)

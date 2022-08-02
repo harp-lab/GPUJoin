@@ -1,6 +1,7 @@
 import re
 import pandas as pd
 import time
+import json
 
 
 def display_time(time_start, time_end, message):
@@ -92,6 +93,8 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+    with open('transitive_closure_pandas.json', 'w') as f:
+        json.dump(result, f)
 
 
 def generate_benchmark():
@@ -119,10 +122,12 @@ def generate_benchmark():
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+    with open('transitive_closure_pandas.json', 'w') as f:
+        json.dump(result, f)
 
 
 if __name__ == "__main__":
-    # generate_benchmark()
-    dataset = "../data/data_5533214.txt"
-    # n = int(re.search('\d+|$', dataset).group())
-    generate_single_tc(dataset=dataset, rows=25)
+    generate_benchmark()
+    # dataset = "../data/data_5533214.txt"
+    # # n = int(re.search('\d+|$', dataset).group())
+    # generate_single_tc(dataset=dataset, rows=25)
