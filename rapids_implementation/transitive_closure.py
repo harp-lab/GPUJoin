@@ -133,6 +133,6 @@ def generate_benchmark():
 
 if __name__ == "__main__":
     # generate_benchmark()
-    dataset = "../data/data_3083796.txt" #3083796
+    dataset = "../data/data_223001.txt" #3083796
     n = int(re.search('\d+|$', dataset).group())
     generate_single_tc(dataset=dataset, rows=n)

@@ -1,11 +1,5 @@
 ### Dataset
 
-```shell
-# Directed graph (each unordered pair of nodes is saved once): roadNet-PA.txt 
-# Pennsylvania road network
-# Nodes: 1088092 Edges: 3083796
-# FromNodeId	ToNodeId
-```
 
 [California road network](https://snap.stanford.edu/data/roadNet-CA.html) (Leskovec 2009)
 has the following properties:
@@ -123,3 +117,4 @@ Pandas final result length: 11066428
 - (Leskovec 2009) J. Leskovec, K. Lang, A. Dasgupta, M. Mahoney. Community 
   Structure in Large Networks: Natural Cluster Sizes and the Absence of Large Well-Defined Clusters. Internet Mathematics 6(1) 29--123, 2009.
 - [Real Datasets for Spatial Databases: Road Networks and Points of Interest](https://www.cs.utah.edu/~lifeifei/SpatialDataset.htm)
+- [San Francisco Road Network's Edges](https://www.cs.utah.edu/~lifeifei/research/tpq/SF.cedge)
