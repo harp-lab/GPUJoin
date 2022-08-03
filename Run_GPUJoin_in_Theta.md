@@ -109,7 +109,6 @@ python data_merge.py
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
 ssh thetagpusn1
-vim 
 ```
 - Create a job script `submit.sh`:
 ```shell
@@ -174,22 +173,6 @@ conda activate /home/arsho/gpujoinenv
 - List installed packages in the current environment:
 ```shell
 conda list
-```
-
-- Loaded `miniconda` and tried to create an environment
-```
-module load miniconda-3
-conda create -p /envs/gpujoin_env_2 --clone $CONDA_PREFIX
-```
-Got the following error:
-```shell
-(miniconda-3/latest/base) arsho@thetalogin4:~> conda create -p /envs/gpujoin_env --clone $CONDA_PREFIX
-Source:      /soft/datascience/conda/miniconda3/latest
-Destination: /envs/gpujoin_env
-The following packages cannot be cloned out of the root environment:
- - defaults/linux-64::conda-4.8.3-py37_0
-Packages: 175
-Files: 117276
 ```
 
 ### Misc commands

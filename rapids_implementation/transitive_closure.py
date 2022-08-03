@@ -57,11 +57,16 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
     while True:
         if show_timing:
             start_time_inner = time.perf_counter()
-        temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
-        temp_projection = get_projection(temp_join, COLUMN_NAMES)
-        projection_size = len(temp_projection)
+        temp_projection = relation_2.merge(relation_1, on=COLUMN_NAMES[0],
+                                           how="inner",
+                                           suffixes=(
+                                               '_relation_1',
+                                               '_relation_2')).drop(
+            [COLUMN_NAMES[0]], axis=1).drop_duplicates()
+        temp_projection.columns = COLUMN_NAMES
         previous_result_size = len(temp_result)
-        temp_result = get_union(temp_result, temp_projection)
+        temp_result = cudf.concat([temp_result, temp_projection],
+                                  ignore_index=True).drop_duplicates()
         current_result_size = len(temp_result)
         if previous_result_size == current_result_size:
             i += 1
@@ -69,7 +74,7 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
         if show_timing:
             end_time_inner = time.perf_counter()
-            message = f"Iteration {i}, Projection size {projection_size}, " \
+            message = f"Iteration {i}, " \
                       f"Result size {current_result_size}, Time"
             display_time(start_time_inner, end_time_inner, message)
         i += 1
@@ -128,7 +133,6 @@ def generate_benchmark():
 
 if __name__ == "__main__":
     # generate_benchmark()
-    dataset = "../data/data_5533214.txt"
+    dataset = "../data/data_3083796.txt" #3083796
     n = int(re.search('\d+|$', dataset).group())
     generate_single_tc(dataset=dataset, rows=n)
-    # generate_single_tc(dataset=dataset, rows=25)
