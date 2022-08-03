@@ -1,5 +1,5 @@
 import re
-import pandas as pd
+import cudf
 import time
 import json
 
@@ -28,8 +28,8 @@ def get_projection(result, column_names=['column 1', 'column 2']):
 
 
 def get_union(relation_1, relation_2):
-    return pd.concat([relation_1, relation_2],
-                     ignore_index=True).drop_duplicates()
+    return cudf.concat([relation_1, relation_2],
+                       ignore_index=True).drop_duplicates()
 
 
 def get_dataset(filename, column_names=['column 1', 'column 2'],
@@ -38,8 +38,8 @@ def get_dataset(filename, column_names=['column 1', 'column 2'],
         nrows = rows
     else:
         nrows = int(re.search('\d+|$', filename).group())
-    return pd.read_csv(filename, sep='\t', header=None,
-                       names=column_names, nrows=nrows)
+    return cudf.read_csv(filename, sep='\t', header=None,
+                         names=column_names, nrows=nrows)
 
 
 def get_transitive_closure(dataset, show_timing=False, rows=None):
@@ -57,7 +57,6 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
     while True:
         if show_timing:
             start_time_inner = time.perf_counter()
-
         temp_projection = relation_2.merge(relation_1, on=COLUMN_NAMES[0],
                                            how="inner",
                                            suffixes=(
@@ -66,8 +65,8 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
             [COLUMN_NAMES[0]], axis=1).drop_duplicates()
         temp_projection.columns = COLUMN_NAMES
         previous_result_size = len(temp_result)
-        temp_result = pd.concat([temp_result, temp_projection],
-                                ignore_index=True).drop_duplicates()
+        temp_result = cudf.concat([temp_result, temp_projection],
+                                  ignore_index=True).drop_duplicates()
         current_result_size = len(temp_result)
         if previous_result_size == current_result_size:
             i += 1
@@ -79,11 +78,11 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
                       f"Result size {current_result_size}, Time"
             display_time(start_time_inner, end_time_inner, message)
         i += 1
-
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
     if show_timing:
         print(f"Total iterations: {i}")
+        print(temp_result)
     return n, len(temp_result), i, time_took
 
 
@@ -100,7 +99,7 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
-    with open('transitive_closure_pandas.json', 'w') as f:
+    with open('transitive_closure.json', 'w') as f:
         json.dump(result, f)
 
 
@@ -129,12 +128,12 @@ def generate_benchmark():
     print("| --- | --- | --- | --- |")
     for record in result:
         print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
-    with open('transitive_closure_pandas.json', 'w') as f:
+    with open('transitive_closure.json', 'w') as f:
         json.dump(result, f)
 
 
 if __name__ == "__main__":
     # generate_benchmark()
-    dataset = "../data/data_223001.txt"  # 223001
+    dataset = "../data/data_223001.txt" #223001
     n = int(re.search('\d+|$', dataset).group())
     generate_single_tc(dataset=dataset, rows=n)
