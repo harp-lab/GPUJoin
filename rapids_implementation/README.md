@@ -71,6 +71,14 @@ flowchart TD
 | 223001 | 80498014 | 287 | 64.129467 (chained) |
 | 223001 | 80498014 | 287 | 64.160251 (original) |
 
+| Dataset | Number of rows | TC size | Iterations | Time (s) |
+| --- | --- | --- | --- | --- |
+| cal.cedge | 21693 | 501755 | 195 | 4.054477 |
+| SF.cedge | 223001 | 80498014 | 287 | 64.265064 |
+| NA.cedge | 179179 | 275761936 | 3277 | 1513.897926 |
+| TG.cedge | 23874 | 481121 | 58 | 1.157264 |
+| OL.cedge | 7035 | 146120 | 64 | 0.544352 |
+
 -`df` benchmark
 
 | Number of rows | TC size | Iterations | Time (s) |
@@ -82,6 +90,24 @@ The cuDF shows significant performance gains for the same dataset using the syst
 | Metric               | cuDF (s) | Pandas DF (s) | Speedup |
 |----------------------|----------|---------------|--------|
 | Execution time       | 64.160251 | 4650.348536     | 72.5x  |
+
+### Theta run
+```shell
+Job routed to queue "full-node".
+WARNING: Filesystem attribute not set for this job submission.
+This job will be set to request all filesystems.  In the event
+of a filesystem outage, this job may be put on hold unnecessarily.
+Setting attrs to:  {'filesystems': 'home,grand,eagle,theta-fs0'}
+10097464
+
+Job routed to queue "full-node".
+WARNING: Filesystem attribute not set for this job submission.
+This job will be set to request all filesystems.  In the event
+of a filesystem outage, this job may be put on hold unnecessarily.
+Setting attrs to:  {'filesystems': 'home,grand,eagle,theta-fs0'}
+10097462
+
+```
 
 ### Reference
 - [Documentation on CUDF Drop](https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.drop.html)
