@@ -127,6 +127,8 @@ system configuration mentioned.
 | TG.cedge          | 1.157264  | 1.609337        | 1.4x    |
 | OL.cedge          | 0.544352  | 0.490264        | 0.9x    |
 
+![alt performance comparison](screenshots/tc_performance_comparison.png)
+
 ### Notes
 
 | Number of rows | TC size | Iterations | Time (s)            |
