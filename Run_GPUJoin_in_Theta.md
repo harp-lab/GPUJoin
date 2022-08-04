@@ -182,6 +182,10 @@ conda list
 ```shell
 nvidia-smi -L
 ```
+- Remove untracked files:
+```shell
+git clean -f
+```
 
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
