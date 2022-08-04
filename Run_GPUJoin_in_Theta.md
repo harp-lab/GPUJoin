@@ -123,12 +123,13 @@ cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/rapids_implementat
 ```
 - Change the permission
 ```shell
-chmod u+x submit.sh
+chmod u+x cudf_submit.sh
+chmod u+x pandas_submit.sh
 ```
 - Submit the job:
 ```shell
-qsub -q single-gpu -o transitive_closure.output -e transitive_closure.error submit.sh
-qsub -q single-gpu -o p.output -e p.error submit.sh
+qsub -O cudf_submit -e cudf_submit.error cudf_submit.sh
+qsub -O pandas_submit -e pandas_submit.error pandas_submit.sh
 ```
 - Show queue:
 ```shell

@@ -42,22 +42,15 @@ def get_dataset(filename, column_names=['column 1', 'column 2'],
                        names=column_names, nrows=nrows)
 
 
-def get_transitive_closure(dataset, show_timing=False, rows=None):
+def get_transitive_closure(dataset):
     COLUMN_NAMES = ['column 1', 'column 2']
-    if rows == None:
-        n = int(re.search('\d+|$', dataset).group())
-    else:
-        n = rows
+    rows = int(re.search('\d+|$', dataset).group())
+    start_time_outer = time.perf_counter()
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
-    # print(f"Input: \n{relation_1}")
     relation_2 = get_reverse(relation_1, COLUMN_NAMES)
     temp_result = relation_1
-    start_time_outer = time.perf_counter()
     i = 0
     while True:
-        if show_timing:
-            start_time_inner = time.perf_counter()
-
         temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
         temp_projection = get_projection(temp_join, COLUMN_NAMES)
         projection_size = len(temp_projection)
@@ -68,18 +61,12 @@ def get_transitive_closure(dataset, show_timing=False, rows=None):
             i += 1
             break
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
-        if show_timing:
-            end_time_inner = time.perf_counter()
-            message = f"Iteration {i}, Projection size {projection_size}, " \
-                      f"Result size {current_result_size}, Time"
-            display_time(start_time_inner, end_time_inner, message)
         i += 1
 
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
-    if show_timing:
-        print(f"Total iterations: {i}")
-    return n, len(temp_result), i, time_took
+    time_took = f"{time_took:.6f}"
+    return rows, len(temp_result), i, time_took
 
 
 def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
@@ -129,8 +116,9 @@ def generate_benchmark(iterative=True, datasets=None):
                 record = list(record)
                 record.insert(0, key)
                 result.append(record)
-                print(
-                    f"| {record[0]} | {record[1]} | {record[2]} | {record[3]} | {record[4]:.6f} |")
+                message = " | ".join([str(s) for s in record])
+                message = "| " + message + " |"
+                print(message)
             except Exception as ex:
                 print(str(ex))
                 break
@@ -138,13 +126,7 @@ def generate_benchmark(iterative=True, datasets=None):
     with open('transitive_closure_pandas.json', 'w') as f:
         json.dump(result, f)
 
-
 if __name__ == "__main__":
-    # generate_benchmark()
-    # dataset = "../data/data_223001.txt"  # 223001
-    # n = int(re.search('\d+|$', dataset).group())
-    # generate_single_tc(dataset=dataset, rows=n)
-
     generate_benchmark(iterative=False, datasets={
         "cal.cedge": "../data/data_21693.txt",
         "SF.cedge": "../data/data_223001.txt",

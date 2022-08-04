@@ -1,6 +1,6 @@
 import re
 import cudf
-import timeit
+import time
 import json
 
 
@@ -45,6 +45,7 @@ def get_dataset(filename, column_names=['column 1', 'column 2'],
 def get_transitive_closure(dataset):
     COLUMN_NAMES = ['column 1', 'column 2']
     rows = int(re.search('\d+|$', dataset).group())
+    start_time_outer = time.perf_counter()
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
     relation_2 = get_reverse(relation_1, COLUMN_NAMES)
     temp_result = relation_1
@@ -60,7 +61,10 @@ def get_transitive_closure(dataset):
             break
         relation_2 = get_reverse(temp_projection, COLUMN_NAMES)
         i += 1
-    return rows, len(temp_result), i
+    end_time_outer = time.perf_counter()
+    time_took = end_time_outer - start_time_outer
+    time_took = f"{time_took:.6f}"
+    return rows, len(temp_result), i, time_took
 
 
 def generate_benchmark(iterative=True, datasets=None):
@@ -87,19 +91,15 @@ def generate_benchmark(iterative=True, datasets=None):
     if datasets:
         print("| Dataset | Number of rows | TC size | Iterations | Time (s) |")
         print("| --- | --- | --- | --- | --- |")
-        repeat = 10
         for key, dataset in datasets.items():
             try:
-                globals()['d'] = dataset
-                time_took = timeit.timeit('get_transitive_closure(d)',
-                                          number=repeat,
-                                          globals=globals())
                 record = get_transitive_closure(dataset)
                 record = list(record)
-                record.append(f"{time_took:.6f}")
                 record.insert(0, key)
                 result.append(record)
-                print(" | ".join([str(s) for s in record]))
+                message = " | ".join([str(s) for s in record])
+                message = "| " + message + " |"
+                print(message)
             except Exception as ex:
                 print(str(ex))
                 break

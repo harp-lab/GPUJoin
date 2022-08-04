@@ -1,7 +1,6 @@
 ## cuDF vs Pandas DataFrame performance comparison
 
-The following sections include the system configuration, the dataset, the flowchart, and the benchmarking result. 
-This result is generated using `timeit` module of Python.
+The following sections include the system configuration, the dataset, the flowchart, and the benchmarking result.
 
 ### System configuration
 - GPU information:

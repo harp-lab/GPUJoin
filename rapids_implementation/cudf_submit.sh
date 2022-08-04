@@ -1,6 +1,6 @@
 #!/bin/bash
 #COBALT -n 1
-#COBALT -t 120
+#COBALT -t 660
 #COBALT -A dist_relational_alg
 module load conda/2022-07-01
 conda activate /home/arsho/gpujoinenv
