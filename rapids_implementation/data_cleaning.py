@@ -1,15 +1,31 @@
-import re
 import cudf
+import os
 
 
 def modify_dataset(filename):
     data = cudf.read_csv(filename, sep=' ',
                          header=None, names=[0, 1, 2, 3]).drop(columns=[0, 3])
-    mod_filename = filename + "1"
-    data.to_csv(mod_filename, header=False, index=False, sep='\t')
+    original_copy = filename.split(".txt")[0] + "_original.txt"
+    os.rename(filename, original_copy)
+    data.to_csv(filename, header=False, index=False, sep='\t')
+    print(f"Modified dataset: {filename}")
 
 
 if __name__ == "__main__":
-    dataset = "../data/data_223001.txt"  # 3083796
-    n = int(re.search('\d+|$', dataset).group())
-    modify_dataset(dataset)
+    try:
+        dataset = "../data/data_223001.txt"
+        modify_dataset(dataset)
+
+        dataset = "../data/data_21693.txt"
+        modify_dataset(dataset)
+
+        dataset = "../data/data_179179.txt"
+        modify_dataset(dataset)
+
+        dataset = "../data/data_23874.txt"
+        modify_dataset(dataset)
+
+        dataset = "../data/data_7035.txt"
+        modify_dataset(dataset)
+    except Exception as ex:
+        print(f"Error: {str(ex)}")

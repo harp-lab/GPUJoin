@@ -97,37 +97,56 @@ def generate_single_tc(dataset="../data/data_550000.txt", rows=100):
         json.dump(result, f)
 
 
-def generate_benchmark():
+def generate_benchmark(iterative=True, datasets=None):
     result = []
-    increment = 1000
-    n = 990
-    count = 0
-    print("| Number of rows | TC size | Iterations | Time (s) |")
-    print("| --- | --- | --- | --- |")
-    while n < 11000:
-        try:
-            dataset = f"../data/data_{n}.txt"
-            n = int(re.search('\d+|$', dataset).group())
-            record = get_transitive_closure(dataset)
-            result.append(record)
-            print(
-                f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
-            n += increment
-        except Exception as ex:
-            print(str(ex))
-            break
-        count += 1
+    if iterative:
+        print("| Number of rows | TC size | Iterations | Time (s) |")
+        print("| --- | --- | --- | --- |")
+        increment = 1000
+        n = 990
+        count = 0
+        while n < 11000:
+            try:
+                dataset = f"../data/data_{n}.txt"
+                n = int(re.search('\d+|$', dataset).group())
+                record = get_transitive_closure(dataset)
+                result.append(record)
+                print(
+                    f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+                n += increment
+            except Exception as ex:
+                print(str(ex))
+                break
+            count += 1
+    if datasets:
+        print("| Dataset | Number of rows | TC size | Iterations | Time (s) |")
+        print("| --- | --- | --- | --- | --- |")
+        for key, dataset in datasets.items():
+            try:
+                record = get_transitive_closure(dataset)
+                record = list(record)
+                record.insert(0, key)
+                result.append(record)
+                print(
+                    f"| {record[0]} | {record[1]} | {record[2]} | {record[3]} | {record[4]:.6f} |")
+            except Exception as ex:
+                print(str(ex))
+                break
     print("\n")
-    print("| Number of rows | TC size | Iterations | Time (s) |")
-    print("| --- | --- | --- | --- |")
-    for record in result:
-        print(f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
     with open('transitive_closure.json', 'w') as f:
         json.dump(result, f)
 
 
 if __name__ == "__main__":
     # generate_benchmark()
-    dataset = "../data/data_223001.txt"
-    n = int(re.search('\d+|$', dataset).group())
-    generate_single_tc(dataset=dataset, rows=n)
+    # dataset = "../data/data_223001.txt"
+    # n = int(re.search('\d+|$', dataset).group())
+    # generate_single_tc(dataset=dataset, rows=n)
+
+    generate_benchmark(iterative=False, datasets={
+        "cal.cedge": "../data/data_21693.txt",
+        "SF.cedge": "../data/data_223001.txt",
+        "NA.cedge": "../data/data_179179.txt",
+        "TG.cedge": "../data/data_23874.txt",
+        "OL.cedge": "../data/data_7035.txt"
+    })
