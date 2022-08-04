@@ -25,13 +25,32 @@ The following sections include the system configuration, the dataset, the flowch
 
 ### Dataset
 
-We used [San Francisco Road Network's Edges](https://www.cs.utah.edu/~lifeifei/research/tpq/SF.cedge) dataset from the 
-[Real Datasets for Spatial Databases: Road Networks and Points of Interest](https://www.cs.utah.edu/~lifeifei/SpatialDataset.htm).
+We used [Gnutella peer-to-peer network, August 9 2002 (p2p-Gnutella09)](https://snap.stanford.edu/data/p2p-Gnutella09.html):
+- Nodes	8114
+- Edges	26013
+- Matrix size 26013 x 2
 
-The dataset has the following properties:
 
-- Matrix size 223001 x 2 (source - destination)
-- File size 2.8M 
+We used [Gnutella peer-to-peer network, August 4 2002 (p2p-Gnutella04)](https://snap.stanford.edu/data/p2p-Gnutella04.html):
+- Nodes	10876
+- Edges	39994
+- Matrix size 39994 x 2
+
+We used 4 datasets from the 
+[Real Datasets for Spatial Databases: Road Networks and Points of Interest](https://www.cs.utah.edu/~lifeifei/SpatialDataset.htm):
+
+- [California Road Network's Edges (cal.cedge)](https://www.cs.utah.edu/~lifeifei/research/tpq/cal.cedge): 
+  - Matrix size 21693 x 2 (source - destination)
+  - File size 233K 
+- [San Francisco Road Network's Edges (SF.cedge)](https://www.cs.utah.edu/~lifeifei/research/tpq/SF.cedge): 
+  - Matrix size 223001 x 2 (source - destination)
+  - File size 2.8M 
+- [TG Road Network's Edges (TG.cedge)](https://www.cs.utah.edu/~lifeifei/research/tpq/TG.cedge): 
+  - Matrix size 23874 x 2 (source - destination)
+  - File size 252K
+- [OL Road Network's Edges (OL.cedge)](https://www.cs.utah.edu/~lifeifei/research/tpq/OL.cedge): 
+  - Matrix size 7035 x 2 (source - destination)
+  - File size 67K 
 
 ### Benchmarks
 
@@ -62,52 +81,43 @@ flowchart TD
 ```
 
 ### Pandas vs CUDF performance comparison
-- For `data_223001` datasets (44K data_223001.txt):
 
 - `cuDF` benchmark
 
-| Number of rows | TC size | Iterations | Time (s)            |
-| --- | --- | --- |---------------------|
-| 223001 | 80498014 | 287 | 64.129467 (chained) |
-| 223001 | 80498014 | 287 | 64.160251 (original) |
+| Dataset     | Number of rows | TC size | Iterations | Time (s) |
+|-------------| --- | --- | --- | --- |
+| cal.cedge   | 21693 | 501755 | 195 | 4.054477 |
+| SF.cedge    | 223001 | 80498014 | 287 | 64.265064 |
+| TG.cedge    | 23874 | 481121 | 58 | 1.157264 |
+| OL.cedge    | 7035 | 146120 | 64 | 0.544352 |
 
-| Dataset | Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- | --- |
-| cal.cedge | 21693 | 501755 | 195 | 4.054477 |
-| SF.cedge | 223001 | 80498014 | 287 | 64.265064 |
-| NA.cedge | 179179 | 275761936 | 3277 | 1513.897926 |
-| TG.cedge | 23874 | 481121 | 58 | 1.157264 |
-| OL.cedge | 7035 | 146120 | 64 | 0.544352 |
+- `df` benchmark
 
--`df` benchmark
+| Dataset    | Number of rows | TC size | Iterations | Time (s) |
+|------------|----------------| --- | --- | --- |
+| cal.cedge  | 21693          | 501755 | 195 | 5.427228 |
+| SF.cedge   | 223001         | 80498014 | 287 | 4650.348536 |
+| TG.cedge   | 23874          | 481121 | 58 | 1.609337 |
+| OL.cedge   | 7035           | 146120 | 64 | 0.490264 |
 
-| Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- |
-| 223001 | 80498014 | 287 | 4650.348536 |
 
 The cuDF shows significant performance gains for the same dataset using the system configuration mentioned.
 
-| Metric               | cuDF (s) | Pandas DF (s) | Speedup |
-|----------------------|----------|---------------|--------|
-| Execution time       | 64.160251 | 4650.348536     | 72.5x  |
+| Dataset        | cuDF (s) | Pandas DF (s) | Speedup |
+|----------------|----------|---------------|---------|
+| cal.cedge | 4.054477 | 5.427228     | 1.3x    |
+| SF.cedge | 64.265064 | 4650.348536     | 72.4x   |
+| TG.cedge | 1.157264 | 1.609337     | 1.4x    |
+| OL.cedge | 0.544352 | 0.490264     | 0.9x    |
 
-### Theta run
-```shell
-Job routed to queue "full-node".
-WARNING: Filesystem attribute not set for this job submission.
-This job will be set to request all filesystems.  In the event
-of a filesystem outage, this job may be put on hold unnecessarily.
-Setting attrs to:  {'filesystems': 'home,grand,eagle,theta-fs0'}
-10097464
+### Notes
 
-Job routed to queue "full-node".
-WARNING: Filesystem attribute not set for this job submission.
-This job will be set to request all filesystems.  In the event
-of a filesystem outage, this job may be put on hold unnecessarily.
-Setting attrs to:  {'filesystems': 'home,grand,eagle,theta-fs0'}
-10097462
+| Number of rows | TC size | Iterations | Time (s)            |
+|----------------| --- | --- |---------------------|
+| 223001         | 80498014 | 287 | 64.129467 (chained) |
+| 223001         | 80498014 | 287 | 64.160251 (original) |
+| 179179         | 275761936 | 3277 | 1513.897926 |
 
-```
 
 ### Reference
 - [Documentation on CUDF Drop](https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.drop.html)
@@ -117,5 +127,4 @@ Setting attrs to:  {'filesystems': 'home,grand,eagle,theta-fs0'}
 - (Leskovec 2009) J. Leskovec, K. Lang, A. Dasgupta, M. Mahoney. Community 
   Structure in Large Networks: Natural Cluster Sizes and the Absence of Large Well-Defined Clusters. Internet Mathematics 6(1) 29--123, 2009.
 - [Real Datasets for Spatial Databases: Road Networks and Points of Interest](https://www.cs.utah.edu/~lifeifei/SpatialDataset.htm)
-- [San Francisco Road Network's Edges](https://www.cs.utah.edu/~lifeifei/research/tpq/SF.cedge)
 - [Flowcharts - Basic Syntax](https://mermaid-js.github.io/mermaid/#/flowchart)

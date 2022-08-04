@@ -109,6 +109,7 @@ python data_merge.py
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
 ssh thetagpusn1
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/rapids_implementation/
 ```
 - Create a job script `submit.sh`:
 ```shell
