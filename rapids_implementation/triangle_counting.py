@@ -59,6 +59,7 @@ def generate_benchmark(iterative=True, datasets=None):
         json.dump(result, f)
 
 if __name__ == "__main__":
+    test = pd.Series([1,2,3,None,4])
     generate_benchmark(iterative=False, datasets={
         "cal.cedge": "../data/data_21693.txt",
         "SF.cedge": "../data/data_223001.txt",
