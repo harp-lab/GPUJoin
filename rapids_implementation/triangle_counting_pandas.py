@@ -66,10 +66,10 @@ if __name__ == "__main__":
         "OL.cedge": "../data/data_7035.txt"
     })
 
-    # generate_benchmark(iterative=False, datasets={
-    #     "p2p-Gnutella09": "../data/data_26013.txt",
-    #     "p2p-Gnutella04": "../data/data_39994.txt"
-    # })
+    generate_benchmark(iterative=False, datasets={
+        "p2p-Gnutella09": "../data/data_26013.txt",
+        "p2p-Gnutella04": "../data/data_39994.txt"
+    })
 
 
     # generate_benchmark(iterative=False, datasets={
