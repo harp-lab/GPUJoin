@@ -65,7 +65,7 @@ if __name__ == "__main__":
         "SF.cedge": "../data/data_223001.txt",
         "TG.cedge": "../data/data_23874.txt",
         "OL.cedge": "../data/data_7035.txt",
-        "roadNet-CA": "../data/data_5533214.txt"
+        "roadNet-CA": "../data/data_5533214.txt",
         "p2p-Gnutella09": "../data/data_26013.txt",
         "p2p-Gnutella04": "../data/data_39994.txt",
         "IGNORE": "../data/data_21693.txt",
