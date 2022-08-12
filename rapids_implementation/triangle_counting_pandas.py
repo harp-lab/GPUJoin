@@ -72,5 +72,7 @@ if __name__ == "__main__":
     # })
     generate_benchmark(iterative=False, datasets={
         "IGNORE": "../data/data_21693.txt",
-        "twitch": "../data/data_6797557.txt"
+        "twitch": "../data/data_6797557.txt",
+        "roadNet-PA": "../data/data_3083796.txt",
+        "roadNet-TX": "../data/data_3843320.txt",
     })
