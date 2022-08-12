@@ -52,17 +52,19 @@ def get_transitive_closure(dataset):
     temp_result = relation_1
     i = 0
     while True:
-        temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
-        temp_projection = get_projection(temp_join, COLUMN_NAMES)
+        temp_projection = get_projection(get_join(relation_2, relation_1,
+                                                  COLUMN_NAMES), COLUMN_NAMES)
         previous_result_size = len(temp_result)
         temp_result = get_union(temp_result, temp_projection)
         current_result_size = len(temp_result)
         if previous_result_size == current_result_size:
             i += 1
             break
+        del relation_2
         relation_2 = temp_projection
         relation_2.columns = COLUMN_NAMES[::-1]
         i += 1
+        del temp_projection
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
     time_took = f"{time_took:.6f}"
@@ -113,12 +115,12 @@ def generate_benchmark(iterative=True, datasets=None):
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
         "cal.cedge": "../data/data_21693.txt",
-        "SF.cedge": "../data/data_223001.txt",
+        # "SF.cedge": "../data/data_223001.txt",
         "NA.cedge": "../data/data_179179.txt",
         "TG.cedge": "../data/data_23874.txt",
         "OL.cedge": "../data/data_7035.txt",
-        "p2p-Gnutella09": "../data/data_26013.txt",
-        "p2p-Gnutella04": "../data/data_39994.txt"
+        # "p2p-Gnutella09": "../data/data_26013.txt",
+        # "p2p-Gnutella04": "../data/data_39994.txt"
     })
 
     # generate_benchmark(iterative=False, datasets={

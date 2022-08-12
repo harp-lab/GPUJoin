@@ -14,7 +14,7 @@ def draw_bar_chart(xtick_labels, first_dataset,
     width = 0.35
 
     # plt.figure()
-    fig, ax = plt.subplots(figsize=(8, 8))
+    fig, ax = plt.subplots(figsize=(10, 6))
     rects1 = ax.bar(label_locations - width / 2, first_dataset, width,
                     label=first_dataset_title)
     rects2 = ax.bar(label_locations + width / 2, second_dataset, width,
