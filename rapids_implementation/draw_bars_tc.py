@@ -13,7 +13,7 @@ def draw_bar_chart(xtick_labels, first_dataset,
     width = 0.35
 
     # plt.figure()
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(8, 4))
     rects1 = ax.bar(label_locations - width / 2, first_dataset, width,
                     label=first_dataset_title)
     rects2 = ax.bar(label_locations + width / 2, second_dataset, width,
@@ -28,15 +28,17 @@ def draw_bar_chart(xtick_labels, first_dataset,
     ax.set_xticks(label_locations, xtick_labels)
     ax.legend()
 
-    ax.bar_label(rects1, fmt='%.2f', padding=5)
-    ax.bar_label(rects2, fmt='%.2f', padding=5)
+    ax.bar_label(rects1, fmt='%.2f')
+    ax.bar_label(rects2, fmt='%.2f')
 
     plt.yscale("log")
     plt.gca().yaxis.set_major_formatter(ScalarFormatter())
 
     fig.tight_layout()
-    # plt.figure()
-    plt.show()
+    figure_path = 'screenshots/tc.png'
+    fig.savefig(figure_path, dpi=600, bbox_inches="tight")
+    print(f"Figure saved in {figure_path}")
+
 
 
 if __name__ == "__main__":
@@ -49,7 +51,7 @@ if __name__ == "__main__":
                       0.474801]
     second_dataset_title = "Pandas"
     x_label = "Datasets"
-    y_label = "Execution Time (s)"
+    y_label = "Execution Time (seconds in log scale)"
     title = "cuDF and Pandas DF execution time comparison"
     draw_bar_chart(dataset_labels, first_dataset, first_dataset_title,
                    second_dataset, second_dataset_title,
