@@ -9,12 +9,6 @@ def display_time(time_start, time_end, message):
     print(f"Debug: {message}: {time_took:.6f}s")
 
 
-def get_reverse(relation, column_names=['column 1', 'column 2']):
-    reverse_relation = relation[relation.columns[::-1]]
-    reverse_relation.columns = column_names
-    return reverse_relation
-
-
 def get_join(relation_1, relation_2, column_names=['column 1', 'column 2']):
     return relation_1.merge(relation_2, on=column_names[0],
                             how="inner",
@@ -47,7 +41,8 @@ def get_transitive_closure(dataset):
     rows = int(re.search('\d+|$', dataset).group())
     start_time_outer = time.perf_counter()
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
-    relation_2 = get_reverse(relation_1, COLUMN_NAMES)
+    relation_2 = relation_1.copy()
+    relation_2.columns = COLUMN_NAMES[::-1]
     temp_result = relation_1
     i = 0
 
@@ -129,6 +124,7 @@ def generate_benchmark(iterative=True, datasets=None):
     with open('transitive_closure_pandas.json', 'w') as f:
         json.dump(result, f)
 
+
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
         "cal.cedge": "../data/data_21693.txt",
@@ -138,7 +134,6 @@ if __name__ == "__main__":
         "p2p-Gnutella09": "../data/data_26013.txt",
         "p2p-Gnutella04": "../data/data_39994.txt"
     })
-
 
     # generate_benchmark(iterative=False, datasets={
     #     "data 3": "../data/data_3.txt",

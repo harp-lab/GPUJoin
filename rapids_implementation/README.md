@@ -80,14 +80,14 @@ python transitive_closure_pandas.py
 
 ```mermaid
 flowchart TD
-    B["result = G"] --> C["r<sub>2</sub> = #961;<sub>0/1</sub>(G)"]
-    C --> D["projection = #960;<sub>1, 2</sub>(r<sub>2</sub> #8904;<sub>0</sub> G)"]
+    B["result = G"] --> C["r = #961;<sub>0/1</sub>(G)"]
+    C --> D["projection = #960;<sub>1, 2</sub>(r #8904;<sub>0</sub> G)"]
     D --> E["old_result_size = length(result)"]
     E --> F["result = projection #8899; G"]
     F --> G["new_result_size = length(result)"]
     G --> H{Is old_result_size = new_result_size?}
     H --> |Yes| I[return result]
-    H --> |No| J["r<sub>2</sub> = #961;<sub>0/1</sub>(projection)"]
+    H --> |No| J["r = #961;<sub>0/1</sub>(projection)"]
     J --> D
 ```
 
@@ -172,6 +172,7 @@ Figure: Transitive closure comparison
 | SF.cedge          | 64.265064 | 4650.348536     | 72.4x   |
 | TG.cedge          | 1.157264  | 1.609337        | 1.4x    |
 | OL.cedge          | 0.544352  | 0.490264        | 0.9x    |
+
 
 ### Reference
 

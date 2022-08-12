@@ -9,12 +9,6 @@ def display_time(time_start, time_end, message):
     print(f"Debug: {message}: {time_took:.6f}s")
 
 
-def get_reverse(relation, column_names=['column 1', 'column 2']):
-    reverse_relation = relation[relation.columns[::-1]]
-    reverse_relation.columns = column_names
-    return reverse_relation
-
-
 def get_join(relation_1, relation_2, column_names=['column 1', 'column 2']):
     return relation_1.merge(relation_2, on=column_names[0],
                             how="inner",
