@@ -115,12 +115,11 @@ def generate_benchmark(iterative=True, datasets=None):
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
         "cal.cedge": "../data/data_21693.txt",
-        # "SF.cedge": "../data/data_223001.txt",
-        "NA.cedge": "../data/data_179179.txt",
+        "SF.cedge": "../data/data_223001.txt",
         "TG.cedge": "../data/data_23874.txt",
         "OL.cedge": "../data/data_7035.txt",
-        # "p2p-Gnutella09": "../data/data_26013.txt",
-        # "p2p-Gnutella04": "../data/data_39994.txt"
+        "p2p-Gnutella09": "../data/data_26013.txt",
+        "p2p-Gnutella04": "../data/data_39994.txt"
     })
 
     # generate_benchmark(iterative=False, datasets={
