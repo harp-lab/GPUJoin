@@ -42,11 +42,11 @@ def draw_bar_chart(xtick_labels, first_dataset,
 if __name__ == "__main__":
     dataset_labels = ['p2p-Gnutella09', 'p2p-Gnutella04',
                       'cal.cedge', 'SF.cedge', 'TG.cedge', 'OL.cedge']
-    first_dataset = [4.636441, 13.969293, 4.054477, 64.265064, 1.157264,
-                     0.544352]
+    first_dataset = [3.881797, 14.104549, 3.883682, 64.235956, 1.191066,
+                     0.557429]
     first_dataset_title = "cuDF"
-    second_dataset = [166.969241, 577.280656, 5.427228, 4650.348536, 1.609337,
-                      0.490264]
+    second_dataset = [167.143291, 569.249333, 5.769209, 4582.067635, 1.400392,
+                      0.474801]
     second_dataset_title = "Pandas"
     x_label = "Datasets"
     y_label = "Execution Time (s)"
@@ -54,4 +54,3 @@ if __name__ == "__main__":
     draw_bar_chart(dataset_labels, first_dataset, first_dataset_title,
                    second_dataset, second_dataset_title,
                    x_label, y_label)
-

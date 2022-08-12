@@ -108,24 +108,24 @@ flowchart TD
 
 | Dataset        | Number of rows   | TC size   | Iterations   | Time (s)    |
 |----------------|------------------|-----------|--------------|-------------|
-| p2p-Gnutella09 | 26013            | 21402960  | 20           | 166.969241  |
-| p2p-Gnutella04 | 39994            | 47059527  | 26           | 577.280656  |
-| cal.cedge      | 21693            | 501755    | 195          | 5.427228    |
-| SF.cedge       | 223001           | 80498014  | 287          | 4650.348536 |
-| TG.cedge       | 23874            | 481121    | 58           | 1.609337    |
-| OL.cedge       | 7035             | 146120    | 64           | 0.490264    |
+| p2p-Gnutella09 | 26013            | 21402960  | 20           | 167.143291  |
+| p2p-Gnutella04 | 39994            | 47059527  | 26           | 569.249333  |
+| cal.cedge      | 21693            | 501755    | 195          | 5.769209    |
+| SF.cedge       | 223001           | 80498014  | 287          | 4582.067635 |
+| TG.cedge       | 23874            | 481121    | 58           | 1.400392    |
+| OL.cedge       | 7035             | 146120    | 64           | 0.474801    |
 
 The cuDF shows significant performance gains for the same dataset using the
 system configuration mentioned.
 
 | Dataset           | cuDF (s)  | Pandas DF (s)   | Speedup |
 |-------------------|-----------|-----------------|---------|
-| p2p-Gnutella09    | 4.636441  | 166.969241      | 36.0x   |
-| p2p-Gnutella04    | 13.969293 | 577.280656      | 41.3x   |
-| cal.cedge         | 4.054477  | 5.427228        | 1.3x    |
-| SF.cedge          | 64.265064 | 4650.348536     | 72.4x   |
-| TG.cedge          | 1.157264  | 1.609337        | 1.4x    |
-| OL.cedge          | 0.544352  | 0.490264        | 0.9x    |
+| p2p-Gnutella09    | 3.881797  | 167.143291      | 43.1x   |
+| p2p-Gnutella04    | 14.104549 | 569.249333      | 40.4x   |
+| cal.cedge         | 3.883682  | 5.769209        | 1.5x    |
+| SF.cedge          | 64.235956 | 4582.067635     | 71.3x   |
+| TG.cedge          | 1.191066  | 1.400392        | 1.2x    |
+| OL.cedge          | 0.557429  | 0.474801        | 0.9x    |
 
 ![alt performance comparison](screenshots/tc.png)
 
@@ -151,6 +151,27 @@ Figure: Transitive closure comparison
 | TG.cedge       | 23874            | 481121    | 58           | 1.157264   |
 | OL.cedge       | 7035             | 146120    | 64           | 0.544352   |
 
+- Old Pandas
+
+| Dataset        | Number of rows   | TC size   | Iterations   | Time (s)    |
+|----------------|------------------|-----------|--------------|-------------|
+| p2p-Gnutella09 | 26013            | 21402960  | 20           | 166.969241  |
+| p2p-Gnutella04 | 39994            | 47059527  | 26           | 577.280656  |
+| cal.cedge      | 21693            | 501755    | 195          | 5.427228    |
+| SF.cedge       | 223001           | 80498014  | 287          | 4650.348536 |
+| TG.cedge       | 23874            | 481121    | 58           | 1.609337    |
+| OL.cedge       | 7035             | 146120    | 64           | 0.490264    |
+
+- Old speedup
+
+| Dataset           | cuDF (s)  | Pandas DF (s)   | Speedup |
+|-------------------|-----------|-----------------|---------|
+| p2p-Gnutella09    | 4.636441  | 166.969241      | 36.0x   |
+| p2p-Gnutella04    | 13.969293 | 577.280656      | 41.3x   |
+| cal.cedge         | 4.054477  | 5.427228        | 1.3x    |
+| SF.cedge          | 64.265064 | 4650.348536     | 72.4x   |
+| TG.cedge          | 1.157264  | 1.609337        | 1.4x    |
+| OL.cedge          | 0.544352  | 0.490264        | 0.9x    |
 
 ### Reference
 
