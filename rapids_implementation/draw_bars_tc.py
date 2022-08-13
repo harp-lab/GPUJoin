@@ -42,12 +42,12 @@ def draw_bar_chart(xtick_labels, first_dataset,
 
 
 if __name__ == "__main__":
-    dataset_labels = ['p2p-Gnutella09', 'p2p-Gnutella04',
-                      'cal.cedge', 'SF.cedge', 'TG.cedge', 'OL.cedge']
-    first_dataset = [3.881797, 14.104549, 3.883682, 64.235956, 1.191066,
+    dataset_labels = ['SF.cedge', 'p2p-Gnutella09', 'p2p-Gnutella04',
+                      'cal.cedge', 'TG.cedge', 'OL.cedge']
+    first_dataset = [64.235956, 3.881797, 14.104549, 3.883682, 1.191066,
                      0.557429]
     first_dataset_title = "cuDF"
-    second_dataset = [167.143291, 569.249333, 5.769209, 4582.067635, 1.400392,
+    second_dataset = [4582.067635, 167.143291, 569.249333, 5.769209, 1.400392,
                       0.474801]
     second_dataset_title = "Pandas"
     x_label = "Datasets"
