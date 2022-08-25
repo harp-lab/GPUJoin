@@ -1,54 +1,16 @@
+# Comparison between cuDF and Pandas
+- [rapids_implementation folder](rapids_implementation) contains the comparison between cuDF and Pandas.
+- The following sections are for the CUDA implementations of inner joins.
+
 ## Join of two relations
 
 ### Dataset
 
-- Small dataset: [employee.txt](data/employee.txt)
 - Large dataset: [link.facts_412148.txt](data/link.facts_412148.txt):
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
-### Comparison between CUDF, pandas, and nested loop join
-- Theta GPU (NVIDIA A100-SXM4-40GB - 40536MiB) result:
-```shell
-python data_merge.py 
-CUDF join (n=100000) size: 20000986
-Pandas join (n=100000) size: 20000986
-CUDF join (n=150000) size: 44995231
-Pandas join (n=150000) size: 44995231
-CUDF join (n=200000) size: 80002265
-Pandas join (n=200000) size: 80002265
-CUDF join (n=250000) size: 125000004
-Pandas join (n=250000) size: 125000004
-CUDF join (n=300000) size: 179991734
-Pandas join (n=300000) size: 179991734
-CUDF join (n=350000) size: 245006327
-Pandas join (n=350000) size: 245006327
-CUDF join (n=400000) size: 319977044
-Pandas join (n=400000) size: 319977044
-CUDF join (n=450000) size: 404982983
-Pandas join (n=450000) size: 404982983
-CUDF join (n=500000) size: 499965209
-Pandas join (n=500000) size: 499965209
-CUDF join (n=550000) size: 605010431
-Pandas join (n=550000) size: 605010431
-std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
-```
-
-- Using Theta GPU (NVIDIA A100 - 40536MiB) result for using Rapids (`cudf`) and Pandas (`df`):
-
-| Number of rows | CUDF time (s) | Pandas time (s) |
-| --- | --- | --- |
-| 100000 | 0.034978 | 0.294990 |
-| 150000 | 0.023296 | 0.655962 |
-| 200000 | 0.031487 | 1.152136 |
-| 250000 | 0.036887 | 1.785033 |
-| 300000 | 0.039247 | 2.559597 |
-| 350000 | 0.057324 | 3.469027 |
-| 400000 | 0.073785 | 4.536874 |
-| 450000 | 0.088625 | 5.866922 |
-| 500000 | 0.107790 | 7.016265 |
-| 550000 | 0.125129 | 8.476868 |
-
+### Join performance
 
 - Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_size.cu`:
 
@@ -108,44 +70,6 @@ qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesys
 | 550000 | 2149 | 256 | 605010431 | 0.173532 | 0.00166867 | 0.545732 | 0.720933 |
 | 550000 | 1075 | 512 | 605010431 | 0.177913 | 0.00177223 | 0.549719 | 0.729405 |
 | 550000 | 538 | 1024 | 605010431 | 0.17582 | 0.00166037 | 0.561509 | 0.738989 |
-
-- Transitive closure for string graph on Theta:
-
-| Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- |
-| 333 | 55611 | 333 | 1.546973 |
-| 990 | 490545 | 990 | 11.516639 |
-| 2990 | 4471545 | 2990 | 48.859073 |
-| 4444 | 9876790 | 4444 | 98.355756 |
-| 4990 | 12452545 | 4990 | 121.888416 |
-| 6990 | 24433545 | 6990 | 263.082299 |
-| 8990 | 40414545 | 8990 | 536.293174 |
-
-
-
-| Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- |
-| 990 | 490545 | 990 | 10.463168 |
-| 1990 | 1981045 | 1990 | 27.225088 |
-| 2990 | 4471545 | 2990 | 48.111031 |
-| 3990 | 7962045 | 3990 | 80.584488 |
-| 4990 | 12452545 | 4990 | 119.979933 |
-| 5990 | 17943045 | 5990 | 175.771437 |
-| 6990 | 24433545 | 6990 | 263.188642 |
-| 7990 | 31924045 | 7990 | 382.733221 |
-| 8990 | 40414545 | 8990 | 536.389028 |
-| 9990 | 49905045 | 9990 | 729.698900 |
-| 10990 | 60395545 | 10990 | 975.010389 |
-
-
-- Transitive closure using pandas on Theta `python transitive_closure_pandas.py` :
-
-
-| Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- |
-| 990 | 490545 | 990 | 17.646939 |
-| 1990 | 1981045 | 1990 | 164.124526 |
-| 2990 | 4471545 | 2990 | 803.840488 |
 
 Overflow at `n=600000`
 ```shell
@@ -543,7 +467,7 @@ Iteration 1: 10.197 seconds
 
 ### Performance comparison
 
-`natural_join.cu` performance comparison for different grid and block size:
+Performance comparison for different grid and block size:
 
 | N      | Grid size | Block size | Get join size | Join operation | Main     |
 |--------|-----------|------------|---------------|----------------|----------|
@@ -557,7 +481,7 @@ Iteration 1: 10.197 seconds
 
 
 
-`natural_join.cu` performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
+Performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
 in seconds:
 
 
@@ -599,11 +523,6 @@ Using local machine:
 - Average non atomic time: 4.18316
 - Total atomic time: 100.504
 - Average atomic time: 10.0504
-
-
-### Notes
-
-- Block size should be some multiple of 32 and less than 1024
 
 ### References
 
