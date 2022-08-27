@@ -43,6 +43,7 @@ void show_relation(int *data, int total_rows,
         }
 
     }
+    cout << "Result counts " << count << "\n" << endl;
     cout << "" << endl;
 }
 
@@ -164,6 +165,10 @@ void cpu_join_relations(const char *data_path, char separator, const char *outpu
                         int total_rows) {
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
+    std::chrono::high_resolution_clock::time_point time_point_begin_outer;
+    std::chrono::high_resolution_clock::time_point time_point_end_outer;
+    time_point_begin_outer = chrono::high_resolution_clock::now();
+
     cout << "CPU join operation" << endl;
     cout << "===================================" << endl;
     cout << "Relation 1: rows: " << relation_1_rows << ", columns: " << relation_1_columns << endl;
@@ -196,6 +201,8 @@ void cpu_join_relations(const char *data_path, char separator, const char *outpu
     free(relation_1_data);
     free(relation_2_data);
     free(join_result);
+    time_point_end_outer = chrono::high_resolution_clock::now();
+    show_time_spent("Total time", time_point_begin_outer, time_point_end_outer);
 }
 
 

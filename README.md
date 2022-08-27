@@ -10,7 +10,63 @@
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
+
+## Hash join
+- Used open addressing method to build the hashtable with linear probing
+- Comparison with nested loop join:
+```shell
+nvcc hashjoin_cpu.cu -o join -run 
+CPU join operation
+===================================
+Relation 1: rows: 10000, columns: 2
+Relation 2: rows: 10000, columns: 2
+
+Read relations: 0.00153804 seconds
+CPU hash join operation: 1.15088 seconds
+Wrote join result (89903 rows) to file: output/cpu_hj.txt
+Write result: 0.760531 seconds
+Total time: 1.91657 seconds
+
+nvcc nested_loop_join_cpu.cu -o join -run
+CPU join operation
+===================================
+Relation 1: rows: 10000, columns: 2
+Relation 2: rows: 10000, columns: 2
+
+Read relations: 0.00596452 seconds
+CPU join operation: 0.196127 seconds
+Wrote join result (89903 rows) to file: output/cpu_nlj.txt
+Write result: 0.745246 seconds
+Total time: 0.950933 seconds
+
+nvcc hashjoin_cpu.cu -o join -run
+CPU join operation
+===================================
+Relation 1: rows: 25000, columns: 2
+Relation 2: rows: 25000, columns: 2
+
+Read relations: 0.0074476 seconds
+CPU hash join operation: 7.19088 seconds
+Wrote join result (222371 rows) to file: output/cpu_hj.txt
+Write result: 4.5376 seconds
+Total time: 11.7565 seconds
+
+nvcc nested_loop_join_cpu.cu -o join -run
+CPU join operation
+===================================
+Relation 1: rows: 25000, columns: 2
+Relation 2: rows: 25000, columns: 2
+
+Read relations: 0.00589868 seconds
+CPU join operation: 1.03065 seconds
+Wrote join result (222371 rows) to file: output/cpu_nlj.txt
+Write result: 4.48683 seconds
+Total time: 5.54417 seconds
+```
+
+## Nested loop join
 ### Join performance
+
 
 - Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_size.cu`:
 
@@ -540,3 +596,4 @@ Using local machine:
 - [Documentation on CUDF Drop](https://docs.rapids.ai/api/cudf/nightly/api_docs/api/cudf.DataFrame.drop.html)
 - [Documentation on CUDF Drop Duplicates](https://docs.rapids.ai/api/cudf/stable/api_docs/api/cudf.DataFrame.drop_duplicates.html?highlight=duplicate#cudf.DataFrame.drop_duplicates)
 - [Documentation on CUDF concatenate](https://docs.rapids.ai/api/cudf/stable/api_docs/api/cudf.concat.html?highlight=concat#cudf.concat)
+- [Open addressing hash table](https://www.scaler.com/topics/data-structures/open-addressing/)
