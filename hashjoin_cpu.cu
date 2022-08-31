@@ -115,8 +115,8 @@ int main() {
     relation_2_columns = 2;
     relation_1_index = 0;
     relation_2_index = 0;
-    relation_1_rows = 25000;
-    relation_2_rows = 25000;
+    relation_1_rows = 10;
+    relation_2_rows = 10;
     data_path = "data/link.facts_412148.txt";
     output_path = "output/cpu_hj.txt";
     int total_rows = relation_1_rows * relation_2_rows;

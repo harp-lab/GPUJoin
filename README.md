@@ -1,6 +1,6 @@
-# Comparison between cuDF and Pandas
-- [rapids_implementation folder](rapids_implementation) contains the comparison between cuDF and Pandas.
-- The following sections are for the CUDA implementations of inner joins.
+# Comparison between cuDF and Pandas for Accelerating Datalog applications with cuDF
+- **Please open [rapids_implementation folder](rapids_implementation) that contains the comparison between cuDF and Pandas.**
+- The following sections are for the CUDA implementations of inner joins
 
 ## Join of two relations
 
@@ -12,7 +12,41 @@
 
 
 ## Hash join
+
+### Techniques
+- Open addressing
+  - Linear probing
+  - Quadratic probing
+  - Double hashing
+- Separate chaining
+
+### Implementation
+
 - Used open addressing method to build the hashtable with linear probing
+- Comparison of hashtable in cpu and gpu:
+```shell
+nvcc hashtable_gpu.cu -o join -run
+GPU hash table: (25000, 2)
+Blocks per grid: 25, Threads per block: 1024
+Hash table row size: 55555
+Hash table size: 444440
+Read relation: 0.0696403 seconds
+Hash table build: 0.0508285 seconds
+Blocks per grid: 55, Threads per block: 1024
+Searched key: 55-->1
+Search: 0.000186191 seconds
+Total time: 0.169277 seconds
+
+nvcc hashtable_cpu.cu -o join -run
+CPU hash table: (25000, 2)
+Hash table row size: 55555
+Read relation: 0.013476 seconds
+Hash table build: 2.25652 seconds
+Searched key: 55-->1
+Search: 2.128e-06 seconds
+Total time: 2.27021 seconds
+
+```
 - Comparison with nested loop join:
 ```shell
 nvcc hashjoin_cpu.cu -o join -run 
@@ -597,3 +631,4 @@ Using local machine:
 - [Documentation on CUDF Drop Duplicates](https://docs.rapids.ai/api/cudf/stable/api_docs/api/cudf.DataFrame.drop_duplicates.html?highlight=duplicate#cudf.DataFrame.drop_duplicates)
 - [Documentation on CUDF concatenate](https://docs.rapids.ai/api/cudf/stable/api_docs/api/cudf.concat.html?highlight=concat#cudf.concat)
 - [Open addressing hash table](https://www.scaler.com/topics/data-structures/open-addressing/)
+- [Open addressing techniques](https://programming.guide/hash-tables-open-addressing.html)
