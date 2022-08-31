@@ -20,11 +20,118 @@
   - Double hashing
 - Separate chaining
 
-### Implementation
+### Configuration
+- Configuration data are collected using `nvidia-smi`, `lscpu`, `free -h`
+- Theta GPU (single-gpu node):
+  - GPU 0: NVIDIA A100-SXM4-40GB
+  - CPU Model name: AMD EPYC 7742 64-Core Processor
+  - CPU(s): 256
+  - Thread(s) per core: 2 
+  - Core(s) per socket: 64 
+  - Socket(s): 2
+  - CPU MHz: 3399.106
+  - L1d cache: 4 MiB
+  - L1i cache: 4 MiB
+  - L2 cache: 64 MiB
+  - L3 cache: 512 MiB
+  - Total memory: 1.0Ti
+
+- Local machine:
+  - GPU 0: NVIDIA GeForce GTX 1060 with Max-Q Design
+  - CPU Model name: Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
+  - CPU(s): 12
+  - Thread(s) per core: 2
+  - Core(s) per socket: 6
+  - Socket(s): 1
+  - L1d cache: 192 KiB
+  - L1i cache: 192 KiB
+  - L2 cache: 1.5 MiB
+  - L3 cache: 9 MiB
+  - Total memory: 15Gi
+
+### Implementation and benchmark of hash table in CPU and GPU
 
 - Used open addressing method to build the hashtable with linear probing
-- Comparison of hashtable in cpu and gpu:
+- Comparison of hashtable in cpu and gpu in theta gpu and local machine (see spec above):
+- Dataset: [data/link.facts_412148.txt](data/link.facts_412148.txt) size (412148 x 2)
+- Speed up: CPU total time (in seconds) / GPU total time (in seconds)  
+
+| # pairs | #  size | GPU read | CPU read | GPU build | CPU build | GPU total | CPU total | Speedup |
+|---------|---------|----------|----------|-----------|-----------|-----------|-----------|---------|
+| 100,000 | 222,222 | 0.1272   | 0.0178   | 0.3405    | 27.9127   | 0.5302    | 27.9308   | 52.68x  |
+| 50,000  | 111,111 | 0.1156   | 0.0090   | 0.1170    | 6.9729    | 0.3019    | 6.9820    | 23.13x  |
+| 25,000  | 55,555  | 0.1078   | 0.0045   | 0.03842   | 1.7461    | 0.2080    | 2.2702    | 10.91x  |
+
 ```shell
+# Theta GPU (single-gpu node)
+-------------------------------
+nvcc hashtable_gpu.cu -o join -run
+GPU hash table: (100000, 2)
+Blocks per grid: 98, Threads per block: 1024
+Hash table row size: 222222
+Hash table size: 1777776
+Read relation: 0.127201 seconds
+Hash table build: 0.340529 seconds
+Blocks per grid: 218, Threads per block: 1024
+Searched key: 55-->181
+Search: 0.000239864 seconds
+Total time: 0.530205 seconds
+
+nvcc hashtable_cpu.cu -o join -run
+CPU hash table: (100000, 2)
+Hash table row size: 222222
+Read relation: 0.0178671 seconds
+Hash table build: 27.9127 seconds
+Searched key: 55-->1
+Search: 1.273e-06 seconds
+Total time: 27.9308 seconds
+
+
+nvcc hashtable_gpu.cu -o join -run
+GPU hash table: (50000, 2)
+Blocks per grid: 49, Threads per block: 1024
+Hash table row size: 111111
+Hash table size: 888888
+Read relation: 0.115693 seconds
+Hash table build: 0.11707 seconds
+Blocks per grid: 109, Threads per block: 1024
+Searched key: 55-->181
+Search: 0.000230857 seconds
+Total time: 0.301926 seconds
+
+nvcc hashtable_cpu.cu -o join -run
+CPU hash table: (50000, 2)
+Hash table row size: 111111
+Read relation: 0.00901145 seconds
+Hash table build: 6.97293 seconds
+Searched key: 55-->1
+Search: 1.172e-06 seconds
+Total time: 6.98206 seconds
+
+
+hashtable_gpu.cu -o join -run
+GPU hash table: (25000, 2)
+Blocks per grid: 25, Threads per block: 1024
+Hash table row size: 55555
+Hash table size: 444440
+Read relation: 0.107857 seconds
+Hash table build: 0.0384229 seconds
+Blocks per grid: 55, Threads per block: 1024
+Searched key: 55-->181
+Search: 0.000186463 seconds
+Total time: 0.208069 seconds
+
+nvcc hashtable_cpu.cu -o join -run
+CPU hash table: (25000, 2)
+Hash table row size: 55555
+Read relation: 0.00457431 seconds
+Hash table build: 1.74615 seconds
+Searched key: 55-->1
+Search: 1.242e-06 seconds
+Total time: 1.75082 seconds
+
+# Local Machine
+-------------------------------
 nvcc hashtable_gpu.cu -o join -run
 GPU hash table: (25000, 2)
 Blocks per grid: 25, Threads per block: 1024
@@ -45,7 +152,6 @@ Hash table build: 2.25652 seconds
 Searched key: 55-->1
 Search: 2.128e-06 seconds
 Total time: 2.27021 seconds
-
 ```
 - Comparison with nested loop join:
 ```shell
