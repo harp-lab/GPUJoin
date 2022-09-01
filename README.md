@@ -738,3 +738,7 @@ Using local machine:
 - [Documentation on CUDF concatenate](https://docs.rapids.ai/api/cudf/stable/api_docs/api/cudf.concat.html?highlight=concat#cudf.concat)
 - [Open addressing hash table](https://www.scaler.com/topics/data-structures/open-addressing/)
 - [Open addressing techniques](https://programming.guide/hash-tables-open-addressing.html)
+- [A Simple GPU Hash Table](https://nosferalatu.com/SimpleGPUHashTable.html)
+- [CUDA Pro Tip: Occupancy API Simplifies Launch Configuration](https://developer.nvidia.com/blog/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/)
+- [CUDA thrust](https://docs.nvidia.com/cuda/thrust/index.html)
+- [Count in thrust](https://thrust.github.io/doc/group__counting_gac4131b028e0826ec6d50bbf0b5e8406d.html)

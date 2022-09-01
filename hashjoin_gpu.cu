@@ -20,23 +20,19 @@ void build_hash_table(int *hash_table, int hash_table_row_size, int hash_table_t
                       int *relation, int relation_rows, int relation_columns, int relation_index) {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (i >= relation_rows) return;
-    int relation_index_value = relation[(i * relation_columns) + relation_index];
-    int secondary =  relation[(i * relation_columns) + 1];
-    int hash_value = relation_index_value % hash_table_row_size;
-    int position = hash_value * relation_columns;
-//    int v = atomicCAS(&hash_table[position], 0, i);
-//    printf("%d %d\n", i, v);
-    int value = atomicAdd(&hash_table[position], 0);
-    printf("=== Position %d, value %d, (%d, %d) ---", position, value, relation_index_value, secondary);
-    while (value != 0) {
-        position = (position + relation_columns) % (hash_table_total_size);
-        value = atomicAdd(&hash_table[position], 0);
+    int key = relation[(i * relation_columns) + relation_index];
+    int position = (key % hash_table_row_size) * relation_columns;
+    while (true) {
+        int existing_key = atomicCAS(&hash_table[position], 0, key);
+        if (existing_key == 0) {
+            for (int k = 0; k < relation_columns; k++) {
+                hash_table[position++] = relation[(i * relation_columns) + k];
+            }
+            break;
+        }
+        position = (position + relation_columns) % hash_table_total_size;
     }
-    for (int k = 0; k < relation_columns; k++) {
-//        hash_table[position++] = relation[(i * relation_columns) + k];
-        atomicAdd(&hash_table[position++], relation[(i * relation_columns) + k]);
-//        atomicCAS(&hash_table[position++], 0, relation[(i * relation_columns) + k]);
-    }
+
 }
 
 __global__
@@ -46,8 +42,8 @@ void hash_join(int *result, int *join_index,
     int j = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (j >= relation_2_rows) return;
     int relation_2_index_value = relation_2[(j * relation_2_columns) + relation_2_index];
-    int hash_value = relation_2_index_value % hash_table_row_size;
-    int position = hash_value * hash_table_columns;
+    int position = (relation_2_index_value % hash_table_row_size) * hash_table_columns;
+
     while (true) {
         if (hash_table[position] == 0) break;
         else if (hash_table[position] == relation_2_index_value) {
@@ -122,7 +118,7 @@ void gpu_hash_join_relations(const char *data_path, char separator, const char *
     get_reverse_relation_gpu(relation_2, relation_1,
                              relation_1_rows,
                              relation_2_columns);
-//    show_relation(relation_1, relation_1_rows, relation_1_columns, "Relation 1", -1, 1);
+    show_relation(relation_1, relation_1_rows, relation_1_columns, "Relation 1", -1, 1);
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Read relations", time_point_begin, time_point_end);
     checkCuda(cudaMallocManaged(&join_result, result_size));
