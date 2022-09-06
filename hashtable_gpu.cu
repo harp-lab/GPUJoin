@@ -29,7 +29,6 @@ void generate_random_relation(int *relation, int relation_rows, int relation_col
         }
     }
     double duplicate = ((double) (relation_rows - max_number) / relation_rows) * 100;
-    cout << "Unique max number " << max_number << ", out of " << relation_rows << endl;
     cout << fixed << "Duplicate percentage: " << duplicate << endl;
 }
 
@@ -57,7 +56,7 @@ void build_hash_table(Entity *hash_table, int hash_table_row_size,
     if (i >= relation_rows) return;
     int key = relation[(i * relation_columns) + 0];
     int value = relation[(i * relation_columns) + 1];
-    int position = key % hash_table_row_size;
+    int position = key & (hash_table_row_size - 1);
     while (true) {
         int existing_key = atomicCAS(&hash_table[position].key, 0, key);
         if (existing_key == 0) {
@@ -72,7 +71,7 @@ __global__
 void get_match_count(Entity *hash_table, int hash_table_row_size, int *match_count, int key) {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (i >= hash_table_row_size) return;
-    int position = key % hash_table_row_size;
+    int position = key & (hash_table_row_size - 1);
     while (true) {
         if (hash_table[position].key == key) {
             atomicAdd(match_count, 1);
@@ -155,8 +154,8 @@ void gpu_hash_table(const char *data_path, char separator,
     checkCuda(cudaMallocManaged(&relation, relation_size));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_size));
     checkCuda(cudaMemPrefetchAsync(relation, relation_size, deviceId));
-    const char *empty = "";
-    if (strcmp(data_path, empty) == 0) {
+    const char *random_datapath = "random";
+    if (strcmp(data_path, random_datapath) == 0) {
         generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
     } else {
         get_relation_from_file_gpu(relation, data_path,
@@ -186,7 +185,6 @@ void gpu_hash_table(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     show_time_spent("Hash table build", time_point_begin, time_point_end);
     show_rate(relation_rows, "Hash table build", time_point_begin, time_point_end);
-
     time_point_begin = chrono::high_resolution_clock::now();
 
 //    block_size = 1;
@@ -199,10 +197,10 @@ void gpu_hash_table(const char *data_path, char separator,
 //    get_match_count<<<grid_size, block_size>>>(hash_table, hash_table_row_size, search_result_size, key);
 //    checkCuda(cudaDeviceSynchronize());
 
-    int search_result_size = thrust::count_if(thrust::device, hash_table, hash_table + hash_table_row_size,
-                                              is_match(key));
     block_size = 1;
     grid_size = 1;
+    int search_result_size = thrust::count_if(thrust::device, hash_table, hash_table + hash_table_row_size,
+                                              is_match(key));
     cout << "Search hash table: (key: " << key << ")" << endl;
     cout << "Grid size: " << grid_size;
     cout << ", Block size: " << block_size << endl;
@@ -229,20 +227,50 @@ void gpu_hash_table(const char *data_path, char separator,
 }
 
 
-int main() {
+int main(int argc, char **argv) {
     const char *data_path;
     char separator = '\t';
-    int relation_rows, relation_columns;
-    relation_columns = 2;
-    relation_rows = 13;
-    double load_factor = 0.3;
-//    data_path = "data/data_4.txt";
-    data_path = "data/link.facts_412148.txt";
-//    data_path = "";
-    int key = 3;
-    int max_duplicate_percentage = 30;
-
+    int relation_rows, relation_columns, key, max_duplicate_percentage;
+    double load_factor;
+    data_path = argv[1];
+    if (sscanf(argv[2], "%i", &relation_rows) != 1) {
+        fprintf(stderr, "error - not an integer");
+    }
+    if (sscanf(argv[3], "%i", &relation_columns) != 1) {
+        fprintf(stderr, "error - not an integer");
+    }
+    if (sscanf(argv[4], "%lf", &load_factor) != 1) {
+        fprintf(stderr, "error - not a double");
+    }
+    if (sscanf(argv[5], "%i", &key) != 1) {
+        fprintf(stderr, "error - not an integer");
+    }
+    if (sscanf(argv[6], "%i", &max_duplicate_percentage) != 1) {
+        fprintf(stderr, "error - not a double");
+    }
+//    cout << "Data path: " << data_path << endl;
+//    cout << "Relation rows: " << relation_rows << endl;
+//    cout << "Relation columns: " << relation_columns << endl;
+//    cout << "Load factor: " << load_factor << endl;
+//    cout << "Search key: " << key << endl;
+//    cout << "Max duplicate percentage: " << max_duplicate_percentage << endl;
+//    relation_columns = 2;
+//    relation_rows = 13;
+//    double load_factor = 0.3;
+////    data_path = "data/data_4.txt";
+//    data_path = "data/link.facts_412148.txt";
+////    data_path = "";
+//    int key = 3;
+//    int max_duplicate_percentage = 30;
+//
     gpu_hash_table(data_path, separator,
                    relation_rows, relation_columns, load_factor, key, max_duplicate_percentage);
+//    for (int i = 0; i < argc; ++i) {
+//        printf("Argument %d : %s\n", i, argv[i]);
+//    }
     return 0;
 }
+
+// Parameters: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage
+// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
+// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
