@@ -67,10 +67,14 @@ cat nested_loop_out.output
 - Interactive job on theta
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
+git fetch; git reset --hard origin/main
 ssh thetagpusn1
 qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
 nvcc nested_loop_join_dynamic_size.cu -o join -run
+nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 150000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
+nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 150000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
 nsys profile --stats=true ./join
 ```
 ### C++ run script example for theta
