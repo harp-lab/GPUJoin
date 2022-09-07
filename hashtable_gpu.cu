@@ -107,7 +107,8 @@ void show_rate(int n, string message,
     chrono::duration<double> time_span = time_point_end - time_point_begin;
     double total_time = time_span.count();
     int rate = n / total_time;
-    cout << fixed << message << ": " << rate << " keys/second" << endl;
+    cout << fixed << message << ": " << rate << " keys/second; ";
+    cout << n << " keys " << total_time << " seconds" << endl;
 }
 
 void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *hash_table_name) {
@@ -148,9 +149,6 @@ void gpu_hash_table(const char *data_path, char separator,
     size_t relation_size = relation_rows * relation_columns * sizeof(int);
     size_t hash_table_size = hash_table_row_size * sizeof(Entity);
 
-    cout << "Hash table row size: " << hash_table_row_size << endl;
-    cout << "Hash table size: " << hash_table_size << endl;
-
     checkCuda(cudaMallocManaged(&relation, relation_size));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_size));
     checkCuda(cudaMemPrefetchAsync(relation, relation_size, deviceId));
@@ -165,15 +163,16 @@ void gpu_hash_table(const char *data_path, char separator,
 
 //    show_relation(relation, relation_rows, relation_columns, "Relation 1", -1, 1);
     time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("Read relation", time_point_begin, time_point_end);
 
     checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
                                                  build_hash_table, 0, 0));
     grid_size = ceil((double) relation_rows / block_size);
     cout << "GPU hash table: ";
-    cout << "(" << relation_rows << ", " << relation_columns << ")" << endl;
+    cout << "(" << data_path << ", " << relation_rows << " keys)" << endl;
     cout << "Grid size: " << grid_size;
     cout << ", Block size: " << block_size << endl;
+    cout << "Hash table total rows: " << hash_table_row_size << ", load factor: " << load_factor << endl;
+    show_time_spent("Read relation", time_point_begin, time_point_end);
 
     time_point_begin = chrono::high_resolution_clock::now();
     build_hash_table<<<grid_size, block_size>>>
@@ -183,7 +182,6 @@ void gpu_hash_table(const char *data_path, char separator,
     checkCuda(cudaDeviceSynchronize());
 //    show_hash_table(hash_table, hash_table_row_size, "Hash table");
     time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("Hash table build", time_point_begin, time_point_end);
     show_rate(relation_rows, "Hash table build", time_point_begin, time_point_end);
     time_point_begin = chrono::high_resolution_clock::now();
 
@@ -201,7 +199,7 @@ void gpu_hash_table(const char *data_path, char separator,
     grid_size = 1;
     int search_result_size = thrust::count_if(thrust::device, hash_table, hash_table + hash_table_row_size,
                                               is_match(key));
-    cout << "Search hash table: (key: " << key << ")" << endl;
+    cout << "Search hash table with key: " << key << ", ";
     cout << "Grid size: " << grid_size;
     cout << ", Block size: " << block_size << endl;
     int *position;
@@ -209,7 +207,7 @@ void gpu_hash_table(const char *data_path, char separator,
     checkCuda(cudaMallocManaged(&search_result, search_result_size * sizeof(int)));
     search_hash_table<<<grid_size, block_size>>>(hash_table, hash_table_row_size, key, position, search_result);
     checkCuda(cudaDeviceSynchronize());
-    cout << "Search count: " << search_result_size << endl;
+    cout << "Search count: " << search_result_size << ", ";
     cout << "Matched values:" << endl;
     for (int i = 0; i < search_result_size; i++) {
         cout << search_result[i] << " ";
