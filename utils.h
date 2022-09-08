@@ -18,6 +18,14 @@ void show_time_spent(string message,
     cout << message << ": " << time_span.count() << " seconds" << endl;
 }
 
+double get_time_spent(string message,
+                     chrono::high_resolution_clock::time_point time_point_begin,
+                     chrono::high_resolution_clock::time_point time_point_end) {
+    chrono::duration<double> time_span = time_point_end - time_point_begin;
+    cout << message << ": " << time_span.count() << " seconds" << endl;
+    return time_span.count();
+}
+
 void show_relation(int *data, int total_rows,
                    int total_columns, const char *relation_name,
                    int visible_rows, int skip_zero) {

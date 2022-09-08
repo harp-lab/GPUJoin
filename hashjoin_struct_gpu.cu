@@ -1,6 +1,5 @@
 #include <cstdio>
 #include <iostream>
-#include <iomanip>
 #include <assert.h>
 #include <cstdlib>
 #include <thrust/count.h>
@@ -39,19 +38,6 @@ struct Entity {
     int value;
 };
 
-struct Output {
-    int block_size;
-    int grid_size;
-    int key_size;
-    int hashtable_rows;
-    double load_factor;
-    int duplicate_percentage;
-    double build_time;
-    long int build_rate;
-    double search_time;
-    double total_time;
-} output;
-
 struct is_match {
     int key;
 
@@ -66,23 +52,18 @@ struct is_match {
 __global__
 void build_hash_table(Entity *hash_table, int hash_table_row_size,
                       int *relation, int relation_rows, int relation_columns) {
-    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
-    if (index >= relation_rows) return;
-
-    int stride = blockDim.x * gridDim.x;
-
-    for (int i = index; i < relation_rows; i += stride) {
-        int key = relation[(i * relation_columns) + 0];
-        int value = relation[(i * relation_columns) + 1];
-        int position = key & (hash_table_row_size - 1);
-        while (true) {
-            int existing_key = atomicCAS(&hash_table[position].key, 0, key);
-            if (existing_key == 0) {
-                hash_table[position].value = value;
-                break;
-            }
-            position = (position + 1) & (hash_table_row_size - 1);
+    int i = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (i >= relation_rows) return;
+    int key = relation[(i * relation_columns) + 0];
+    int value = relation[(i * relation_columns) + 1];
+    int position = key & (hash_table_row_size - 1);
+    while (true) {
+        int existing_key = atomicCAS(&hash_table[position].key, 0, key);
+        if (existing_key == 0) {
+            hash_table[position].value = value;
+            break;
         }
+        position = (position + 1) & (hash_table_row_size - 1);
     }
 }
 
@@ -147,20 +128,17 @@ void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *ha
 
 void gpu_hash_table(const char *data_path, char separator,
                     int relation_rows, int relation_columns, double load_factor, int key,
-                    int max_duplicate_percentage, int preferred_grid_size, int preferred_block_size) {
+                    int max_duplicate_percentage) {
+    std::chrono::high_resolution_clock::time_point time_point_begin;
+    std::chrono::high_resolution_clock::time_point time_point_end;
     std::chrono::high_resolution_clock::time_point time_point_begin_outer;
     std::chrono::high_resolution_clock::time_point time_point_end_outer;
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
     time_point_begin_outer = chrono::high_resolution_clock::now();
-    int device_id;
-    int number_of_sm;
-    cudaGetDevice(&device_id);
-    cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
+    int deviceId;
+    cudaGetDevice(&deviceId);
     int block_size, min_grid_size, grid_size;
 
+    time_point_begin = chrono::high_resolution_clock::now();
     int *relation;
     int *search_result;
     Entity *hash_table;
@@ -173,7 +151,7 @@ void gpu_hash_table(const char *data_path, char separator,
 
     checkCuda(cudaMallocManaged(&relation, relation_size));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_size));
-    checkCuda(cudaMemPrefetchAsync(relation, relation_size, device_id));
+    checkCuda(cudaMemPrefetchAsync(relation, relation_size, deviceId));
     const char *random_datapath = "random";
     if (strcmp(data_path, random_datapath) == 0) {
         generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
@@ -184,44 +162,34 @@ void gpu_hash_table(const char *data_path, char separator,
     }
 
 //    show_relation(relation, relation_rows, relation_columns, "Relation 1", -1, 1);
+    time_point_end = chrono::high_resolution_clock::now();
+
     checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
                                                  build_hash_table, 0, 0));
-    grid_size = 32 * number_of_sm;//ceil((double) relation_rows / block_size);
-    if ((preferred_grid_size != 0) && (preferred_block_size != 0)) {
-        grid_size = preferred_grid_size;
-        block_size = preferred_block_size;
-    }
-    output.block_size = block_size;
-    output.grid_size = grid_size;
-    output.key_size = relation_rows;
-    output.load_factor = load_factor;
+    grid_size = ceil((double) relation_rows / block_size);
     cout << "GPU hash table: ";
     cout << "(" << data_path << ", " << relation_rows << " keys)" << endl;
     cout << "Grid size: " << grid_size;
     cout << ", Block size: " << block_size << endl;
-    output.hashtable_rows = hash_table_row_size;
-    output.load_factor = load_factor;
-    output.duplicate_percentage = max_duplicate_percentage;
     cout << "Hash table total rows: " << hash_table_row_size << ", load factor: " << load_factor << endl;
-    checkCuda(cudaEventRecord(start));
+    show_time_spent("Read relation", time_point_begin, time_point_end);
+
+    time_point_begin = chrono::high_resolution_clock::now();
     build_hash_table<<<grid_size, block_size>>>
             (hash_table, hash_table_row_size,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
 //    show_hash_table(hash_table, hash_table_row_size, "Hash table");
-    checkCuda(cudaEventRecord(stop));
-    checkCuda(cudaEventSynchronize(stop));
-    float gpu_time = 0;
-    cudaEventElapsedTime(&gpu_time, start, stop);
-    double gpu_time_s = gpu_time / 1000.0f;
-    long int rate = relation_rows / gpu_time_s;
-    cout << "Rate: " << rate << " keys/s, time: " << gpu_time_s << "s, keys: " << relation_rows << endl;
-    output.build_time = gpu_time_s;
-    output.build_rate = rate;
+    time_point_end = chrono::high_resolution_clock::now();
+    show_rate(relation_rows, "Hash table build", time_point_begin, time_point_end);
+    time_point_begin = chrono::high_resolution_clock::now();
 
 //    block_size = 1;
 //    grid_size = 1;
+//    cout << "Search hash table: (key: " << key << ")" << endl;
+//    cout << "Grid size: " << grid_size;
+//    cout << ", Block size: " << block_size << endl;
 //    int *search_result_size;
 //    checkCuda(cudaMallocManaged(&search_result_size, sizeof(int)));
 //    get_match_count<<<grid_size, block_size>>>(hash_table, hash_table_row_size, search_result_size, key);
@@ -237,40 +205,30 @@ void gpu_hash_table(const char *data_path, char separator,
     int *position;
     checkCuda(cudaMallocManaged(&position, sizeof(int)));
     checkCuda(cudaMallocManaged(&search_result, search_result_size * sizeof(int)));
-    checkCuda(cudaEventRecord(start));
     search_hash_table<<<grid_size, block_size>>>(hash_table, hash_table_row_size, key, position, search_result);
     checkCuda(cudaDeviceSynchronize());
-    checkCuda(cudaEventRecord(stop));
-    checkCuda(cudaEventSynchronize(stop));
-    cudaEventElapsedTime(&gpu_time, start, stop);
-    gpu_time_s = gpu_time / 1000.0f;
-    output.search_time = gpu_time_s;
     cout << "Search count: " << search_result_size << ", ";
     cout << "Matched values:" << endl;
     for (int i = 0; i < search_result_size; i++) {
         cout << search_result[i] << " ";
     }
     cout << endl;
+    time_point_end = chrono::high_resolution_clock::now();
+    show_time_spent("Search", time_point_begin, time_point_end);
+
     cudaFree(relation);
     cudaFree(hash_table);
     cudaFree(position);
     cudaFree(search_result);
     time_point_end_outer = chrono::high_resolution_clock::now();
-    double total_time = get_time_spent("Total time", time_point_begin_outer, time_point_end_outer);
-    output.total_time = total_time;
-    std::cout << std::fixed;
-    std::cout << std::setprecision(4);
-    cout << "| " << output.key_size << " | " << output.grid_size << " | " << output.block_size << " | ";
-    cout << output.hashtable_rows << " | " << output.load_factor << " | " << output.duplicate_percentage << " | ";
-    cout << fixed << output.build_time << " | " << output.build_rate << " | ";
-    cout << fixed << output.search_time << " | " << output.total_time << " |" << endl;
+    show_time_spent("Total time", time_point_begin_outer, time_point_end_outer);
 }
 
 
 int main(int argc, char **argv) {
     const char *data_path;
     char separator = '\t';
-    int relation_rows, relation_columns, key, max_duplicate_percentage, grid_size, block_size;
+    int relation_rows, relation_columns, key, max_duplicate_percentage;
     double load_factor;
     data_path = argv[1];
     if (sscanf(argv[2], "%i", &relation_rows) != 1) {
@@ -286,13 +244,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error - not an integer");
     }
     if (sscanf(argv[6], "%i", &max_duplicate_percentage) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[7], "%i", &grid_size) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[8], "%i", &block_size) != 1) {
-        fprintf(stderr, "error - not an integer");
+        fprintf(stderr, "error - not a double");
     }
 //    cout << "Data path: " << data_path << endl;
 //    cout << "Relation rows: " << relation_rows << endl;
@@ -310,18 +262,13 @@ int main(int argc, char **argv) {
 //    int max_duplicate_percentage = 30;
 //
     gpu_hash_table(data_path, separator,
-                   relation_rows, relation_columns, load_factor, key, max_duplicate_percentage, grid_size, block_size);
+                   relation_rows, relation_columns, load_factor, key, max_duplicate_percentage);
 //    for (int i = 0; i < argc; ++i) {
 //        printf("Argument %d : %s\n", i, argv[i]);
 //    }
     return 0;
 }
 
-// Parameters: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage, Grid size, Block size
+// Parameters: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage
 // nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 50 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
 // nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 10000000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 25 0 0
-
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 50 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0

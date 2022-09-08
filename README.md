@@ -56,6 +56,9 @@
 - Dataset: [data/link.facts_412148.txt](data/link.facts_412148.txt) size (412148 x 2)
 - Benchmark of hash table in Theta GPU with graph dataset
 
+| # keys | Grid size | Block size | # hashtable rows | Load factor | Duplicate | Build  | Build rate  | Search | Total  |
+
+
 | # keys  | # hashtable rows | Load factor | Read   | Build  | Build rate  | Search | Total  | 
 |---------|------------------|-------------|--------|--------|-------------|--------|--------|
 | 100,000 | 1,048,576        | 0.1         | 0.3772 | 0.3324 | 300,779 k/s | 0.0139 | 0.7841 |
