@@ -73,6 +73,24 @@ __device__ int get_position(int key, int hash_table_row_size) {
     key *= 0xc2b2ae35;
     key ^= key >> 16;
     return key & (hash_table_row_size - 1);
+
+    /*
+    const u64 base = 14695981039346656037ULL;
+    const u64 prime = 1099511628211ULL;
+
+    u64 hash = base;
+    {
+        u64 chunk = key;
+        hash ^= chunk & 255ULL;
+        hash *= prime;
+        for (char j = 0; j < 7; ++j)
+        {
+            chunk = chunk >> 8;
+            hash ^= chunk & 255ULL;
+            hash *= prime;
+        }
+    }
+     */
 }
 
 
@@ -224,7 +242,7 @@ void gpu_hash_table(const char *data_path, char separator,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
-    show_hash_table(hash_table, hash_table_row_size, "Hash table");
+//    show_hash_table(hash_table, hash_table_row_size, "Hash table");
     checkCuda(cudaEventRecord(stop));
     checkCuda(cudaEventSynchronize(stop));
     float gpu_time = 0;
@@ -280,7 +298,7 @@ void gpu_hash_table(const char *data_path, char separator,
     cout << "| " << output.key_size << " | " << output.grid_size << " | " << output.block_size << " | ";
     cout << output.hashtable_rows << " | " << output.load_factor << " | " << output.duplicate_percentage << " | ";
     cout << fixed << output.build_time << " | " << output.build_rate << " | ";
-    cout << fixed << output.search_time << " | " << output.total_time << " |" << endl;
+    cout << fixed << output.search_time << " | " << output.total_time << " |\n" << endl;
 }
 
 /**
