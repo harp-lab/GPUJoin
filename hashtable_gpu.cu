@@ -17,7 +17,6 @@ inline cudaError_t checkCuda(cudaError_t result) {
     return result;
 }
 
-
 void generate_random_relation(int *relation, int relation_rows, int relation_columns, double max_duplicate_percentage) {
     double temp = (ceil)((1 - (max_duplicate_percentage / 100)) * relation_rows);
 
@@ -63,6 +62,20 @@ struct is_match {
     }
 };
 
+
+/*
+ * Method that returns position in the hashtable for a key using Murmur3 hash
+ * */
+__device__ int get_position(int key, int hash_table_row_size) {
+    key ^= key >> 16;
+    key *= 0x85ebca6b;
+    key ^= key >> 13;
+    key *= 0xc2b2ae35;
+    key ^= key >> 16;
+    return key & (hash_table_row_size - 1);
+}
+
+
 __global__
 void build_hash_table(Entity *hash_table, int hash_table_row_size,
                       int *relation, int relation_rows, int relation_columns) {
@@ -74,7 +87,7 @@ void build_hash_table(Entity *hash_table, int hash_table_row_size,
     for (int i = index; i < relation_rows; i += stride) {
         int key = relation[(i * relation_columns) + 0];
         int value = relation[(i * relation_columns) + 1];
-        int position = key & (hash_table_row_size - 1);
+        int position = get_position(key, hash_table_row_size);
         while (true) {
             int existing_key = atomicCAS(&hash_table[position].key, 0, key);
             if (existing_key == 0) {
@@ -90,7 +103,7 @@ __global__
 void get_match_count(Entity *hash_table, int hash_table_row_size, int *match_count, int key) {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (i >= hash_table_row_size) return;
-    int position = key & (hash_table_row_size - 1);
+    int position = get_position(key, hash_table_row_size);
     while (true) {
         if (hash_table[position].key == key) {
             atomicAdd(match_count, 1);
@@ -107,7 +120,7 @@ void search_hash_table(Entity *hash_table, int hash_table_row_size,
                        int key, int *index, int *result) {
     int i = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (i >= hash_table_row_size) return;
-    int position = key % hash_table_row_size;
+    int position = get_position(key, hash_table_row_size);
     while (true) {
         if (hash_table[position].key == key) {
             int current_index = atomicAdd(index, 1);
@@ -153,6 +166,8 @@ void gpu_hash_table(const char *data_path, char separator,
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
+    std::locale loc("");
+    std::cout.imbue(loc);
 
     time_point_begin_outer = chrono::high_resolution_clock::now();
     int device_id;
@@ -209,7 +224,7 @@ void gpu_hash_table(const char *data_path, char separator,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
-//    show_hash_table(hash_table, hash_table_row_size, "Hash table");
+    show_hash_table(hash_table, hash_table_row_size, "Hash table");
     checkCuda(cudaEventRecord(stop));
     checkCuda(cudaEventSynchronize(stop));
     float gpu_time = 0;
@@ -316,5 +331,7 @@ int main(int argc, char **argv) {
 // Parameters: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage, Grid size, Block size
 
 // nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 50 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0
+// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0
 // nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 1000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 25 -run-args 0 -run-args 0
+
+// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 100000000 -run-args 2 -run-args 0.1 -run-args 1 -run-args 0 -run-args 0 -run-args 0

@@ -54,9 +54,41 @@
 - Used open addressing method to build the hashtable with linear probing
 - Comparison of hashtable in cpu and gpu in theta gpu and local machine (see spec above):
 - Dataset: [data/link.facts_412148.txt](data/link.facts_412148.txt) size (412148 x 2)
-- Benchmark of hash table in Theta GPU with graph dataset
+- Benchmark of hash table in Theta GPU with random dataset
+
+| # keys      | Grid size | Block size | # hashtable rows | Load factor | Duplicate | Build  | Build rate   | Search  | Total   |
+|-------------|-----------|------------|------------------|-------------|-----------|--------|--------------|---------|---------|
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 0 | 0.0026 | 378,865,954 | 0.1712 | 0.1958 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 10 | 1.8021 | 554,909 | 0.1714 | 2.0021 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 20 | 3.1046 | 322,105 | 0.1710 | 3.2974 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 30 | 3.8944 | 256,777 | 0.1706 | 4.0870 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 40 | 4.3306 | 230,913 | 0.1698 | 4.5223 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 50 | 4.5901 | 217,858 | 0.1706 | 4.7851 |
+| 1,000,000 | 3,456 | 1,024 | 4,194,304 | 0.4000 | 0 | 0.0027 | 365,497,061 | 0.1700 | 0.1947 |
+| 1,000,000 | 3,456 | 1,024 | 4,194,304 | 0.4000 | 50 | 3.5791 | 279,402 | 0.1709 | 3.7723 |
+| 1,000,000 | 96 | 512 | 4,194,304 | 0.4000 | 50 | 4.3680 | 228,939 | 0.1705 | 4.5605 |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 50 | 4.6162 | 216,628 | 0.1710 | 4.8098 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 0 | 0.0207 | 482,015,045 | 1.8800 | 2.1681 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 10 | 118.1803 | 84,616 | 1.8801 | 120.3269 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 20 | 208.1775 | 48,035 | 1.8800 | 210.3218 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 30 | 275.6550 | 36,277 | 1.8800 | 277.7997 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 40 | 315.9996 | 31,645 | 1.8800 | 318.1441 |
+| 10,000,000 | 3,456 | 1,024 | 134,217,728 | 0.1000 | 50 | 331.5945 | 30,157 | 1.8800 | 333.7395 |
+| 10,000,000 | 3,456 | 1,024 | 33,554,432 | 0.4000 | 50 | 329.8256 | 30,319 | 1.8740 | 331.8920 |
+| 10,000,000 | 96 | 512 | 33,554,432 | 0.4000 | 50 | 392.0051 | 25,509 | 1.8740 | 394.0723 |
+| 10,000,000 | 96 | 1,024 | 33,554,432 | 0.4000 | 50 | 396.3696 | 25,228 | 1.8740 | 398.4319 |
+| 100,000,000 | 3,456     | 1,024      | 1,073,741,824    | 0.1000      | 0         | 0.1490 | 671,241,548  | 18.7985 | 21.4103 |
+| 100,000,000 | 3,456     | 1,024      | 536,870,912      | 0.2000      | 0         | 0.1499 | 667,283,323  | 18.7998 | 21.0183 |
+| 100,000,000 | 3,456     | 1,024      | 536,870,912      | 0.3000      | 0         | 0.1482 | 674,682,538  | 18.7988 | 21.0028 |
+| 100,000,000 | 3,456     | 1,024      | 268,435,456      | 0.4000      | 0         | 0.1485 | 673,621,456  | 18.7990 | 20.7955 |
+| 100,000,000 | 3,456     | 1,024      | 268,435,456      | 0.5000      | 0         | 0.1479 | 676,196,152  | 18.7985 | 20.7957 |
+
 
 | # keys | Grid size | Block size | # hashtable rows | Load factor | Duplicate | Build  | Build rate  | Search | Total  |
+|-------------|-----------|------------|------------------|-------------|-----------|--------|--------------|---------|---------|
+| 412,148 | 3,456 | 1,024 | 2,097,152 | 0.3000 | 30 | 2.6656 | 154,618 | 0.0648 | 2.9018 |
+| 412,148 | 3,456 | 1,024 | 1,048,576 | 0.4000 | 30 | 2.6604 | 154,921 | 0.0643 | 2.8158 |
+| 412,148 | 96 | 512 | 1,048,576 | 0.4000 | 30 | 3.8604 | 106,763 | 0.0643 | 4.0137 |
 
 
 | # keys  | # hashtable rows | Load factor | Read   | Build  | Build rate  | Search | Total  | 
@@ -95,6 +127,31 @@ For random data:
 | 100,000 | 262,144          | 0.4         | 75        | 0.3531 | 0.1096 | 911,670 k/s     | 0.0168 | 0.5416 |
 
 ```shell
+nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 1000000 -run-args 2 -run-args 0.4 -run-args 1 -run-args 10 -run-args 96 -run-args 1024
+Duplicate percentage: 10.000000
+GPU hash table: (random, 1,000,000 keys)
+Grid size: 96, Block size: 1,024
+Hash table total rows: 4,194,304, load factor: 0.400000
+Build rate: 554,909 keys/s, time: 1.802097s, keys: 1,000,000
+Search hash table with key: 1, Grid size: 1, Block size: 1
+Search count: 2, Matched values:
+384 182 
+Total time: 2.002072 seconds
+| # keys | Grid size | Block size | # hashtable rows | Load factor | Duplicate | Build  | Build rate  | Search | Total  |
+| 1,000,000 | 96 | 1,024 | 4,194,304 | 0.4000 | 10 | 1.8021 | 554,909 | 0.1714 | 2.0021 |
+
+nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.4 -run-args 1 -run-args 30 -run-args 96 -run-args 512
+GPU hash table: (data/link.facts_412148.txt, 250,000 keys)
+Grid size: 96, Block size: 512
+Hash table total rows: 1,048,576, load factor: 0.4
+Build rate: 144,834 keys/s, time: 1.72611s, keys: 250,000
+Search hash table with key: 1, Grid size: 1, Block size: 1
+Search count: 22, Matched values:
+535 342 343 344 179 180 181 182 183 53 54 55 56 57 1 2 345 346 536 537 538 539 
+Total time: 1.8191 seconds
+| # keys | Grid size | Block size | # hashtable rows | Load factor | Duplicate | Build  | Build rate  | Search | Total  |
+| 250,000 | 96 | 512 | 1,048,576 | 0.4000 | 30 | 1.7261 | 144,834 | 0.0390 | 1.8191 |
+
 nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
 GPU hash table: (data/link.facts_412148.txt, 250000 keys)
 Grid size: 245, Block size: 1024
@@ -796,3 +853,5 @@ Using local machine:
 - [CUDA Pro Tip: Occupancy API Simplifies Launch Configuration](https://developer.nvidia.com/blog/cuda-pro-tip-occupancy-api-simplifies-launch-configuration/)
 - [CUDA thrust](https://docs.nvidia.com/cuda/thrust/index.html)
 - [Count in thrust](https://thrust.github.io/doc/group__counting_gac4131b028e0826ec6d50bbf0b5e8406d.html)
+- [Basics of Hash Tables](https://www.hackerearth.com/practice/data-structures/hash-tables/basics-of-hash-tables/tutorial/)
+- [MurmurHash3](https://stackoverflow.com/a/68365962/3129414)
