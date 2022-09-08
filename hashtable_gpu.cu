@@ -216,7 +216,7 @@ void gpu_hash_table(const char *data_path, char separator,
     cudaEventElapsedTime(&gpu_time, start, stop);
     double gpu_time_s = gpu_time / 1000.0f;
     long int rate = relation_rows / gpu_time_s;
-    cout << "Rate: " << rate << " keys/s, time: " << gpu_time_s << "s, keys: " << relation_rows << endl;
+    cout << "Build rate: " << rate << " keys/s, time: " << gpu_time_s << "s, keys: " << relation_rows << endl;
     output.build_time = gpu_time_s;
     output.build_rate = rate;
 
@@ -260,14 +260,28 @@ void gpu_hash_table(const char *data_path, char separator,
     output.total_time = total_time;
     std::cout << std::fixed;
     std::cout << std::setprecision(4);
+    cout << "| # keys | Grid size | Block size | # hashtable rows | Load factor | Duplicate ";
+    cout << "| Build  | Build rate  | Search | Total  |" << endl;
     cout << "| " << output.key_size << " | " << output.grid_size << " | " << output.block_size << " | ";
     cout << output.hashtable_rows << " | " << output.load_factor << " | " << output.duplicate_percentage << " | ";
     cout << fixed << output.build_time << " | " << output.build_rate << " | ";
     cout << fixed << output.search_time << " | " << output.total_time << " |" << endl;
 }
 
-
+/**
+ * Main function to create a hashtable and search an item.
+ * The parameters are given as sequential command line arguments.
+ *
+ * @args: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage, Grid size, Block size
+ * Data path: (filepath or random) (string)
+ * Load factor: 0 - 1 (double)
+ * Max duplicate percentage: 0-99 (int), will not be used if data path is not random
+ * Grid size: 0 for predefined value based on number of SMs of the GPU
+ * Block size: 0 for predefined value based on occupancy API
+ * @return 0
+ */
 int main(int argc, char **argv) {
+
     const char *data_path;
     char separator = '\t';
     int relation_rows, relation_columns, key, max_duplicate_percentage, grid_size, block_size;
@@ -294,34 +308,13 @@ int main(int argc, char **argv) {
     if (sscanf(argv[8], "%i", &block_size) != 1) {
         fprintf(stderr, "error - not an integer");
     }
-//    cout << "Data path: " << data_path << endl;
-//    cout << "Relation rows: " << relation_rows << endl;
-//    cout << "Relation columns: " << relation_columns << endl;
-//    cout << "Load factor: " << load_factor << endl;
-//    cout << "Search key: " << key << endl;
-//    cout << "Max duplicate percentage: " << max_duplicate_percentage << endl;
-//    relation_columns = 2;
-//    relation_rows = 13;
-//    double load_factor = 0.3;
-////    data_path = "data/data_4.txt";
-//    data_path = "data/link.facts_412148.txt";
-////    data_path = "";
-//    int key = 3;
-//    int max_duplicate_percentage = 30;
-//
     gpu_hash_table(data_path, separator,
                    relation_rows, relation_columns, load_factor, key, max_duplicate_percentage, grid_size, block_size);
-//    for (int i = 0; i < argc; ++i) {
-//        printf("Argument %d : %s\n", i, argv[i]);
-//    }
     return 0;
 }
 
 // Parameters: Data path, Relation rows, Relation columns, Load factor, Search key, Max duplicate percentage, Grid size, Block size
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 50 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 100000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
-// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 10000000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 25 0 0
 
 // nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 50 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0
+// nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 250000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30 -run-args 0 -run-args 0
+// nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 1000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 25 -run-args 0 -run-args 0
