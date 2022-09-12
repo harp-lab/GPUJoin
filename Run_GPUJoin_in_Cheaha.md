@@ -18,3 +18,16 @@ module load OpenMPI
 mpicc CODE.c -o CODE
 mpirun -np <number of cores to run with> ./CODE
 ```
+
+### Running CUDA code on Cheaha
+
+- Make sure when requesting an interactive job to select "pascalnodes" as the partition.
+- Load CUDA module:
+```commandline
+module load cuda11.2/toolkit/11.2.2
+```
+- Compile and run/profile CUDA code:
+```commandline
+nvcc CODE.cu -o CODE
+nvprof ./CODE
+```
