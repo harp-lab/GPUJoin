@@ -177,8 +177,8 @@ void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *ha
 
 
 void gpu_hash_table(const char *data_path, char separator,
-                    int relation_rows, int relation_columns, double load_factor, int key,
-                    int max_duplicate_percentage, int preferred_grid_size, int preferred_block_size) {
+                  int relation_rows, int relation_columns, double load_factor, int key,
+                  int max_duplicate_percentage, int preferred_grid_size, int preferred_block_size) {
     std::chrono::high_resolution_clock::time_point time_point_begin_outer;
     std::chrono::high_resolution_clock::time_point time_point_end_outer;
     cudaEvent_t start, stop;
@@ -342,7 +342,7 @@ int main(int argc, char **argv) {
         fprintf(stderr, "error - not an integer");
     }
     gpu_hash_table(data_path, separator,
-                   relation_rows, relation_columns, load_factor, key, max_duplicate_percentage, grid_size, block_size);
+                 relation_rows, relation_columns, load_factor, key, max_duplicate_percentage, grid_size, block_size);
     return 0;
 }
 

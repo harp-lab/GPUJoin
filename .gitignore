@@ -11,3 +11,8 @@ join
 build/
 rapids_implementation/cufile.log
 rapids_implementation/rmm_log.txt
+output/cpu_hj.txt
+output/gpu_hj.txt
+output/cpu_nlj.txt
+output/gpu_nlj.txt
+check.py

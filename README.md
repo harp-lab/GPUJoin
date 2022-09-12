@@ -16,9 +16,6 @@
 ### Techniques
 - Open addressing
   - Linear probing
-  - Quadratic probing
-  - Double hashing
-- Separate chaining
 
 ### Configuration
 - Configuration data are collected using `nvidia-smi`, `lscpu`, `free -h`
@@ -48,6 +45,37 @@
   - L2 cache: 1.5 MiB
   - L3 cache: 9 MiB
   - Total memory: 15Gi
+
+### Implementation of Hashjoin in GPU
+- Used open addressing based hash table with linear probing and Murmur3 hash
+- Comparison between nested loop join for random and graph data (local machine):
+```shell
+nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Duplicate percentage: 30.000000
+Join result: 50,000 x 3
+Wrote join result (50,000 rows) to file: output/gpu_hj.txt
+| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+| 25,000 | 50,000 | 320X1,024 | 131,072 | 0.3000 | 30 | 77,790,502 | 0.0009 (0.0003+0.0000+0.0003+0.0003) |
+
+nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args random -run-args 25000 -run-args 30                                 
+Duplicate percentage: 30.000000
+Join result: 50,000 x 3
+Wrote join result (50,000 rows) to file: output/gpu_nlj.txt
+| #Input | #Join | #BlocksXThreads | Duplicate | Total(Pass 1+Offset+Pass 2) |
+| 25,000 | 50,000 | 25X1,024 | 30 | 0.0248 (0.0042+0.0015+0.0192) |
+
+nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Join result: 222,371 x 3
+Wrote join result (222,371 rows) to file: output/gpu_hj.txt
+| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+| 25,000 | 222,371 | 320X1,024 | 131,072 | 0.3000 | N/A | 80,309,416 | 0.0010 (0.0003+0.0000+0.0003+0.0004) |
+
+nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 30
+Join result: 222,371 x 3
+Wrote join result (222,371 rows) to file: output/gpu_nlj.txt
+| #Input | #Join | #BlocksXThreads | Duplicate | Total(Pass 1+Offset+Pass 2) |
+| 25,000 | 222,371 | 25X1,024 | N/A | 0.0156 (0.0033+0.0003+0.0120) |
+```
 
 ### Implementation and benchmark of hash table in CPU and GPU
 
@@ -109,26 +137,7 @@
 | 412,148 | 3,456 | 1,024 | 1,048,576 | 0.4000 | 30 | 2.6604 | 154,921 | 0.0643 | 2.8158 |
 | 412,148 | 96 | 512 | 1,048,576 | 0.4000 | 30 | 3.8604 | 106,763 | 0.0643 | 4.0137 |
 
-
-| # keys  | # hashtable rows | Load factor | Read   | Build  | Build rate  | Search | Total  | 
-|---------|------------------|-------------|--------|--------|-------------|--------|--------|
-| 100,000 | 1,048,576        | 0.1         | 0.3772 | 0.3324 | 300,779 k/s | 0.0139 | 0.7841 |
-| 100,000 | 524,288          | 0.2         | 0.3868 | 0.3456 | 289,302 k/s | 0.0132 | 0.8115 |
-| 100,000 | 524,288          | 0.3         | 0.3811 | 0.3098 | 322,766 k/s | 0.0132 | 0.7682 |
-| 100,000 | 262,144          | 0.4         | 0.3798 | 0.3235 | 309,109 k/s | 0.0132 | 0.7865 |
-| 100,000 | 262,144          | 0.5         | 0.3730 | 0.3187 | 313,677 k/s | 0.0133 | 0.7649 |
-| 200,000 | 2,097,152        | 0.1         | 0.3951 | 0.9496 | 210,606 k/s | 0.0259 | 1.4353 |
-| 200,000 | 1,048,576        | 0.2         | 0.3969 | 0.9726 | 205,618 k/s | 0.0258 | 1.4610 |
-| 200,000 | 1,048,576        | 0.3         | 0.3977 | 0.9670 | 206,815 k/s | 0.0258 | 1.4507 |
-| 200,000 | 524,288          | 0.4         | 0.3914 | 0.9771 | 204,684 k/s | 0.0252 | 1.4570 |
-| 200,000 | 524,288          | 0.5         | 0.4036 | 0.9532 | 209,811 k/s | 0.0253 | 1.4512 |
-| 250,000 | 4,194,304        | 0.1         | 0.4141 | 1.2503 | 199,944 k/s | 0.0341 | 1.7638 |
-| 250,000 | 2,097,152        | 0.2         | 0.4079 | 1.2328 | 202,783 k/s | 0.0324 | 1.7332 |
-| 250,000 | 1,048,576        | 0.3         | 0.4112 | 1.2540 | 199,347 k/s | 0.0319 | 1.7569 |
-| 250,000 | 1,048,576        | 0.4         | 0.4059 | 1.2364 | 202,197 k/s | 0.0317 | 1.7351 |
-| 250,000 | 524,288          | 0.5         | 0.4250 | 1.2608 | 198,276 k/s | 0.0313 | 1.7774 |
-
-For random data:
+- For random data with modular hash:
 
 | # keys  | # hashtable rows | Load factor | Duplicate | Read   | Build  | Build rate      | Search | Total  | 
 |---------|------------------|-------------|-----------|--------|--------|-----------------|--------|--------|
@@ -271,29 +280,6 @@ Hash table build: 1.74615 seconds
 Searched key: 55-->1
 Search: 1.242e-06 seconds
 Total time: 1.75082 seconds
-
-# Local Machine
--------------------------------
-nvcc hashtable_gpu.cu -o join -run
-GPU hash table: (25000, 2)
-Blocks per grid: 25, Threads per block: 1024
-Hash table row size: 55555
-Hash table size: 444440
-Read relation: 0.0696403 seconds
-Hash table build: 0.0508285 seconds
-Blocks per grid: 55, Threads per block: 1024
-Searched key: 55-->1
-Search: 0.000186191 seconds
-Total time: 0.169277 seconds
-
-nvcc hashtable_cpu.cu -o join -run
-CPU hash table: (25000, 2)
-Hash table row size: 55555
-Read relation: 0.013476 seconds
-Hash table build: 2.25652 seconds
-Searched key: 55-->1
-Search: 2.128e-06 seconds
-Total time: 2.27021 seconds
 ```
 - Comparison with nested loop join:
 ```shell
@@ -417,46 +403,6 @@ GPU Pass 1 get join size per row in relation 1: 0.210211 seconds
 Total size of the join result: -2135009041
 Thrust calculate offset: 0.00207949 seconds
 ```
-
-#### Local result
-- Local setup: NVIDIA GeForce GTX 1060 with Max-Q Design - 6144MiB 
-- CUDF and pandas:
-
-```shell
-CUDF join (n=100000) size: 20000986
-Pandas join (n=100000) size: 20000986
-CUDF join (n=150000) size: 44995231
-Pandas join (n=150000) size: 44995231
-CUDF join (n=200000) size: 80002265
-Pandas join (n=200000) size: 80002265
-```
-
-| Number of rows | CUDF time (s) | Pandas time (s) |
-| --- | --- | --- |
-| 100000 | 0.039079 | 1.443562 |
-| 150000 | 0.078298 | 3.711782 |
-| 200000 | 0.211207 | 11.871658 |
-
-
-Error for `n=250000`:
-```
-std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include/rmm/mr/device/cuda_memory_resource.hpp:70: cudaErrorMemoryAllocation out of memory
-```
-
-```shell
-nvcc nested_loop_join_dynamic_size.cu -o join -run
-```
-
-| Number of rows | #Blocks | #Threads | #Result rows | Pass 1 | Offset calculation | Pass 2 | Total time |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 100000 | 98 | 1024 | 20000986 | 0.0422773 | 0.000791339 | 0.147426 | 0.190495 |
-| 150000 | 147 | 1024 | 44995231 | 0.0918371 | 0.00044723 | 0.350052 | 0.442336 |
-| 200000 | 196 | 1024 | 80002265 | 0.164065 | 0.00042808 | 0.581562 | 0.746055 |
-| 250000 | 245 | 1024 | 125000004 | 0.257465 | 0.000507826 | 0.931161 | 1.18913 |
-| 300000 | 293 | 1024 | 179991734 | 0.377683 | 0.000541065 | 1.31541 | 1.69363 |
-| 350000 | 342 | 1024 | 245006327 | 0.51732 | 0.000397259 | 2.14485 | 2.66257 |
-| 400000 | 391 | 1024 | 319977044 | 0.668371 | 0.0058857 | 2.94693 | 3.62118 |
-| 450000 | 440 | 1024 | 404982983 | 0.839768 | 0.00467816 | 3.78764 | 4.63209 |
 
 ### Profiling
 - Using `nvprof` with threads per block 1024

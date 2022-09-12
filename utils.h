@@ -19,10 +19,11 @@ void show_time_spent(string message,
 }
 
 double get_time_spent(string message,
-                     chrono::high_resolution_clock::time_point time_point_begin,
-                     chrono::high_resolution_clock::time_point time_point_end) {
+                      chrono::high_resolution_clock::time_point time_point_begin,
+                      chrono::high_resolution_clock::time_point time_point_end) {
     chrono::duration<double> time_span = time_point_end - time_point_begin;
-    cout << message << ": " << time_span.count() << " seconds" << endl;
+    if (message != "")
+        cout << message << ": " << time_span.count() << " seconds" << endl;
     return time_span.count();
 }
 
@@ -131,6 +132,21 @@ void get_reverse_relation_gpu(int *reverse_data, int *data, int total_rows, int 
             pos--;
         }
     }
+}
+
+
+void generate_random_relation(int *relation, int relation_rows, int relation_columns, double max_duplicate_percentage) {
+    double temp = (ceil)((1 - (max_duplicate_percentage / 100)) * relation_rows);
+    int max_number = temp;
+    for (int i = 0; i < relation_rows; i++) {
+        int key = (i % max_number) + 1;
+        relation[(i * relation_columns) + 0] = key;
+        for (int j = 1; j < relation_columns; j++) {
+            relation[(i * relation_columns) + j] = (rand() % 500) + 1;
+        }
+    }
+    double duplicate = ((double) (relation_rows - max_number) / relation_rows) * 100;
+    cout << fixed << "Duplicate percentage: " << duplicate << endl;
 }
 
 void cpu_get_join_data(int *result, long long data_max_length,
