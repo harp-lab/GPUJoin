@@ -48,6 +48,35 @@
 
 ### Implementation of Hashjoin in GPU
 - Used open addressing based hash table with linear probing and Murmur3 hash
+- Comparison between nested loop join for random and graph data (ThetaGPU):
+```shell
+nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Join result: 3,232,717 x 3
+Wrote join result (3,232,717 rows) to file: output/gpu_hj.txt
+| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+| 412,148 | 3,232,717 | 3,456X1,024 | 2,097,152 | 0.3000 | N/A | 203,585,371 | 0.0078 (0.0020+0.0015+0.0017+0.0026) |
+
+nested_loop_join_dynamic_size.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 30
+Join result: 3,232,717 x 3
+Wrote join result (3,232,717 rows) to file: output/gpu_nlj.txt
+| #Input | #Join | #BlocksXThreads | Duplicate | Total(Pass 1+Offset+Pass 2) |
+| 412,148 | 3,232,717 | 403X1,024 | N/A | 0.2743 (0.1056+0.0099+0.1587) |
+
+nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 10000000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Duplicate percentage: 30.000000
+Join result: 20,000,000 x 3
+Wrote join result (20,000,000 rows) to file: output/gpu_hj.txt
+| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+| 10,000,000 | 20,000,000 | 3,456X1,024 | 33,554,432 | 0.3000 | 30 | 360,834,511 | 0.0627 (0.0277+0.0212+0.0018+0.0120) |
+
+nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args random -run-args 10000000 -run-args 30
+Duplicate percentage: 30.000000
+Join result: 20,000,000 x 3
+Wrote join result (20,000,000 rows) to file: output/gpu_nlj.txt
+| #Input | #Join | #BlocksXThreads | Duplicate | Total(Pass 1+Offset+Pass 2) |
+| 10,000,000 | 20,000,000 | 9,766X1,024 | 30 | 131.1090 (44.7930+0.0019+86.3141) |
+
+```
 - Comparison between nested loop join for random and graph data (local machine):
 ```shell
 nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0

@@ -233,3 +233,6 @@ int main(int argc, char **argv) {
 
 // nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 30
 // nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args random -run-args 25000 -run-args 30
+
+// nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 30
+// nvcc nested_loop_join_dynamic_size.cu -run -o join -run-args random -run-args 1000000 -run-args 30

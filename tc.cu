@@ -38,18 +38,6 @@ struct Output {
     double total_time;
 } output;
 
-
-struct is_match_gpu {
-    int key;
-
-    __host__ __device__ is_match_gpu(int searched_key) : key(searched_key) {};
-
-    __device__
-    bool operator()(Entity &x) {
-        return x.key == key;
-    }
-};
-
 /*
  * Method that returns position in the hashtable for a key using Murmur3 hash
  * */
@@ -60,6 +48,20 @@ __device__ int get_position(int key, int hash_table_row_size) {
     key *= 0xc2b2ae35;
     key ^= key >> 16;
     return key & (hash_table_row_size - 1);
+}
+
+void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *hash_table_name) {
+    int count = 0;
+    cout << "Hashtable name: " << hash_table_name << endl;
+    cout << "===================================" << endl;
+    for (int i = 0; i < hash_table_row_size; i++) {
+        if (hash_table[i].key != 0) {
+            cout << hash_table[i].key << " " << hash_table[i].value << endl;
+            count++;
+        }
+    }
+    cout << "Row counts " << count << "\n" << endl;
+    cout << "" << endl;
 }
 
 __global__
@@ -96,8 +98,6 @@ void get_join_result_size(Entity *hash_table, long int hash_table_row_size,
 
     for (int i = index; i < relation_rows; i += stride) {
         int key = reverse_relation[(i * relation_columns) + 0];
-//        int current_size = thrust::count_if(thrust::device, hash_table,
-//                                            hash_table + hash_table_row_size, is_match_gpu(key));
         int current_size = 0;
         int position = get_position(key, hash_table_row_size);
         while (true) {
@@ -108,8 +108,7 @@ void get_join_result_size(Entity *hash_table, long int hash_table_row_size,
             }
             position = (position + 1) & (hash_table_row_size - 1);
         }
-
-        current_size = current_size * 3;
+        current_size = current_size * 2;
         join_result_size[i] = current_size;
     }
 }
@@ -127,7 +126,6 @@ void get_join_result(Entity *hash_table, int hash_table_row_size,
         int position = get_position(key, hash_table_row_size);
         while (true) {
             if (hash_table[position].key == key) {
-                join_result[start_index++] = key;
                 join_result[start_index++] = hash_table[position].value;
                 join_result[start_index++] = value;
             } else if (hash_table[position].key == 0) {
@@ -157,24 +155,25 @@ void gpu_hashjoin(const char *data_path, char separator,
     cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     int block_size, min_grid_size, grid_size;
     double spent_time;
-    int *relation, *reverse_relation, *join_result, *offset;
+    int *relation, *reverse_relation;
     Entity *hash_table;
     const char *random_datapath = "random";
-    long int hash_table_size, join_result_size, join_result_rows, relation_size;
-    int join_result_columns = (relation_columns * 2) - 1;
+    long int hash_table_size, join_result_size, join_result_rows, relation_size, result_size, new_result_size;
+    long int reverse_relation_rows = relation_rows;
+    long int result_rows = relation_rows;
 
-
+    int join_result_columns = relation_columns;
     int hash_table_row_size = (int) relation_rows / load_factor;
     hash_table_row_size = pow(2, ceil(log(hash_table_row_size) / log(2)));
 
-    relation_size = relation_rows * relation_columns * sizeof(int);
-    hash_table_size = hash_table_row_size * sizeof(Entity);
+    relation_size = relation_rows * relation_columns;
+    hash_table_size = hash_table_row_size;
+    result_size = relation_size;
 
-    checkCuda(cudaMallocManaged(&relation, relation_size));
-    checkCuda(cudaMallocManaged(&reverse_relation, relation_size));
-    checkCuda(cudaMallocManaged(&offset, relation_rows * sizeof(int)));
-    checkCuda(cudaMallocManaged(&hash_table, hash_table_size));
-    checkCuda(cudaMemPrefetchAsync(relation, relation_size, device_id));
+    checkCuda(cudaMallocManaged(&relation, relation_size * sizeof(int)));
+    checkCuda(cudaMallocManaged(&reverse_relation, relation_size * sizeof(int)));
+    checkCuda(cudaMallocManaged(&hash_table, hash_table_size * sizeof(Entity)));
+    checkCuda(cudaMemPrefetchAsync(relation, relation_size * sizeof(int), device_id));
 
     if (strcmp(data_path, random_datapath) == 0) {
         generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
@@ -185,6 +184,8 @@ void gpu_hashjoin(const char *data_path, char separator,
     get_reverse_relation_gpu(reverse_relation, relation,
                              relation_rows,
                              relation_columns);
+//    show_relation(reverse_relation, relation_rows, relation_columns, "Relation 2", -1, 1);
+//    show_relation(relation, relation_rows, relation_columns, "Relation 1", -1, 1);
     checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
                                                  build_hash_table, 0, 0));
     grid_size = 32 * number_of_sm;
@@ -192,87 +193,131 @@ void gpu_hashjoin(const char *data_path, char separator,
         grid_size = preferred_grid_size;
         block_size = preferred_block_size;
     }
-    output.block_size = block_size;
-    output.grid_size = grid_size;
-    output.key_size = relation_rows;
-    output.load_factor = load_factor;
-    output.hashtable_rows = hash_table_row_size;
-    output.load_factor = load_factor;
-    output.duplicate_percentage = max_duplicate_percentage;
-    checkCuda(cudaEventRecord(start));
     build_hash_table<<<grid_size, block_size>>>
             (hash_table, hash_table_row_size,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
-    checkCuda(cudaEventRecord(stop));
-    checkCuda(cudaEventSynchronize(stop));
-    float gpu_time = 0;
-    cudaEventElapsedTime(&gpu_time, start, stop);
-    double gpu_time_s = gpu_time / 1000.0f;
-    long int rate = relation_rows / gpu_time_s;
-    output.build_time = gpu_time_s;
-    output.build_rate = rate;
+//    show_hash_table(hash_table, hash_table_row_size, "Hash table");
 
-    checkCuda(cudaEventRecord(start));
-    get_join_result_size<<<grid_size, block_size>>>
-            (hash_table, hash_table_row_size,
-             reverse_relation, relation_rows,
-             relation_columns, offset);
-    checkCuda(cudaDeviceSynchronize());
-    checkCuda(cudaEventRecord(stop));
-    checkCuda(cudaEventSynchronize(stop));
-    gpu_time = 0;
-    cudaEventElapsedTime(&gpu_time, start, stop);
-    gpu_time_s = gpu_time / 1000.0f;
-    time_point_begin = chrono::high_resolution_clock::now();
-    join_result_size = thrust::reduce(thrust::device, offset, offset + relation_rows, 0);
-    thrust::exclusive_scan(thrust::device, offset, offset + relation_rows, offset);
-    join_result_rows = join_result_size / join_result_columns;
-    output.join_rows = join_result_rows;
-    output.join_columns = join_result_columns;
-    time_point_end = chrono::high_resolution_clock::now();
-    spent_time = get_time_spent("", time_point_begin, time_point_end);
-    output.join_pass_1 = gpu_time_s;
-    output.join_offset = spent_time;
-    cout << "Join result: " << join_result_rows << " x " << join_result_columns << endl;
-    checkCuda(cudaMallocManaged(&join_result, join_result_size * sizeof(int)));
-    checkCuda(cudaEventRecord(start));
-    get_join_result<<<grid_size, block_size>>>
-            (hash_table, hash_table_row_size,
-             reverse_relation, relation_rows,
-             relation_columns, offset, join_result);
-    checkCuda(cudaDeviceSynchronize());
-    checkCuda(cudaEventRecord(stop));
-    checkCuda(cudaEventSynchronize(stop));
-    gpu_time = 0;
-    cudaEventElapsedTime(&gpu_time, start, stop);
-    gpu_time_s = gpu_time / 1000.0f;
-    output.join_pass_2 = gpu_time_s;
-    write_relation_to_file(join_result, join_result_rows, join_result_columns,
-                           output_path, separator);
-    output.total_time = output.build_time + output.join_pass_1 + output.join_offset + output.join_pass_2;
-    cudaFree(relation);
-    cudaFree(reverse_relation);
-    cudaFree(hash_table);
-    cudaFree(join_result);
-    cudaFree(offset);
-    std::cout << std::fixed;
-    std::cout << std::setprecision(4);
-    cout << "| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate ";
-    cout << "| Build rate | Total(Build+Pass 1+Offset+Pass 2) |" << endl;
-    cout << "| " << output.key_size << " | " << output.join_rows;
-    cout << " | " << output.grid_size << "X" << output.block_size << " | ";
-    cout << output.hashtable_rows << " | " << output.load_factor << " | ";
-    if (strcmp(data_path, random_datapath) == 0) {
-        cout << output.duplicate_percentage << " | ";
-    } else {
-        cout << "N/A | ";
+    while (true) {
+        int *join_result, *offset;
+        checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
+        get_join_result_size<<<grid_size, block_size>>>
+                (hash_table, hash_table_row_size,
+                 reverse_relation, reverse_relation_rows,
+                 relation_columns, offset);
+        checkCuda(cudaDeviceSynchronize());
+        join_result_size = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
+        thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
+        join_result_rows = join_result_size / join_result_columns;
+        checkCuda(cudaMallocManaged(&join_result, join_result_rows * join_result_columns * sizeof(int)));
+        get_join_result<<<grid_size, block_size>>>
+                (hash_table, hash_table_row_size,
+                 reverse_relation, reverse_relation_rows,
+                 relation_columns, offset, join_result);
+        checkCuda(cudaDeviceSynchronize());
+
+        // deduplication
+        long int projection_rows = 0;
+        for (long int i = 0; i < join_result_rows; i++) {
+            int key = join_result[(i * join_result_columns) + 0];
+            int value = join_result[(i * join_result_columns) + 1];
+            if (key != 0) {
+                projection_rows++;
+                for (int j = i + 1; j < join_result_rows; j++) {
+                    int current_key = join_result[(j * join_result_columns) + 0];
+                    int current_value = join_result[(j * join_result_columns) + 1];
+                    if ((key == current_key) && (value == current_value)) {
+                        join_result[(j * join_result_columns) + 0] = 0;
+                        join_result[(j * join_result_columns) + 1] = 0;
+                    }
+                }
+            }
+        }
+        int *projection;
+        cudaFree(reverse_relation);
+        checkCuda(cudaMallocManaged(&projection, projection_rows * relation_columns * sizeof(int)));
+        checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
+
+        long int index = 0;
+        for (long int i = 0; i < join_result_rows; i++) {
+            int key = join_result[(i * join_result_columns) + 0];
+            int value = join_result[(i * join_result_columns) + 1];
+            if (key != 0) {
+                reverse_relation[(index * join_result_columns) + 0] = key;
+                reverse_relation[(index * join_result_columns) + 1] = value;
+                projection[(index * join_result_columns) + 0] = value;
+                projection[(index * join_result_columns) + 1] = key;
+                index++;
+            }
+        }
+        show_relation(projection, projection_rows, join_result_columns, "Join dropped key", -1, 0);
+        int *concatenated_result;
+        long int concatenated_rows = projection_rows + result_rows;
+        checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * relation_columns * sizeof(int)));
+        index = 0;
+        for (long int i = 0; i < relation_rows; i++) {
+            concatenated_result[(index * relation_columns) + 0] = relation[(i * relation_columns) + 0];
+            concatenated_result[(index * relation_columns) + 1] = relation[(i * relation_columns) + 1];
+            index++;
+        }
+        for (long int i = 0; i < projection_rows; i++) {
+            concatenated_result[(index * relation_columns) + 0] = projection[(i * relation_columns) + 0];
+            concatenated_result[(index * relation_columns) + 1] = projection[(i * relation_columns) + 1];
+            index++;
+        }
+
+        // deduplication
+        long int deduplicated_result_rows = 0;
+        for (long int i = 0; i < concatenated_rows; i++) {
+            int key = concatenated_result[(i * relation_columns) + 0];
+            int value = concatenated_result[(i * relation_columns) + 1];
+            if (key != 0) {
+                deduplicated_result_rows++;
+                for (int j = i + 1; j < concatenated_rows; j++) {
+                    int current_key = concatenated_result[(j * relation_columns) + 0];
+                    int current_value = concatenated_result[(j * relation_columns) + 1];
+                    if ((key == current_key) && (value == current_value)) {
+                        concatenated_result[(j * relation_columns) + 0] = 0;
+                        concatenated_result[(j * relation_columns) + 1] = 0;
+                    }
+                }
+            }
+        }
+        int *depulicated_result;
+        checkCuda(cudaMallocManaged(&depulicated_result, deduplicated_result_rows * relation_columns * sizeof(int)));
+
+        index = 0;
+        for (long int i = 0; i < deduplicated_result_rows; i++) {
+            int key = concatenated_result[(i * relation_columns) + 0];
+            int value = concatenated_result[(i * relation_columns) + 1];
+            if (key != 0) {
+                depulicated_result[(index * relation_columns) + 0] = key;
+                depulicated_result[(index * relation_columns) + 1] = value;
+                index++;
+            }
+        }
+
+        show_relation(depulicated_result, deduplicated_result_rows,
+                      relation_columns, "deduplicated result", -1, 0);
+        new_result_size = deduplicated_result_rows * relation_columns;
+        cout << "Result size: " << result_size << ", new result size: " << new_result_size << endl;
+//    show_relation(reverse_relation, projection_rows, join_result_columns, "Join dropped key", -1, 0);
+        reverse_relation_rows = projection_rows;
+
+        cudaFree(reverse_relation);
+        cudaFree(join_result);
+        cudaFree(offset);
+        cudaFree(projection);
+        cudaFree(concatenated_result);
+        if (result_size == new_result_size){
+            break;
+        }
+        result_size = new_result_size;
     }
-    cout << fixed << output.build_rate << " | ";
-    cout << fixed << output.total_time;
-    cout << fixed << " (" << output.build_time << "+" << output.join_pass_1 << "+";
-    cout << fixed << output.join_offset << "+" << output.join_pass_2 << ") |\n" << endl;
+    cudaFree(relation);
+    cudaFree(hash_table);
 }
 
 /**
@@ -320,8 +365,7 @@ int main(int argc, char **argv) {
 
 // Parameters: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size
 
-// nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 
-// nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 1000000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args data/hpc_talk.txt -run-args 5 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
