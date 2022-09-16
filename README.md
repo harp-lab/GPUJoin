@@ -2,6 +2,23 @@
 - **Please open [rapids_implementation folder](rapids_implementation) that contains the comparison between cuDF and Pandas.**
 - The following sections are for the CUDA implementations of inner joins
 
+## Transitive closure
+- Use hash join (open addressing, linear probing)
+```shell
+nvcc tc.cu -run -o join -run-args data/hpc_talk.txt -run-args 5 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Iteration: 1, result rows: 8
+Iteration: 2, result rows: 9
+
+Total iterations: 2, Result rows: 9
+
+nvcc tc.cu -run -o join -run-args data/data_4.txt -run-args 4 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+Iteration: 1, result rows: 7
+Iteration: 2, result rows: 9
+Iteration: 3, result rows: 10
+
+Total iterations: 3, Result rows: 10
+```
+
 ## Join of two relations
 
 ### Dataset
