@@ -10,13 +10,40 @@ Iteration: 1, result rows: 8
 Iteration: 2, result rows: 9
 
 Total iterations: 2, Result rows: 9
+Entity name: Result
+===================================
+1 2
+1 3
+2 4
+3 4
+4 5
+1 4
+2 5
+3 5
+1 5
+Row counts 9
 
-nvcc tc.cu -run -o join -run-args data/data_4.txt -run-args 4 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+
+nvcc tc.cu -run -o join -run-args data/data_4.txt -run-args 4 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0  
 Iteration: 1, result rows: 7
 Iteration: 2, result rows: 9
 Iteration: 3, result rows: 10
 
 Total iterations: 3, Result rows: 10
+Entity name: Result
+===================================
+1 2
+2 3
+3 4
+4 5
+1 3
+2 4
+3 5
+1 4
+2 5
+1 5
+Row counts 10
+
 ```
 
 ## Join of two relations
