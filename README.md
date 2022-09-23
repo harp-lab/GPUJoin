@@ -905,3 +905,4 @@ Using local machine:
 - [Count in thrust](https://thrust.github.io/doc/group__counting_gac4131b028e0826ec6d50bbf0b5e8406d.html)
 - [Basics of Hash Tables](https://www.hackerearth.com/practice/data-structures/hash-tables/basics-of-hash-tables/tutorial/)
 - [MurmurHash3](https://stackoverflow.com/a/68365962/3129414)
+- [Thrust stable_sort()](https://thrust.github.io/doc/group__sorting_ga703dbe25a420a7eef8d93a65f3588d96.html#ga703dbe25a420a7eef8d93a65f3588d96)

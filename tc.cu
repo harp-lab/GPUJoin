@@ -3,19 +3,19 @@
 #include <iomanip>
 #include <assert.h>
 #include <thrust/count.h>
+#include <thrust/sort.h>
+#include <thrust/execution_policy.h>
+#include <thrust/functional.h>
+#include <thrust/device_ptr.h>
+#include <thrust/host_vector.h>
+#include <thrust/device_vector.h>
+#include <thrust/remove.h>
+#include <thrust/unique.h>
 #include "utils.h"
 
 
 using namespace std;
 
-//inline cudaError_t checkCuda(cudaError_t result, const char *file, int line, bool abort=true) {
-//    if (result != cudaSuccess) {
-////        fprintf(stderr, "CUDA Runtime Error: %s\n", cudaGetErrorString(result));
-//        fprintf(stderr,"CUDA Runtime Error: %s %s %d\n", cudaGetErrorString(result), file, line);
-//        assert(result == cudaSuccess);
-//    }
-//    return result;
-//}
 
 #define checkCuda(ans) { gpuAssert((ans), __FILE__, __LINE__); }
 
@@ -48,6 +48,34 @@ struct Output {
     long int join_columns;
     double total_time;
 } output;
+
+
+struct is_equal {
+    __host__ __device__
+    bool operator()(const Entity &lhs, const Entity &rhs) {
+        if ((lhs.key == rhs.key) && (lhs.value == rhs.value))
+            return true;
+        return false;
+    }
+};
+
+
+struct cmp {
+    __host__ __device__
+    bool operator()(const Entity &lhs, const Entity &rhs) {
+        if (lhs.key < rhs.key)
+            return true;
+        else if (lhs.key > rhs.key)
+            return false;
+        else {
+            if (lhs.value < rhs.value)
+                return true;
+            else if (lhs.value > rhs.value)
+                return false;
+            return true;
+        }
+    }
+};
 
 /*
  * Method that returns position in the hashtable for a key using Murmur3 hash
@@ -201,6 +229,8 @@ void gpu_tc(const char *data_path, char separator,
     get_reverse_relation_gpu(reverse_relation, relation,
                              relation_rows,
                              relation_columns);
+
+
     // initial result is the input relation
     for (long int i = 0; i < relation_rows; i++) {
         result[i].key = relation[(i * relation_columns) + 0];
@@ -242,44 +272,28 @@ void gpu_tc(const char *data_path, char separator,
                  relation_columns, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
 
-        // deduplication
-        long int projection_rows = 0;
-        for (long int i = 0; i < join_result_rows; i++) {
-            int key = join_result[i].key;
-            int value = join_result[i].value;
-            if (key != 0) {
-                projection_rows++;
-                for (int j = i + 1; j < join_result_rows; j++) {
-                    int current_key = join_result[j].key;
-                    int current_value = join_result[j].value;
-                    if ((key == current_key) && (value == current_value)) {
-                        join_result[j].key = 0;
-                        join_result[j].value = 0;
-                    }
-                }
-            }
-        }
+        // deduplication of projection
+        long int projection_rows = (thrust::unique(thrust::device,
+                                                   join_result, join_result + join_result_rows,
+                                                   is_equal())) - join_result;
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
 
-        long int index = 0;
-        for (long int i = 0; i < join_result_rows; i++) {
+        for (long int i = 0; i < projection_rows; i++) {
             int key = join_result[i].key;
             int value = join_result[i].value;
-            if (key != 0) {
-                reverse_relation[(index * join_result_columns) + 0] = key;
-                reverse_relation[(index * join_result_columns) + 1] = value;
-                projection[index].key = value;
-                projection[index].value = key;
-                index++;
-            }
+            reverse_relation[(i * join_result_columns) + 0] = key;
+            reverse_relation[(i * join_result_columns) + 1] = value;
+            projection[i].key = value;
+            projection[i].value = key;
         }
-//        show_relation(projection, projection_rows, join_result_columns, "Join dropped key", -1, 0);
+
+////        show_relation(projection, projection_rows, join_result_columns, "Join dropped key", -1, 0);
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
-        index = 0;
+        long int index = 0;
         for (long int i = 0; i < result_rows; i++) {
             concatenated_result[index].key = result[i].key;
             concatenated_result[index].value = result[i].value;
@@ -291,39 +305,19 @@ void gpu_tc(const char *data_path, char separator,
             index++;
         }
 
-        // deduplication
-        long int deduplicated_result_rows = 0;
-        for (long int i = 0; i < concatenated_rows; i++) {
-            int key = concatenated_result[i].key;
-            int value = concatenated_result[i].value;
-            if (key != 0) {
-                deduplicated_result_rows++;
-                for (int j = i + 1; j < concatenated_rows; j++) {
-                    int current_key = concatenated_result[j].key;
-                    int current_value = concatenated_result[j].value;
-                    if ((key == current_key) && (value == current_value)) {
-                        concatenated_result[j].key = 0;
-                        concatenated_result[j].value = 0;
-                    }
-                }
-            }
-        }
-
-
+        // deduplication of projection
+        long int deduplicated_result_rows = (thrust::unique(thrust::device,
+                                                            concatenated_result,
+                                                            concatenated_result + concatenated_rows,
+                                                            is_equal())) - concatenated_result;
         cudaFree(result);
         Entity *result;
         checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
-        index = 0;
         for (long int i = 0; i < deduplicated_result_rows; i++) {
-            int key = concatenated_result[i].key;
-            int value = concatenated_result[i].value;
-            if (key != 0) {
-                result[index].key = key;
-                result[index].value = value;
-                index++;
-            }
+            result[i].key = concatenated_result[i].key;
+            result[i].value = concatenated_result[i].value;
         }
-//    show_relation(reverse_relation, projection_rows, join_result_columns, "Join dropped key", -1, 0);
+////    show_relation(reverse_relation, projection_rows, join_result_columns, "Join dropped key", -1, 0);
         reverse_relation_rows = projection_rows;
 
         cudaFree(join_result);
@@ -335,6 +329,7 @@ void gpu_tc(const char *data_path, char separator,
         }
         iterations++;
         result_rows = deduplicated_result_rows;
+//        show_entity_array(result, result_rows, "Result in iteration");
         cout << "Iteration: " << iterations << ", result rows: " << result_rows << endl;
     }
     cout << "\nTotal iterations: " << iterations << ", Result rows: " << result_rows << endl;
