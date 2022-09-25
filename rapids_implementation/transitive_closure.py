@@ -59,9 +59,11 @@ def get_transitive_closure(dataset):
         relation_2.columns = COLUMN_NAMES[::-1]
         i += 1
         del temp_projection
+        print(f"i: {i}, rows: {len(temp_result)}")
     end_time_outer = time.perf_counter()
     time_took = end_time_outer - start_time_outer
     time_took = f"{time_took:.6f}"
+    # print(temp_result)
     return rows, len(temp_result), i, time_took
 
 
@@ -108,12 +110,13 @@ def generate_benchmark(iterative=True, datasets=None):
 
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
-        "cal.cedge": "../data/data_21693.txt",
-        "SF.cedge": "../data/data_223001.txt",
-        "TG.cedge": "../data/data_23874.txt",
+        # "cal.cedge": "../data/data_21693.txt",
+        # "SF.cedge": "../data/data_223001.txt",
+        # "TG.cedge": "../data/data_23874.txt",
         "OL.cedge": "../data/data_7035.txt",
-        "p2p-Gnutella09": "../data/data_26013.txt",
-        "p2p-Gnutella04": "../data/data_39994.txt"
+        # "data_4": "../data/data_4.txt",
+        # "p2p-Gnutella09": "../data/data_26013.txt",
+        # "p2p-Gnutella04": "../data/data_39994.txt"
     })
 
     # generate_benchmark(iterative=False, datasets={
