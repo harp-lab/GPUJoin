@@ -300,7 +300,6 @@ void gpu_tc(const char *data_path, char separator,
         long int projection_rows = (thrust::unique(thrust::device,
                                                    join_result, join_result + join_result_rows,
                                                    is_equal())) - join_result;
-//        tc_size += projection_rows;
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
@@ -319,21 +318,21 @@ void gpu_tc(const char *data_path, char separator,
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
 
-        long int index = 0;
-        for (long int i = 0; i < result_rows; i++) {
-            concatenated_result[index].key = result[i].key;
-            concatenated_result[index].value = result[i].value;
-            index++;
-        }
-        for (long int i = 0; i < projection_rows; i++) {
-            concatenated_result[index].key = projection[i].key;
-            concatenated_result[index].value = projection[i].value;
-            index++;
-        }
+//        long int index = 0;
+//        for (long int i = 0; i < result_rows; i++) {
+//            concatenated_result[index].key = result[i].key;
+//            concatenated_result[index].value = result[i].value;
+//            index++;
+//        }
+//        for (long int i = 0; i < projection_rows; i++) {
+//            concatenated_result[index].key = projection[i].key;
+//            concatenated_result[index].value = projection[i].value;
+//            index++;
+//        }
 
-//        thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
-//        thrust::copy(thrust::device, projection, projection + projection_rows,
-//                     concatenated_result + result_rows);
+        thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
+        thrust::copy(thrust::device, projection, projection + projection_rows,
+                     concatenated_result + result_rows);
 
         // deduplication of projection
         long int deduplicated_result_rows = (thrust::unique(thrust::device,
@@ -344,12 +343,12 @@ void gpu_tc(const char *data_path, char separator,
         Entity *result;
         checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
         // Copy the deduplicated concatenated result to result
-//        thrust::copy(thrust::device, concatenated_result,
-//                     concatenated_result + deduplicated_result_rows, result);
-        for (long int i = 0; i < deduplicated_result_rows; i++) {
-            result[i].key = concatenated_result[i].key;
-            result[i].value = concatenated_result[i].value;
-        }
+        thrust::copy(thrust::device, concatenated_result,
+                     concatenated_result + deduplicated_result_rows, result);
+//        for (long int i = 0; i < deduplicated_result_rows; i++) {
+//            result[i].key = concatenated_result[i].key;
+//            result[i].value = concatenated_result[i].value;
+//        }
         reverse_relation_rows = projection_rows;
         cudaFree(join_result);
         cudaFree(offset);
