@@ -97,7 +97,7 @@ void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *ha
     cout << "===================================" << endl;
     for (int i = 0; i < hash_table_row_size; i++) {
         if (hash_table[i].key != -1) {
-//            cout << hash_table[i].key << " " << hash_table[i].value << endl;
+            cout << hash_table[i].key << " " << hash_table[i].value << endl;
             count++;
         }
     }
@@ -111,7 +111,7 @@ void show_entity_array(Entity *data, int data_rows, const char *array_name) {
     cout << "===================================" << endl;
     for (int i = 0; i < data_rows; i++) {
         if (data[i].key != -1) {
-//            cout << data[i].key << " " << data[i].value << endl;
+            cout << data[i].key << " " << data[i].value << endl;
             count++;
         }
     }
@@ -297,6 +297,10 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
 
         // deduplication of projection
+        // first sort the array and then remove consecutive duplicated elements
+        thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
+                            cmp());
+
         long int projection_rows = (thrust::unique(thrust::device,
                                                    join_result, join_result + join_result_rows,
                                                    is_equal())) - join_result;
@@ -312,58 +316,45 @@ void gpu_tc(const char *data_path, char separator,
             projection[i].key = value;
             projection[i].value = key;
         }
-
         // concatenated result = result + projection
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
-
-//        long int index = 0;
-//        for (long int i = 0; i < result_rows; i++) {
-//            concatenated_result[index].key = result[i].key;
-//            concatenated_result[index].value = result[i].value;
-//            index++;
-//        }
-//        for (long int i = 0; i < projection_rows; i++) {
-//            concatenated_result[index].key = projection[i].key;
-//            concatenated_result[index].value = projection[i].value;
-//            index++;
-//        }
 
         thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
         thrust::copy(thrust::device, projection, projection + projection_rows,
                      concatenated_result + result_rows);
 
         // deduplication of projection
+        // first sort the array and then remove consecutive duplicated elements
+        thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
+                            cmp());
         long int deduplicated_result_rows = (thrust::unique(thrust::device,
                                                             concatenated_result,
                                                             concatenated_result + concatenated_rows,
                                                             is_equal())) - concatenated_result;
         cudaFree(result);
-        Entity *result;
+//        Entity *result;
         checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
         // Copy the deduplicated concatenated result to result
         thrust::copy(thrust::device, concatenated_result,
                      concatenated_result + deduplicated_result_rows, result);
-//        for (long int i = 0; i < deduplicated_result_rows; i++) {
-//            result[i].key = concatenated_result[i].key;
-//            result[i].value = concatenated_result[i].value;
-//        }
         reverse_relation_rows = projection_rows;
+
+//        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         cudaFree(join_result);
         cudaFree(offset);
         cudaFree(projection);
         cudaFree(concatenated_result);
+        iterations++;
         if (result_rows == deduplicated_result_rows) {
             break;
         }
-        iterations++;
         result_rows = deduplicated_result_rows;
-        cout << "Iteration: " << iterations << ", result rows: " << result_rows << endl;
-//        break;
+        cout << "Iteration: " << iterations << ", Projection size: " << projection_rows
+             << ", Result rows: " << result_rows << endl;
     }
-    cout << "\nTotal iterations: " << iterations << ", Result rows: " << result_rows << endl;
-//    cout << "TC Size: " << tc_size << endl;
+    cout << "\nTotal iterations: " << iterations << ", TC size: " << result_rows << endl;
 
 //    show_entity_array(result, result_rows, "Result");
     cudaFree(relation);
@@ -414,6 +405,8 @@ int main(int argc, char **argv) {
     gpu_tc(data_path, separator,
            relation_rows, relation_columns, load_factor, max_duplicate_percentage,
            grid_size, block_size, output_path);
+
+
     return 0;
 }
 
@@ -426,3 +419,8 @@ int main(int argc, char **argv) {
 // nvcc tc.cu -run -o join -run-args data/data_4.txt -run-args 4 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 // nvcc tc.cu -run -o join -run-args data/data_5.txt -run-args 5 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 // nvcc tc.cu -run -o join -run-args data/data_7035.txt -run-args 7035 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// String graph
+// nvcc tc.cu -run -o join -run-args data/data_22.txt -run-args 22 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// Cyclic graph
+// nvcc tc.cu -run -o join -run-args data/data_3.txt -run-args 3 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0

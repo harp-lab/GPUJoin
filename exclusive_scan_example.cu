@@ -85,5 +85,35 @@ int main() {
 //        cout << relation_host[i].key << ", " << relation_host[i].value << endl;
 //    }
 
+//    Entity *concatenated_result;
+//    long int concatenated_rows = 5;
+//    checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
+//    concatenated_result[0].key = 1;
+//    concatenated_result[0].value = 1;
+//    concatenated_result[1].key = 1;
+//    concatenated_result[1].value = 1;
+//    concatenated_result[2].key = 2;
+//    concatenated_result[2].value = 2;
+//    concatenated_result[3].key = 1;
+//    concatenated_result[3].value = 1;
+//    concatenated_result[4].key = 2;
+//    concatenated_result[4].value = 1;
+//    // (1, 1), (1, 1), (2, 2), (1, 1), (2, 1) -> (1, 1), (2, 2), (2, 1)
+//
+//    thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows, cmp());
+//    cout << "Sorted input: " << endl;
+//    for (long int i = 0; i < concatenated_rows; i++) {
+//        cout << concatenated_result[i].key << ", " << concatenated_result[i].value << endl;
+//    }
+//
+//    long int deduplicated_result_rows = (thrust::unique(thrust::device,
+//                                                        concatenated_result,
+//                                                        concatenated_result + concatenated_rows,
+//                                                        is_equal())) - concatenated_result;
+//    cout << "Deduplicated result: " << endl;
+//    for (long int i = 0; i < deduplicated_result_rows; i++) {
+//        cout << concatenated_result[i].key << ", " << concatenated_result[i].value << endl;
+//    }
+
     return 0;
 }
