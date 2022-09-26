@@ -377,11 +377,12 @@ void gpu_tc(const char *data_path, char separator,
     double total_time = get_time_spent("", time_point_begin, time_point_end);
 //    cout << "\nTotal iterations: " << iterations << ", TC size: " << result_rows << endl;
     if (benchmark == false) {
-        cout << "| Dataset | Number of rows | TC size | Iterations | Time (s) |" << endl;
-        cout << "| --- | --- | --- | --- | --- |" << endl;
+        cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
+        cout << "| --- | --- | --- | --- | --- | --- |" << endl;
     }
     cout << "| " << dataset_name << " | " << relation_rows << " | " << result_rows;
-    cout << fixed << " | " << iterations << " | " << total_time << " |" << endl;
+    cout << fixed << " | " << iterations << " | ";
+    cout << fixed << grid_size << " x " << block_size << " | " << total_time << " |" << endl;
 }
 
 long int get_row_size(const char *data_path) {
@@ -401,15 +402,15 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "cal.cedge", "data/data_21693.txt",
             "SF.cedge", "data/data_223001.txt",
+            "p2p-Gnutella09", "data/data_26013.txt",
+            "p2p-Gnutella04", "data/data_39994.txt",
+            "cal.cedge", "data/data_21693.txt",
             "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
-            "p2p-Gnutella09", "data/data_26013.txt",
-            "p2p-Gnutella04", "data/data_39994.txt"
     };
-    cout << "| Dataset | Number of rows | TC size | Iterations | Time (s) |" << endl;
-    cout << "| --- | --- | --- | --- | --- |" << endl;
+    cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
+    cout << "| --- | --- | --- | --- | --- | --- |" << endl;
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
         dataset_name = datasets[i].c_str();

@@ -70,8 +70,9 @@ ssh USERNAME@theta.alcf.anl.gov
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
 git fetch; git reset --hard origin/main
 ssh thetagpusn1
-qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg
+qsub -I -n 1 -t 10 -q single-gpu -A dist_relational_alg --attrs filesystems=home,grand,theta-fs0
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin
+nvcc tc.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 nvcc nested_loop_join_dynamic_size.cu -o join -run
 nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 150000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
 nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 150000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
@@ -140,7 +141,10 @@ qsub -O pandas_submit -e pandas_submit.error pandas_submit.sh
 ```shell
 qstat -u $USER
 ```
-
+- Delete a job from queue:
+```shell
+qdel JOB_ID
+```
 - Running hashgraph (python) on theta
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
@@ -189,6 +193,10 @@ nvidia-smi -L
 - Remove untracked files:
 ```shell
 git clean -f
+```
+- Project allocations:
+```shell
+sbank allocations
 ```
 
 ### References

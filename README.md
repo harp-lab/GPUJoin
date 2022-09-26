@@ -4,11 +4,27 @@
 
 ## Transitive closure
 - Use hash join (open addressing, linear probing)
+- Theta GPU run:
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 1,024 | 69.9199 |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 1,024 | 4.7001 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 1,024 | 22.2563 |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 1,024 | 1.2410 |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.3603 |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.3052 |
+
+
+- Local run
 ```shell
-nvcc tc.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.4 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
-| Dataset | Number of rows | TC size | Iterations | Time (s) |
-| --- | --- | --- | --- | --- |
-| TG.cedge | 23,874 | 481,121 | 58 | 0.2601 |
+nvcc tc.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 320 x 1,024 | 30.1415 |
+| cal.cedge | 21,693 | 501,755 | 195 | 320 x 1,024 | 0.5332 |
+| TG.cedge | 23,874 | 481,121 | 58 | 320 x 1,024 | 0.1656 |
+| OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.1367 |
 ```
 
 ## Join of two relations
