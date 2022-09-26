@@ -157,6 +157,24 @@ void initialize_result(Entity *result,
 }
 
 __global__
+void reverse_projection(Entity *join_result, Entity *projection,
+                        int *reverse_relation, long int projection_rows, int join_result_columns) {
+    long int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= projection_rows) return;
+
+    long int stride = blockDim.x * gridDim.x;
+
+    for (long int i = index; i < projection_rows; i += stride) {
+        int key = join_result[i].key;
+        int value = join_result[i].value;
+        reverse_relation[(i * join_result_columns) + 0] = key;
+        reverse_relation[(i * join_result_columns) + 1] = value;
+        projection[i].key = value;
+        projection[i].value = key;
+    }
+}
+
+__global__
 void get_join_result_size(Entity *hash_table, long int hash_table_row_size,
                           int *reverse_relation, long int relation_rows, int relation_columns,
                           int *join_result_size) {
@@ -208,10 +226,11 @@ void get_join_result(Entity *hash_table, int hash_table_row_size,
 
 void gpu_tc(const char *data_path, char separator,
             long int relation_rows, int relation_columns, double load_factor, int max_duplicate_percentage,
-            int preferred_grid_size, int preferred_block_size, const char *output_path) {
+            int preferred_grid_size, int preferred_block_size, const char *dataset_name, bool benchmark) {
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
-//    double spent_time;
+    std::cout << std::fixed;
+    std::cout << std::setprecision(4);
     time_point_begin = chrono::high_resolution_clock::now();
     // Added to display comma separated integer values
     std::locale loc("");
@@ -238,7 +257,6 @@ void gpu_tc(const char *data_path, char separator,
     checkCuda(cudaMallocManaged(&result, result_rows * sizeof(Entity)));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity)));
 //    checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
-
 
     if (strcmp(data_path, random_datapath) == 0) {
         generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
@@ -300,22 +318,19 @@ void gpu_tc(const char *data_path, char separator,
         // first sort the array and then remove consecutive duplicated elements
         thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
                             cmp());
-
         long int projection_rows = (thrust::unique(thrust::device,
                                                    join_result, join_result + join_result_rows,
                                                    is_equal())) - join_result;
+
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
 
-        for (long int i = 0; i < projection_rows; i++) {
-            int key = join_result[i].key;
-            int value = join_result[i].value;
-            reverse_relation[(i * join_result_columns) + 0] = key;
-            reverse_relation[(i * join_result_columns) + 1] = value;
-            projection[i].key = value;
-            projection[i].value = key;
-        }
+        reverse_projection<<<grid_size, block_size>>>
+                (join_result, projection,
+                 reverse_relation, projection_rows, join_result_columns);
+        checkCuda(cudaDeviceSynchronize());
+
         // concatenated result = result + projection
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
@@ -334,7 +349,6 @@ void gpu_tc(const char *data_path, char separator,
                                                             concatenated_result + concatenated_rows,
                                                             is_equal())) - concatenated_result;
         cudaFree(result);
-//        Entity *result;
         checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
         // Copy the deduplicated concatenated result to result
         thrust::copy(thrust::device, concatenated_result,
@@ -351,25 +365,68 @@ void gpu_tc(const char *data_path, char separator,
             break;
         }
         result_rows = deduplicated_result_rows;
-        cout << "Iteration: " << iterations << ", Projection size: " << projection_rows
-             << ", Result rows: " << result_rows << endl;
+//        cout << "Iteration: " << iterations << ", Projection size: " << projection_rows
+//             << ", Result rows: " << result_rows << endl;
     }
-    cout << "\nTotal iterations: " << iterations << ", TC size: " << result_rows << endl;
-
 //    show_entity_array(result, result_rows, "Result");
     cudaFree(relation);
     cudaFree(reverse_relation);
     cudaFree(result);
     cudaFree(hash_table);
     time_point_end = chrono::high_resolution_clock::now();
-    show_time_spent("Total time", time_point_begin, time_point_end);
+    double total_time = get_time_spent("", time_point_begin, time_point_end);
+//    cout << "\nTotal iterations: " << iterations << ", TC size: " << result_rows << endl;
+    if (benchmark == false) {
+        cout << "| Dataset | Number of rows | TC size | Iterations | Time (s) |" << endl;
+        cout << "| --- | --- | --- | --- | --- |" << endl;
+    }
+    cout << "| " << dataset_name << " | " << relation_rows << " | " << result_rows;
+    cout << fixed << " | " << iterations << " | " << total_time << " |" << endl;
+}
+
+long int get_row_size(const char *data_path) {
+    long int row_size = 0;
+    int base = 1;
+    for (int i = strlen(data_path) - 1; i >= 0; i--) {
+        if (isdigit(data_path[i])) {
+            int digit = (int) data_path[i] - '0';
+            row_size += base * digit;
+            base *= 10;
+        }
+    }
+    return row_size;
+}
+
+void run_benchmark(int relation_columns, int max_duplicate_percentage,
+                   int grid_size, int block_size, double load_factor) {
+    char separator = '\t';
+    string datasets[] = {
+            "cal.cedge", "data/data_21693.txt",
+            "SF.cedge", "data/data_223001.txt",
+            "TG.cedge", "data/data_23874.txt",
+            "OL.cedge", "data/data_7035.txt",
+            "p2p-Gnutella09", "data/data_26013.txt",
+            "p2p-Gnutella04", "data/data_39994.txt"
+    };
+    cout << "| Dataset | Number of rows | TC size | Iterations | Time (s) |" << endl;
+    cout << "| --- | --- | --- | --- | --- |" << endl;
+    for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
+        const char *data_path, *dataset_name;
+        dataset_name = datasets[i].c_str();
+        data_path = datasets[i + 1].c_str();
+        long int row_size = get_row_size(data_path);
+        gpu_tc(data_path, separator,
+               row_size, relation_columns, load_factor, max_duplicate_percentage,
+               grid_size, block_size, dataset_name, true);
+
+    }
 }
 
 /**
  * Main function to create a hashtable on an input relation, reverse it, and join the original relation with reverse one
  * The parameters are given as sequential command line arguments.
  *
- * @args: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size
+ * @args: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size, Dataset name
  * Data path: (filepath or random) (string)
  * Load factor: 0 - 1 (double)
  * Max duplicate percentage: 0-99 (int), will not be used if data path is not random
@@ -378,12 +435,14 @@ void gpu_tc(const char *data_path, char separator,
  * @return 0
  */
 int main(int argc, char **argv) {
-    const char *data_path, *output_path;
+    const char *data_path, *dataset_name;
     char separator = '\t';
-    int relation_rows, relation_columns, max_duplicate_percentage, grid_size, block_size;
+    long int relation_rows;
+    int relation_columns, max_duplicate_percentage, grid_size, block_size;
     double load_factor;
+    const char *benchmark_str = "benchmark";
     data_path = argv[1];
-    if (sscanf(argv[2], "%i", &relation_rows) != 1) {
+    if (sscanf(argv[2], "%ld", &relation_rows) != 1) {
         fprintf(stderr, "error - not an integer");
     }
     if (sscanf(argv[3], "%i", &relation_columns) != 1) {
@@ -401,26 +460,27 @@ int main(int argc, char **argv) {
     if (sscanf(argv[7], "%i", &block_size) != 1) {
         fprintf(stderr, "error - not an integer");
     }
-    output_path = "output/gpu_hj.txt";
-    gpu_tc(data_path, separator,
-           relation_rows, relation_columns, load_factor, max_duplicate_percentage,
-           grid_size, block_size, output_path);
+    dataset_name = argv[8];
 
-
+    if (strcmp(data_path, benchmark_str) == 0) {
+        run_benchmark(relation_columns, max_duplicate_percentage, grid_size, block_size, load_factor);
+    } else {
+        gpu_tc(data_path, separator,
+               relation_rows, relation_columns, load_factor, max_duplicate_percentage,
+               grid_size, block_size, dataset_name, false);
+    }
     return 0;
 }
 
-// Parameters: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size
+// Parameters: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size, Dataset name
 
-// nvcc tc.cu -run -o join -run-args data/link.facts_412148.txt -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc tc.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-
-// nvcc tc.cu -run -o join -run-args data/hpc_talk.txt -run-args 5 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc tc.cu -run -o join -run-args data/data_4.txt -run-args 4 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc tc.cu -run -o join -run-args data/data_5.txt -run-args 5 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc tc.cu -run -o join -run-args data/data_7035.txt -run-args 7035 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 // String graph
-// nvcc tc.cu -run -o join -run-args data/data_22.txt -run-args 22 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args data/data_22.txt -run-args 22 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "string"
 // Cyclic graph
-// nvcc tc.cu -run -o join -run-args data/data_3.txt -run-args 3 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
-// nvcc tc.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+// nvcc tc.cu -run -o join -run-args data/data_3.txt -run-args 3 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "cyclic"
+
+// Single data
+// nvcc tc.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+
+// Benchmark
+// nvcc tc.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
