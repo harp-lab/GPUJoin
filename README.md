@@ -38,6 +38,20 @@ nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run
 - Use hash join (open addressing, linear probing)
 - Theta GPU run:
 
+```shell
+nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+```
+
+| Dataset | Number of rows | Triangles | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| roadNet-CA | 5,533,214 | 120,676 | 3,456 x 1,024 | 2.3305 |
+| roadNet-TX | 3,843,320 | 82,869 | 3,456 x 1,024 | 0.6461 |
+| roadNet-PA | 3,083,796 | 67,150 | 3,456 x 1,024 | 0.5132 |
+| SF.cedge | 223,001 | 4,036 | 3,456 x 1,024 | 0.0444 |
+| p2p-Gnutella09 | 26,013 | 2,354 | 3,456 x 1,024 | 0.0101 |
+| three_triangles | 10 | 3 | 3,456 x 1,024 | 0.0049 |
+| one_triangle | 3 | 1 | 3,456 x 1,024 | 0.0050 |
+
 
 - Local run
 ```shell
@@ -46,13 +60,14 @@ nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-
 
 | Dataset | Number of rows | Triangles | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- |
-| roadNet-CA | 5,533,214 | 120,676 | 320 x 1,024 | 1.0549 |
-| roadNet-TX | 3,843,320 | 82,869 | 320 x 1,024 | 0.6558 |
-| roadNet-PA | 3,083,796 | 67,150 | 320 x 1,024 | 0.5207 |
-| SF.cedge | 223,001 | 4,036 | 320 x 1,024 | 0.0458 |
-| p2p-Gnutella09 | 26,013 | 2,354 | 320 x 1,024 | 0.0070 |
-| three_triangles | 10 | 3 | 320 x 1,024 | 0.0015 |
-| one_triangle | 3 | 1 | 320 x 1,024 | 0.0014 |
+| roadNet-CA | 5,533,214 | 120,676 | 320 x 1,024 | 1.0186 |
+| roadNet-TX | 3,843,320 | 82,869 | 320 x 1,024 | 0.6186 |
+| roadNet-PA | 3,083,796 | 67,150 | 320 x 1,024 | 0.4961 |
+| SF.cedge | 223,001 | 4,036 | 320 x 1,024 | 0.0397 |
+| p2p-Gnutella09 | 26,013 | 2,354 | 320 x 1,024 | 0.0075 |
+| three_triangles | 10 | 3 | 320 x 1,024 | 0.0013 |
+| one_triangle | 3 | 1 | 320 x 1,024 | 0.0013 |
+
 
 
 
@@ -70,6 +85,19 @@ nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-
 ### Techniques
 - Open addressing
   - Linear probing
+
+- Theta GPU:
+
+```shell
+nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+nvcc hashjoin_gpu.cu -run -o join -run-args data/data_223001.txt -run-args 223001 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+```
+
+| Dataset               | #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+|-----------------------| --- | --- | --- | --- | --- | --- | --- | --- |
+| link.facts_412148.txt | 412,148  | 3,232,717 | 3,456X1,024 | 2,097,152 | 0.3000 | N/A | 261,456,823 | 0.0064 (0.0016+0.0012+0.0016+0.0020) |
+| SF.cedge              | 223,001 | 273,550 | 3,456X1,024 | 1,048,576 | 0.3000 | N/A | 245,250,095 | 0.0034 (0.0009+0.0007+0.0016+0.0003) |
+| Random                | 10,000,000 | 20,000,000 | 3,456X1,024 | 33,554,432 | 0.3000 | 30 | 381,580,125 | 0.0570 (0.0262+0.0171+0.0024+0.0113) |
 
 ### Configuration
 - Configuration data are collected using `nvidia-smi`, `lscpu`, `free -h`
