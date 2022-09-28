@@ -34,23 +34,6 @@ struct Entity {
     int value;
 };
 
-struct Output {
-    int block_size;
-    int grid_size;
-    long int key_size;
-    long int hashtable_rows;
-    double load_factor;
-    int duplicate_percentage;
-    double build_time;
-    long int build_rate;
-    double join_pass_1;
-    double join_offset;
-    double join_pass_2;
-    long int join_rows;
-    long int join_columns;
-    double total_time;
-} output;
-
 
 struct is_equal {
     __host__ __device__
@@ -91,7 +74,7 @@ __device__ int get_position(int key, int hash_table_row_size) {
     return key & (hash_table_row_size - 1);
 }
 
-void show_hash_table(Entity *hash_table, int hash_table_row_size, const char *hash_table_name) {
+void show_hash_table(Entity *hash_table, long int hash_table_row_size, const char *hash_table_name) {
     int count = 0;
     cout << "Hashtable name: " << hash_table_name << endl;
     cout << "===================================" << endl;
@@ -249,7 +232,7 @@ void gpu_tc(const char *data_path, char separator,
     long int iterations = 0;
 
     int join_result_columns = relation_columns;
-    int hash_table_rows = (int) relation_rows / load_factor;
+    long int hash_table_rows = (long int) relation_rows / load_factor;
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
 
     checkCuda(cudaMallocManaged(&relation, relation_rows * relation_columns * sizeof(int)));
@@ -476,12 +459,12 @@ int main(int argc, char **argv) {
 // Parameters: Data path, Relation rows, Relation columns, Load factor, Max duplicate percentage, Grid size, Block size, Dataset name
 
 // String graph
-// nvcc tc.cu -run -o join -run-args data/data_22.txt -run-args 22 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "string"
+// nvcc transitive_closure.cu -run -o join -run-args data/data_22.txt -run-args 22 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "string"
 // Cyclic graph
-// nvcc tc.cu -run -o join -run-args data/data_3.txt -run-args 3 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "cyclic"
+// nvcc transitive_closure.cu -run -o join -run-args data/data_3.txt -run-args 3 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args "cyclic"
 
 // Single data
-// nvcc tc.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+// nvcc transitive_closure.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 
 // Benchmark
-// nvcc tc.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+// nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge

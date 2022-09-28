@@ -6,6 +6,10 @@
 - Use hash join (open addressing, linear probing)
 - Theta GPU run:
 
+```shell
+nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+```
+
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
 | SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 1,024 | 69.9199 |
@@ -17,15 +21,40 @@
 
 
 - Local run
+
 ```shell
-nvcc tc.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+```
+
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 320 x 1,024 | 30.1415 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 320 x 1,024 | 27.8483 |
 | cal.cedge | 21,693 | 501,755 | 195 | 320 x 1,024 | 0.5332 |
-| TG.cedge | 23,874 | 481,121 | 58 | 320 x 1,024 | 0.1656 |
-| OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.1367 |
+| TG.cedge | 23,874 | 481,121 | 58 | 320 x 1,024 | 0.1619 |
+| OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.1042 |
+
+
+## Triangle counting
+- Use hash join (open addressing, linear probing)
+- Theta GPU run:
+
+
+- Local run
+```shell
+nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 ```
+
+| Dataset | Number of rows | Triangles | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| roadNet-CA | 5,533,214 | 120,676 | 320 x 1,024 | 1.0549 |
+| roadNet-TX | 3,843,320 | 82,869 | 320 x 1,024 | 0.6558 |
+| roadNet-PA | 3,083,796 | 67,150 | 320 x 1,024 | 0.5207 |
+| SF.cedge | 223,001 | 4,036 | 320 x 1,024 | 0.0458 |
+| p2p-Gnutella09 | 26,013 | 2,354 | 320 x 1,024 | 0.0070 |
+| three_triangles | 10 | 3 | 320 x 1,024 | 0.0015 |
+| one_triangle | 3 | 1 | 320 x 1,024 | 0.0014 |
+
+
 
 ## Join of two relations
 
