@@ -19,6 +19,9 @@ nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run
 | TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.3603 |
 | OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.3052 |
 
+Transitive closure computation using CUDA, cuDF and Pandas for same datasets in ThetaGPU:
+
+![alt transitive closure](rapids_implementation/screenshots/transitive_closure_3.png)
 
 - Local run
 
@@ -51,6 +54,10 @@ nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-
 | p2p-Gnutella09 | 26,013 | 2,354 | 3,456 x 1,024 | 0.0101 |
 | three_triangles | 10 | 3 | 3,456 x 1,024 | 0.0049 |
 | one_triangle | 3 | 1 | 3,456 x 1,024 | 0.0050 |
+
+Triangle counting computation using CUDA, cuDF and Pandas for same datasets in ThetaGPU:
+
+![alt triangle counting](rapids_implementation/screenshots/triangle_counting_3.png)
 
 
 - Local run
@@ -324,124 +331,6 @@ Total time: 1.756978 seconds
 | 50,000  | 111,111 | 0.1156   | 0.0090   | 0.1170    | 6.9729    | 0.3019    | 6.9820    | 23.13x  |
 | 25,000  | 55,555  | 0.1078   | 0.0045   | 0.03842   | 1.7461    | 0.2080    | 2.2702    | 10.91x  |
 
-```shell
-# Theta GPU (single-gpu node)
--------------------------------
-nvcc hashtable_gpu.cu -o join -run
-GPU hash table: (100000, 2)
-Blocks per grid: 98, Threads per block: 1024
-Hash table row size: 222222
-Hash table size: 1777776
-Read relation: 0.127201 seconds
-Hash table build: 0.340529 seconds
-Blocks per grid: 218, Threads per block: 1024
-Searched key: 55-->181
-Search: 0.000239864 seconds
-Total time: 0.530205 seconds
-
-nvcc hashtable_cpu.cu -o join -run
-CPU hash table: (100000, 2)
-Hash table row size: 222222
-Read relation: 0.0178671 seconds
-Hash table build: 27.9127 seconds
-Searched key: 55-->1
-Search: 1.273e-06 seconds
-Total time: 27.9308 seconds
-
-
-nvcc hashtable_gpu.cu -o join -run
-GPU hash table: (50000, 2)
-Blocks per grid: 49, Threads per block: 1024
-Hash table row size: 111111
-Hash table size: 888888
-Read relation: 0.115693 seconds
-Hash table build: 0.11707 seconds
-Blocks per grid: 109, Threads per block: 1024
-Searched key: 55-->181
-Search: 0.000230857 seconds
-Total time: 0.301926 seconds
-
-nvcc hashtable_cpu.cu -o join -run
-CPU hash table: (50000, 2)
-Hash table row size: 111111
-Read relation: 0.00901145 seconds
-Hash table build: 6.97293 seconds
-Searched key: 55-->1
-Search: 1.172e-06 seconds
-Total time: 6.98206 seconds
-
-
-hashtable_gpu.cu -o join -run
-GPU hash table: (25000, 2)
-Blocks per grid: 25, Threads per block: 1024
-Hash table row size: 55555
-Hash table size: 444440
-Read relation: 0.107857 seconds
-Hash table build: 0.0384229 seconds
-Blocks per grid: 55, Threads per block: 1024
-Searched key: 55-->181
-Search: 0.000186463 seconds
-Total time: 0.208069 seconds
-
-nvcc hashtable_cpu.cu -o join -run
-CPU hash table: (25000, 2)
-Hash table row size: 55555
-Read relation: 0.00457431 seconds
-Hash table build: 1.74615 seconds
-Searched key: 55-->1
-Search: 1.242e-06 seconds
-Total time: 1.75082 seconds
-```
-- Comparison with nested loop join:
-```shell
-nvcc hashjoin_cpu.cu -o join -run 
-CPU join operation
-===================================
-Relation 1: rows: 10000, columns: 2
-Relation 2: rows: 10000, columns: 2
-
-Read relations: 0.00153804 seconds
-CPU hash join operation: 1.15088 seconds
-Wrote join result (89903 rows) to file: output/cpu_hj.txt
-Write result: 0.760531 seconds
-Total time: 1.91657 seconds
-
-nvcc nested_loop_join_cpu.cu -o join -run
-CPU join operation
-===================================
-Relation 1: rows: 10000, columns: 2
-Relation 2: rows: 10000, columns: 2
-
-Read relations: 0.00596452 seconds
-CPU join operation: 0.196127 seconds
-Wrote join result (89903 rows) to file: output/cpu_nlj.txt
-Write result: 0.745246 seconds
-Total time: 0.950933 seconds
-
-nvcc hashjoin_cpu.cu -o join -run
-CPU join operation
-===================================
-Relation 1: rows: 25000, columns: 2
-Relation 2: rows: 25000, columns: 2
-
-Read relations: 0.0074476 seconds
-CPU hash join operation: 7.19088 seconds
-Wrote join result (222371 rows) to file: output/cpu_hj.txt
-Write result: 4.5376 seconds
-Total time: 11.7565 seconds
-
-nvcc nested_loop_join_cpu.cu -o join -run
-CPU join operation
-===================================
-Relation 1: rows: 25000, columns: 2
-Relation 2: rows: 25000, columns: 2
-
-Read relations: 0.00589868 seconds
-CPU join operation: 1.03065 seconds
-Wrote join result (222371 rows) to file: output/cpu_nlj.txt
-Write result: 4.48683 seconds
-Total time: 5.54417 seconds
-```
 
 ## Nested loop join
 ### Join performance
