@@ -34,6 +34,26 @@ struct Entity {
     int value;
 };
 
+struct Output {
+    int block_size;
+    int grid_size;
+    long int input_rows;
+    long int hashtable_rows;
+    double load_factor;
+    int duplicate_percentage;
+    double initialization_time;
+    double memory_clear_time;
+    double read_time;
+    double reverse_time;
+    double hashtable_build_time;
+    long int hashtable_build_rate;
+    double join_time;
+    double projection_time;
+    double deduplication_time;
+    double union_time;
+    double total_time;
+    const char *dataset_name;
+} output;
 
 struct is_equal {
     __host__ __device__
@@ -140,8 +160,21 @@ void initialize_result(Entity *result,
 }
 
 __global__
-void reverse_projection(Entity *join_result, Entity *projection,
-                        int *reverse_relation, long int projection_rows, int join_result_columns) {
+void get_reverse_relation(int *relation, long int relation_rows, int relation_columns, int *reverse_relation) {
+    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= relation_rows) return;
+
+    int stride = blockDim.x * gridDim.x;
+
+    for (long int i = index; i < relation_rows; i += stride) {
+        reverse_relation[(i * relation_columns) + 1] = relation[(i * relation_columns) + 0];
+        reverse_relation[(i * relation_columns) + 0] = relation[(i * relation_columns) + 1];
+    }
+}
+
+__global__
+void get_reverse_projection(Entity *join_result, Entity *projection,
+                            int *reverse_relation, long int projection_rows, int join_result_columns) {
     long int index = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (index >= projection_rows) return;
 
@@ -215,6 +248,7 @@ void gpu_tc(const char *data_path, char separator,
     std::cout << std::fixed;
     std::cout << std::setprecision(4);
     time_point_begin = chrono::high_resolution_clock::now();
+    double spent_time;
     // Added to display comma separated integer values
     std::locale loc("");
     std::cout.imbue(loc);
@@ -230,7 +264,6 @@ void gpu_tc(const char *data_path, char separator,
     long int reverse_relation_rows = relation_rows;
     long int result_rows = relation_rows;
     long int iterations = 0;
-
     int join_result_columns = relation_columns;
     long int hash_table_rows = (long int) relation_rows / load_factor;
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
@@ -240,16 +273,6 @@ void gpu_tc(const char *data_path, char separator,
     checkCuda(cudaMallocManaged(&result, result_rows * sizeof(Entity)));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity)));
 //    checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
-
-    if (strcmp(data_path, random_datapath) == 0) {
-        generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
-    } else {
-        get_relation_from_file_gpu(relation, data_path,
-                                   relation_rows, relation_columns, separator);
-    }
-    get_reverse_relation_gpu(reverse_relation, relation,
-                             relation_rows,
-                             relation_columns);
     checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
                                                  build_hash_table, 0, 0));
     grid_size = 32 * number_of_sm;
@@ -257,37 +280,75 @@ void gpu_tc(const char *data_path, char separator,
         grid_size = preferred_grid_size;
         block_size = preferred_block_size;
     }
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.initialization_time += spent_time;
+    time_point_begin = chrono::high_resolution_clock::now();
+    if (strcmp(data_path, random_datapath) == 0) {
+        generate_random_relation(relation, relation_rows, relation_columns, max_duplicate_percentage);
+    } else {
+        get_relation_from_file_gpu(relation, data_path,
+                                   relation_rows, relation_columns, separator);
+    }
+
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.read_time = spent_time;
+    time_point_begin = chrono::high_resolution_clock::now();
+    get_reverse_relation<<<grid_size, block_size>>>(relation, relation_rows, relation_columns,
+                                                    reverse_relation);
+    checkCuda(cudaDeviceSynchronize());
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.reverse_time = spent_time;
 
     Entity negative_entity;
     negative_entity.key = -1;
     negative_entity.value = -1;
-
+    time_point_begin = chrono::high_resolution_clock::now();
     thrust::fill(thrust::device, hash_table, hash_table + hash_table_rows, negative_entity);
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.initialization_time += spent_time;
+    time_point_begin = chrono::high_resolution_clock::now();
     build_hash_table<<<grid_size, block_size>>>
             (hash_table, hash_table_rows,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.hashtable_build_time = spent_time;
+    output.hashtable_build_rate = relation_rows / spent_time;
+    output.join_time += spent_time;
 
+    time_point_begin = chrono::high_resolution_clock::now();
     // initial result is the input relation
     initialize_result<<<grid_size, block_size>>>
             (result,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
-//    show_entity_array(result, result_rows, "Result");
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.union_time += spent_time;
 
-//    show_hash_table(hash_table, hash_table_rows, "Hash table");
-
+    cout << "| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union |" << endl;
+    cout << "| --- | --- | --- | --- | --- |" << endl;
     while (true) {
         int *offset;
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
+        time_point_begin = chrono::high_resolution_clock::now();
         get_join_result_size<<<grid_size, block_size>>>
                 (hash_table, hash_table_rows,
                  reverse_relation, reverse_relation_rows,
                  relation_columns, offset);
         checkCuda(cudaDeviceSynchronize());
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.join_time += spent_time;
+        time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
         checkCuda(cudaMallocManaged(&join_result, join_result_rows * sizeof(Entity)));
@@ -296,35 +357,50 @@ void gpu_tc(const char *data_path, char separator,
                  reverse_relation, reverse_relation_rows,
                  relation_columns, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.join_time += spent_time;
 
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
+        time_point_begin = chrono::high_resolution_clock::now();
         thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
                             cmp());
         long int projection_rows = (thrust::unique(thrust::device,
                                                    join_result, join_result + join_result_rows,
                                                    is_equal())) - join_result;
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.deduplication_time += spent_time;
 
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
 
-        reverse_projection<<<grid_size, block_size>>>
+        time_point_begin = chrono::high_resolution_clock::now();
+        get_reverse_projection<<<grid_size, block_size>>>
                 (join_result, projection,
                  reverse_relation, projection_rows, join_result_columns);
         checkCuda(cudaDeviceSynchronize());
-
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.projection_time += spent_time;
         // concatenated result = result + projection
+        time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
-
         thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
         thrust::copy(thrust::device, projection, projection + projection_rows,
                      concatenated_result + result_rows);
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.union_time += spent_time;
 
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
+
+        time_point_begin = chrono::high_resolution_clock::now();
         thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
                             cmp());
         long int deduplicated_result_rows = (thrust::unique(thrust::device,
@@ -336,36 +412,67 @@ void gpu_tc(const char *data_path, char separator,
         // Copy the deduplicated concatenated result to result
         thrust::copy(thrust::device, concatenated_result,
                      concatenated_result + deduplicated_result_rows, result);
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.deduplication_time += spent_time;
         reverse_relation_rows = projection_rows;
-
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
+        time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(join_result);
         cudaFree(offset);
         cudaFree(projection);
         cudaFree(concatenated_result);
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.memory_clear_time += spent_time;
         iterations++;
+        cout << "| " << iterations << " | " << join_result_rows << " | ";
+        cout << projection_rows << " | " << concatenated_rows << " | " << result_rows << " |" << endl;
         if (result_rows == deduplicated_result_rows) {
             break;
         }
         result_rows = deduplicated_result_rows;
-//        cout << "Iteration: " << iterations << ", Projection size: " << projection_rows
-//             << ", Result rows: " << result_rows << endl;
     }
 //    show_entity_array(result, result_rows, "Result");
+    time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(reverse_relation);
     cudaFree(result);
     cudaFree(hash_table);
     time_point_end = chrono::high_resolution_clock::now();
-    double total_time = get_time_spent("", time_point_begin, time_point_end);
-//    cout << "\nTotal iterations: " << iterations << ", TC size: " << result_rows << endl;
-    if (benchmark == false) {
-        cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
-        cout << "| --- | --- | --- | --- | --- | --- |" << endl;
-    }
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.memory_clear_time += spent_time;
+    double calculated_time = output.initialization_time +
+                             output.read_time + output.reverse_time + output.hashtable_build_time + output.join_time +
+                             output.projection_time +
+                             output.union_time + output.deduplication_time + output.memory_clear_time;
+    cout << endl;
+    cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
+    cout << "| --- | --- | --- | --- | --- | --- |" << endl;
     cout << "| " << dataset_name << " | " << relation_rows << " | " << result_rows;
     cout << fixed << " | " << iterations << " | ";
-    cout << fixed << grid_size << " x " << block_size << " | " << total_time << " |" << endl;
+    cout << fixed << grid_size << " x " << block_size << " | " << calculated_time << " |\n" << endl;
+    output.block_size = block_size;
+    output.grid_size = grid_size;
+    output.input_rows = relation_rows;
+    output.load_factor = load_factor;
+    output.hashtable_rows = hash_table_rows;
+    output.duplicate_percentage = max_duplicate_percentage;
+    output.dataset_name = dataset_name;
+    output.total_time = calculated_time;
+
+    cout << endl;
+    cout << "Initialization: " << output.initialization_time;
+    cout << ", Read: " << output.read_time << ", reverse: " << output.reverse_time << endl;
+    cout << "Hashtable rate: " << output.hashtable_build_rate << " keys/s, time: ";
+    cout << output.hashtable_build_time << endl;
+    cout << "Join: " << output.join_time << endl;
+    cout << "Projection: " << output.projection_time << endl;
+    cout << "Deduplication: " << output.deduplication_time << endl;
+    cout << "Memory clear: " << output.memory_clear_time << endl;
+    cout << "Union: " << output.union_time << endl;
+    cout << "Total: " << output.total_time << endl;
+
 }
 
 long int get_row_size(const char *data_path) {
@@ -392,16 +499,17 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
             "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
     };
-    cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
-    cout << "| --- | --- | --- | --- | --- | --- |" << endl;
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
         dataset_name = datasets[i].c_str();
         data_path = datasets[i + 1].c_str();
         long int row_size = get_row_size(data_path);
+        cout << "Benchmark for " << dataset_name << endl;
+        cout << "----------------------------------------------------------" << endl;
         gpu_tc(data_path, separator,
                row_size, relation_columns, load_factor, max_duplicate_percentage,
                grid_size, block_size, dataset_name, true);
+        cout << endl;
 
     }
 }
@@ -425,34 +533,39 @@ int main(int argc, char **argv) {
     int relation_columns, max_duplicate_percentage, grid_size, block_size;
     double load_factor;
     const char *benchmark_str = "benchmark";
-    data_path = argv[1];
-    if (sscanf(argv[2], "%ld", &relation_rows) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[3], "%i", &relation_columns) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[4], "%lf", &load_factor) != 1) {
-        fprintf(stderr, "error - not a double");
-    }
-    if (sscanf(argv[5], "%i", &max_duplicate_percentage) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[6], "%i", &grid_size) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    if (sscanf(argv[7], "%i", &block_size) != 1) {
-        fprintf(stderr, "error - not an integer");
-    }
-    dataset_name = argv[8];
+    if (argc > 2) {
+        data_path = argv[1];
+        if (sscanf(argv[2], "%ld", &relation_rows) != 1) {
+            fprintf(stderr, "error - not an integer");
+        }
+        if (sscanf(argv[3], "%i", &relation_columns) != 1) {
+            fprintf(stderr, "error - not an integer");
+        }
+        if (sscanf(argv[4], "%lf", &load_factor) != 1) {
+            fprintf(stderr, "error - not a double");
+        }
+        if (sscanf(argv[5], "%i", &max_duplicate_percentage) != 1) {
+            fprintf(stderr, "error - not an integer");
+        }
+        if (sscanf(argv[6], "%i", &grid_size) != 1) {
+            fprintf(stderr, "error - not an integer");
+        }
+        if (sscanf(argv[7], "%i", &block_size) != 1) {
+            fprintf(stderr, "error - not an integer");
+        }
+        dataset_name = argv[8];
 
-    if (strcmp(data_path, benchmark_str) == 0) {
-        run_benchmark(relation_columns, max_duplicate_percentage, grid_size, block_size, load_factor);
+        if (strcmp(data_path, benchmark_str) == 0) {
+            run_benchmark(relation_columns, max_duplicate_percentage, grid_size, block_size, load_factor);
+        } else {
+            gpu_tc(data_path, separator,
+                   relation_rows, relation_columns, load_factor, max_duplicate_percentage,
+                   grid_size, block_size, dataset_name, false);
+        }
     } else {
-        gpu_tc(data_path, separator,
-               relation_rows, relation_columns, load_factor, max_duplicate_percentage,
-               grid_size, block_size, dataset_name, false);
+        run_benchmark(2, 0.3, 0, 0, 0.1);
     }
+
     return 0;
 }
 
@@ -468,3 +581,4 @@ int main(int argc, char **argv) {
 
 // Benchmark
 // nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+// nvcc transitive_closure.cu -run -o join

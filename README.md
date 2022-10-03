@@ -4,6 +4,224 @@
 
 ## Transitive closure
 - Use hash join (open addressing, linear probing)
+- Intermediate times:
+
+- Local run:
+```shell
+ nvprof ./join                     
+Benchmark for TG.cedge
+----------------------------------------------------------
+==23177== NVPROF is profiling process 23177, command: ./join
+| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union |
+| --- | --- | --- | --- | --- |
+| 1 | 24,274 | 22,471 | 46,345 | 23,874 |
+| 2 | 25,228 | 22,375 | 68,213 | 45,838 |
+| 3 | 27,477 | 23,637 | 90,261 | 66,624 |
+| 4 | 30,638 | 25,782 | 112,796 | 87,014 |
+| 5 | 34,619 | 28,560 | 135,881 | 107,321 |
+| 6 | 39,237 | 31,840 | 159,507 | 127,667 |
+| 7 | 44,299 | 35,460 | 183,467 | 148,007 |
+| 8 | 49,741 | 39,337 | 207,559 | 168,222 |
+| 9 | 55,442 | 43,371 | 231,520 | 188,149 |
+| 10 | 61,196 | 47,414 | 255,161 | 207,747 |
+| 11 | 66,811 | 51,351 | 278,288 | 226,937 |
+| 12 | 72,325 | 55,127 | 300,696 | 245,569 |
+| 13 | 77,517 | 58,670 | 322,248 | 263,578 |
+| 14 | 82,402 | 62,029 | 342,927 | 280,898 |
+| 15 | 86,914 | 65,016 | 362,511 | 297,495 |
+| 16 | 91,053 | 67,792 | 381,097 | 313,305 |
+| 17 | 94,711 | 70,145 | 398,552 | 328,407 |
+| 18 | 97,580 | 71,909 | 414,545 | 342,636 |
+| 19 | 99,605 | 73,064 | 428,981 | 355,917 |
+| 20 | 100,798 | 73,683 | 441,904 | 368,221 |
+| 21 | 101,377 | 73,821 | 453,422 | 379,601 |
+| 22 | 101,272 | 73,437 | 463,581 | 390,144 |
+| 23 | 100,639 | 72,723 | 472,509 | 399,786 |
+| 24 | 99,452 | 71,591 | 480,191 | 408,600 |
+| 25 | 97,752 | 70,144 | 486,766 | 416,622 |
+| 26 | 95,644 | 68,467 | 492,378 | 423,911 |
+| 27 | 93,239 | 66,570 | 497,115 | 430,545 |
+| 28 | 90,494 | 64,480 | 501,051 | 436,571 |
+| 29 | 87,553 | 62,259 | 504,300 | 442,041 |
+| 30 | 84,326 | 59,796 | 506,795 | 446,999 |
+| 31 | 80,888 | 57,243 | 508,667 | 451,424 |
+| 32 | 77,279 | 54,559 | 509,936 | 455,377 |
+| 33 | 73,506 | 51,796 | 510,692 | 458,896 |
+| 34 | 69,658 | 49,012 | 510,990 | 461,978 |
+| 35 | 65,786 | 46,217 | 510,876 | 464,659 |
+| 36 | 61,999 | 43,494 | 510,509 | 467,015 |
+| 37 | 58,359 | 40,877 | 510,000 | 469,123 |
+| 38 | 54,900 | 38,399 | 509,407 | 471,008 |
+| 39 | 51,604 | 35,988 | 508,675 | 472,687 |
+| 40 | 48,440 | 33,679 | 507,831 | 474,152 |
+| 41 | 45,405 | 31,442 | 506,850 | 475,408 |
+| 42 | 42,450 | 29,250 | 505,726 | 476,476 |
+| 43 | 39,519 | 27,107 | 504,489 | 477,382 |
+| 44 | 36,686 | 25,048 | 503,200 | 478,152 |
+| 45 | 33,893 | 23,074 | 501,869 | 478,795 |
+| 46 | 31,213 | 21,168 | 500,499 | 479,331 |
+| 47 | 28,619 | 19,362 | 499,123 | 479,761 |
+| 48 | 26,111 | 17,640 | 497,743 | 480,103 |
+| 49 | 23,708 | 16,033 | 496,409 | 480,376 |
+| 50 | 21,452 | 14,527 | 495,124 | 480,597 |
+| 51 | 19,335 | 13,113 | 493,887 | 480,774 |
+| 52 | 17,335 | 11,765 | 492,671 | 480,906 |
+| 53 | 15,437 | 10,504 | 491,502 | 480,998 |
+| 54 | 13,678 | 9,324 | 490,383 | 481,059 |
+| 55 | 12,059 | 8,247 | 489,343 | 481,096 |
+| 56 | 10,599 | 7,270 | 488,384 | 481,114 |
+| 57 | 9,261 | 6,366 | 487,486 | 481,120 |
+| 58 | 8,069 | 5,573 | 486,694 | 481,121 |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 58 | 320 x 1,024 | 0.6103 |
+
+
+Initialization: 0.3325, Read: 0.0041, reverse: 0.0005
+Hashtable rate: 603,061,533 keys/s, time: 0.0000
+Join: 0.0533
+Projection: 0.0064
+Deduplication: 0.1645
+Memory clear: 0.0088
+Union: 0.0401
+Total: 0.6103
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union |
+| --- | --- | --- | --- | --- |
+| 1 | 7,445 | 7,331 | 14,366 | 7,035 |
+| 2 | 7,784 | 7,628 | 21,947 | 14,319 |
+| 3 | 8,049 | 7,848 | 29,661 | 21,813 |
+| 4 | 8,248 | 8,017 | 37,369 | 29,352 |
+| 5 | 8,390 | 8,134 | 44,985 | 36,851 |
+| 6 | 8,489 | 8,214 | 52,449 | 44,235 |
+| 7 | 8,552 | 8,263 | 59,704 | 51,441 |
+| 8 | 8,610 | 8,293 | 66,717 | 58,424 |
+| 9 | 8,681 | 8,321 | 73,468 | 65,147 |
+| 10 | 8,716 | 8,317 | 79,913 | 71,596 |
+| 11 | 8,783 | 8,357 | 86,051 | 77,694 |
+| 12 | 8,885 | 8,415 | 91,872 | 83,457 |
+| 13 | 8,985 | 8,448 | 97,342 | 88,894 |
+| 14 | 9,073 | 8,467 | 102,451 | 93,984 |
+| 15 | 9,125 | 8,463 | 107,201 | 98,738 |
+| 16 | 9,158 | 8,424 | 111,585 | 103,161 |
+| 17 | 9,139 | 8,352 | 115,604 | 107,252 |
+| 18 | 9,076 | 8,248 | 119,263 | 111,015 |
+| 19 | 9,006 | 8,133 | 122,593 | 114,460 |
+| 20 | 8,889 | 7,979 | 125,598 | 117,619 |
+| 21 | 8,692 | 7,754 | 128,229 | 120,475 |
+| 22 | 8,494 | 7,541 | 130,552 | 123,011 |
+| 23 | 8,273 | 7,341 | 132,649 | 125,308 |
+| 24 | 8,045 | 7,127 | 134,563 | 127,436 |
+| 25 | 7,776 | 6,877 | 136,276 | 129,399 |
+| 26 | 7,468 | 6,591 | 137,790 | 131,199 |
+| 27 | 7,103 | 6,259 | 139,087 | 132,828 |
+| 28 | 6,697 | 5,883 | 140,158 | 134,275 |
+| 29 | 6,234 | 5,469 | 141,005 | 135,536 |
+| 30 | 5,754 | 5,038 | 141,671 | 136,633 |
+| 31 | 5,263 | 4,611 | 142,200 | 137,589 |
+| 32 | 4,777 | 4,192 | 142,621 | 138,429 |
+| 33 | 4,302 | 3,797 | 142,975 | 139,178 |
+| 34 | 3,864 | 3,427 | 143,274 | 139,847 |
+| 35 | 3,444 | 3,071 | 143,523 | 140,452 |
+| 36 | 3,036 | 2,726 | 143,721 | 140,995 |
+| 37 | 2,669 | 2,414 | 143,895 | 141,481 |
+| 38 | 2,344 | 2,134 | 144,058 | 141,924 |
+| 39 | 2,062 | 1,887 | 144,214 | 142,327 |
+| 40 | 1,806 | 1,665 | 144,359 | 142,694 |
+| 41 | 1,576 | 1,467 | 144,501 | 143,034 |
+| 42 | 1,364 | 1,280 | 144,640 | 143,360 |
+| 43 | 1,174 | 1,109 | 144,784 | 143,675 |
+| 44 | 1,010 | 960 | 144,936 | 143,976 |
+| 45 | 866 | 824 | 145,088 | 144,264 |
+| 46 | 744 | 709 | 145,241 | 144,532 |
+| 47 | 638 | 608 | 145,387 | 144,779 |
+| 48 | 548 | 523 | 145,525 | 145,002 |
+| 49 | 462 | 445 | 145,643 | 145,198 |
+| 50 | 393 | 379 | 145,748 | 145,369 |
+| 51 | 332 | 322 | 145,840 | 145,518 |
+| 52 | 281 | 272 | 145,917 | 145,645 |
+| 53 | 235 | 227 | 145,982 | 145,755 |
+| 54 | 197 | 190 | 146,037 | 145,847 |
+| 55 | 162 | 158 | 146,080 | 145,922 |
+| 56 | 133 | 130 | 146,110 | 145,980 |
+| 57 | 107 | 105 | 146,129 | 146,024 |
+| 58 | 83 | 81 | 146,138 | 146,057 |
+| 59 | 63 | 61 | 146,143 | 146,082 |
+| 60 | 44 | 44 | 146,142 | 146,098 |
+| 61 | 34 | 34 | 146,143 | 146,109 |
+| 62 | 24 | 24 | 146,140 | 146,116 |
+| 63 | 17 | 17 | 146,136 | 146,119 |
+| 64 | 12 | 12 | 146,132 | 146,120 |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.7673 |
+
+
+Initialization: 0.3327, Read: 0.0013, reverse: 0.0006
+Hashtable rate: 14,730,331 keys/s, time: 0.0005
+Join: 0.0953
+Projection: 0.0091
+Deduplication: 0.2538
+Memory clear: 0.0129
+Union: 0.0611
+Total: 0.7673
+
+==23177== Profiling application: ./join
+==23177== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   48.70%  89.609ms       366  244.83us  2.0790us  1.8111ms  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__parallel_for::ParallelForAgent<thrust::cuda_cub::__transform::unary_transform_f<Entity*, Entity*, thrust::cuda_cub::__transform::no_stencil_tag, thrust::identity<Entity>, thrust::cuda_cub::__transform::always_true_predicate>, long>, thrust::cuda_cub::__transform::unary_transform_f<Entity*, Entity*, thrust::cuda_cub::__transform::no_stencil_tag, thrust::identity<Entity>, thrust::cuda_cub::__transform::always_true_predicate>, long>(Entity*, thrust::cuda_cub::__transform::no_stencil_tag)
+                   22.69%  41.744ms      1090  38.297us  5.7280us  1.2961ms  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__merge_sort::MergeAgent<Entity*, Entity*, long, cmp, thrust::detail::integral_constant<bool, bool=0>>, bool, Entity*, Entity*, long, Entity*, Entity*, cmp, long*, long>(Entity*, long, cmp, bool, bool=0, thrust::detail::integral_constant<bool, bool=0>, thrust::cuda_cub::__merge_sort::MergeAgent<Entity*, Entity*, long, cmp, thrust::detail::integral_constant<bool, bool=0>>, bool, Entity*)
+                   12.38%  22.782ms       244  93.369us  36.960us  274.37us  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__merge_sort::BlockSortAgent<Entity*, Entity*, long, cmp, thrust::detail::integral_constant<bool, bool=0>, thrust::detail::integral_constant<bool, bool=1>>, bool, Entity*, Entity*, long, Entity*, Entity*, cmp>(Entity*, long, cmp, bool, bool=0, thrust::detail::integral_constant<bool, bool=0>, bool)
+                    5.01%  9.2191ms      1090  8.4570us  3.4560us  14.560us  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__merge_sort::PartitionAgent<Entity*, long, cmp>, bool, Entity*, Entity*, long, unsigned long, long*, cmp, long, int>(long, cmp, thrust::cuda_cub::__merge_sort::PartitionAgent<Entity*, long, cmp>, bool, Entity*, Entity*, long, unsigned long, long*)
+                    3.76%  6.9272ms       244  28.390us  4.9600us  89.824us  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__unique::UniqueAgent<Entity*, Entity*, is_equal, int, int*>, Entity*, Entity*, is_equal, int*, int, cub::ScanTileState<int, bool=1>, unsigned long>(Entity*, is_equal, int, int*, thrust::cuda_cub::__unique::UniqueAgent<Entity*, Entity*, is_equal, int, int*>, Entity*, Entity*)
+                    2.24%  4.1156ms       122  33.734us  10.752us  321.44us  get_reverse_projection(Entity*, Entity*, int*, long, int)
+                    1.64%  3.0202ms       122  24.755us  10.752us  243.01us  get_join_result(Entity*, int, int*, int, int, int*, Entity*)
+                    1.08%  1.9856ms       122  16.275us  11.104us  25.312us  get_join_result_size(Entity*, long, int*, long, int, int*)
+                    0.47%  864.06us        88  9.8180us  3.8720us  429.15us  void cub::DeviceReduceKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>>(int, int, int, cub::GridEvenShare<int>, thrust::plus<int>)
+                    0.45%  820.61us       122  6.7260us  4.2560us  10.176us  void cub::DeviceScanKernel<cub::DeviceScanPolicy<int>::Policy600, int*, int*, cub::ScanTileState<int, bool=1>, thrust::plus<void>, cub::detail::InputValue<int, int*>, int>(cub::DeviceScanPolicy<int>::Policy600, int*, int*, int, int, bool=1, cub::ScanTileState<int, bool=1>)
+                    0.35%  646.78us         2  323.39us  275.68us  371.10us  get_reverse_relation(int*, long, int, int*)
+                    0.31%  574.23us       244  2.3530us  2.1120us  2.8160us  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__unique::InitAgent<cub::ScanTileState<int, bool=1>, int*, int>, cub::ScanTileState<int, bool=1>, unsigned long, int*>(bool=1, cub::ScanTileState<int, bool=1>, int*)
+                    0.28%  507.59us       122  4.1600us  3.6480us  4.9600us  void cub::DeviceReduceSingleTileKernel<cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600, int*, int*, int, thrust::plus<int>, int>(int, int, int, thrust::plus<int>, cub::DeviceReducePolicy<int, int, int, thrust::plus<int>>::Policy600)
+                    0.21%  391.26us         2  195.63us  166.02us  225.25us  void thrust::cuda_cub::core::_kernel_agent<thrust::cuda_cub::__parallel_for::ParallelForAgent<thrust::cuda_cub::__fill::functor<Entity*, Entity>, long>, thrust::cuda_cub::__fill::functor<Entity*, Entity>, long>(Entity, thrust::cuda_cub::__fill::functor<Entity*, Entity>)
+                    0.21%  379.55us       366  1.0370us     799ns  1.4400us  [CUDA memcpy DtoH]
+                    0.16%  285.43us       122  2.3390us  2.1440us  2.5920us  void cub::DeviceScanInitKernel<cub::ScanTileState<int, bool=1>>(int, int)
+                    0.05%  87.584us         2  43.792us  12.352us  75.232us  initialize_result(Entity*, int*, long, int)
+                    0.02%  43.392us         2  21.696us  13.952us  29.440us  build_hash_table(Entity*, long, int*, long, int)
+      API calls:   43.59%  236.91ms      1466  161.60us     784ns  2.1107ms  cudaStreamSynchronize
+                   22.93%  124.60ms       740  168.38us  3.2790us  117.09ms  cudaMallocManaged
+                   11.12%  60.463ms      1350  44.787us  7.5240us  2.2499ms  cudaFree
+                    9.80%  53.268ms       732  72.770us  55.279us  2.3588ms  cudaMalloc
+                    7.08%  38.500ms       372  103.50us  12.615us  1.6052ms  cudaDeviceSynchronize
+                    3.33%  18.099ms      4106  4.4070us  2.2680us  29.673us  cudaLaunchKernel
+                    0.76%  4.1443ms       366  11.323us  9.2140us  22.406us  cudaMemcpyAsync
+                    0.55%  2.9783ms     22931     129ns      91ns  408.41us  cudaGetLastError
+                    0.31%  1.6738ms      4821     347ns     206ns  7.6750us  cudaGetDevice
+                    0.27%  1.4516ms      2872     505ns     201ns  407.42us  cudaDeviceGetAttribute
+                    0.17%  904.36us      7468     121ns      91ns  5.3610us  cudaPeekAtLastError
+                    0.06%  333.76us       300  1.1120us     779ns  4.5850us  cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
+                    0.03%  138.02us       101  1.3660us     161ns  58.377us  cuDeviceGetAttribute
+                    0.00%  26.777us         1  26.777us  26.777us  26.777us  cuDeviceGetName
+                    0.00%  16.424us         3  5.4740us  3.0550us  9.6660us  cudaFuncGetAttributes
+                    0.00%  8.1670us         1  8.1670us  8.1670us  8.1670us  cuDeviceGetPCIBusId
+                    0.00%  1.6180us         3     539ns     216ns  1.1660us  cuDeviceGetCount
+                    0.00%     817ns         1     817ns     817ns     817ns  cuDeviceTotalMem
+                    0.00%     731ns         2     365ns     181ns     550ns  cuDeviceGet
+                    0.00%     539ns         1     539ns     539ns     539ns  cuModuleGetLoadingMode
+                    0.00%     300ns         1     300ns     300ns     300ns  cuDeviceGetUuid
+                    0.00%     225ns         1     225ns     225ns     225ns  cudaGetDeviceCount
+
+==23177== Unified Memory profiling result:
+Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
+   Count  Avg Size  Min Size  Max Size  Total Size  Total Time  Name
+      10  32.000KB  4.0000KB  100.00KB  320.0000KB  32.67200us  Host To Device
+       3  21.333KB  4.0000KB  52.000KB  64.00000KB  6.496000us  Device To Host
+    1464         -         -         -           -  68.96086ms  Gpu page fault groups
+Total CPU Page faults: 4
+```
 - Theta GPU run:
 
 ```shell
@@ -105,6 +323,17 @@ nvcc hashjoin_gpu.cu -run -o join -run-args data/data_223001.txt -run-args 22300
 | link.facts_412148.txt | 412,148  | 3,232,717 | 3,456X1,024 | 2,097,152 | 0.3000 | N/A | 261,456,823 | 0.0064 (0.0016+0.0012+0.0016+0.0020) |
 | SF.cedge              | 223,001 | 273,550 | 3,456X1,024 | 1,048,576 | 0.3000 | N/A | 245,250,095 | 0.0034 (0.0009+0.0007+0.0016+0.0003) |
 | Random                | 10,000,000 | 20,000,000 | 3,456X1,024 | 33,554,432 | 0.3000 | 30 | 381,580,125 | 0.0570 (0.0262+0.0171+0.0024+0.0113) |
+
+- Local run:
+
+```shell
+nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
+```
+
+| #Input | #Join | #BlocksXThreads | #Hashtable | Load factor | Duplicate | Build rate | Total(Build+Pass 1+Offset+Pass 2) |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 412,148 | 3,232,717 | 320X1,024 | 2,097,152 | 0.3000 | N/A | 156,871,557 | 0.0081 (0.0026+0.0017+0.0004+0.0034) |
+
 
 ### Configuration
 - Configuration data are collected using `nvidia-smi`, `lscpu`, `free -h`
