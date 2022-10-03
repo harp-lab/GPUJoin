@@ -333,9 +333,12 @@ void gpu_tc(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.union_time += spent_time;
 
-    cout << "| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union |" << endl;
-    cout << "| --- | --- | --- | --- | --- |" << endl;
+    cout
+            << "| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
+            << endl;
+    cout << "| --- | --- | --- | --- | --- | --- | --- | --- | --- |" << endl;
     while (true) {
+        double temp_join_time, temp_projection_time, temp_deduplication_time, temp_union_time;
         int *offset;
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
@@ -347,6 +350,7 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_join_time += spent_time;
         output.join_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
@@ -359,6 +363,7 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_join_time += spent_time;
         output.join_time += spent_time;
 
         // deduplication of projection
@@ -371,6 +376,7 @@ void gpu_tc(const char *data_path, char separator,
                                                    is_equal())) - join_result;
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_deduplication_time += spent_time;
         output.deduplication_time += spent_time;
 
         Entity *projection;
@@ -384,6 +390,7 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_projection_time += spent_time;
         output.projection_time += spent_time;
         // concatenated result = result + projection
         time_point_begin = chrono::high_resolution_clock::now();
@@ -395,6 +402,7 @@ void gpu_tc(const char *data_path, char separator,
                      concatenated_result + result_rows);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_union_time += spent_time;
         output.union_time += spent_time;
 
         // deduplication of projection
@@ -414,6 +422,7 @@ void gpu_tc(const char *data_path, char separator,
                      concatenated_result + deduplicated_result_rows, result);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_deduplication_time += spent_time;
         output.deduplication_time += spent_time;
         reverse_relation_rows = projection_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
@@ -427,7 +436,10 @@ void gpu_tc(const char *data_path, char separator,
         output.memory_clear_time += spent_time;
         iterations++;
         cout << "| " << iterations << " | " << join_result_rows << " | ";
-        cout << projection_rows << " | " << concatenated_rows << " | " << result_rows << " |" << endl;
+        cout << projection_rows << " | " << concatenated_rows << " | " << result_rows << " | ";
+        cout << temp_join_time << " | " << temp_deduplication_time << " | " << temp_projection_time << " | ";
+        cout << temp_union_time << " |" << endl;
+
         if (result_rows == deduplicated_result_rows) {
             break;
         }
