@@ -3,11 +3,13 @@ import cudf
 import time
 import json
 
-
 def display_time(time_start, time_end, message):
     time_took = time_end - time_start
     print(f"Debug: {message}: {time_took:.6f}s")
 
+def get_time_spent(time_start, time_end):
+    time_took = time_end - time_start
+    return round(time_took, 4)
 
 def get_join(relation_1, relation_2, column_names=['column 1', 'column 2']):
     return relation_1.merge(relation_2, on=column_names[0],
@@ -40,14 +42,30 @@ def get_transitive_closure(dataset):
     COLUMN_NAMES = ['column 1', 'column 2']
     rows = int(re.search('\d+|$', dataset).group())
     start_time_outer = time.perf_counter()
+    time_start = time.perf_counter()
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
+    time_end = time.perf_counter()
+    read_time = get_time_spent(time_start, time_end)
     relation_2 = relation_1.copy()
     relation_2.columns = COLUMN_NAMES[::-1]
+    time_end = time.perf_counter()
+    read_time = get_time_spent(time_start, time_end)
     temp_result = relation_1
     i = 0
+    join_time = 0
+    projection_deduplication_time = 0
     while True:
-        temp_projection = get_projection(get_join(relation_2, relation_1,
-                                                  COLUMN_NAMES), COLUMN_NAMES)
+        time_start = time.perf_counter()
+        temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
+        time_end = time.perf_counter()
+        join_time += get_time_spent(time_start, time_end)
+        time_start = time.perf_counter()
+        temp_projection = get_projection(temp_join, COLUMN_NAMES)
+        time_end = time.perf_counter()
+        projection_deduplication_time += get_time_spent(time_start, time_end)
+        time_end = time.perf_counter()
+        read_time = get_time_spent(time_start, time_end)
+
         x = len(temp_projection)
         previous_result_size = len(temp_result)
         temp_result = get_union(temp_result, temp_projection)
