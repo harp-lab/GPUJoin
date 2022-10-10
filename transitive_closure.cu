@@ -249,6 +249,14 @@ void gpu_tc(const char *data_path, char separator,
     std::cout << std::setprecision(4);
     time_point_begin = chrono::high_resolution_clock::now();
     double spent_time;
+    output.initialization_time = 0;
+    output.join_time = 0;
+    output.projection_time = 0;
+    output.deduplication_time = 0;
+    output.memory_clear_time = 0;
+    output.union_time = 0;
+    output.total_time = 0;
+
     // Added to display comma separated integer values
     std::locale loc("");
     std::cout.imbue(loc);
@@ -334,11 +342,11 @@ void gpu_tc(const char *data_path, char separator,
     output.union_time += spent_time;
 
     cout
-            << "| Iteration | # Join | # Deduplicated join | # Union | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
+            << "| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
             << endl;
-    cout << "| --- | --- | --- | --- | --- | --- | --- | --- | --- |" << endl;
+    cout << "| --- | --- | --- | --- | --- | --- | --- |" << endl;
     while (true) {
-        double temp_join_time, temp_projection_time, temp_deduplication_time, temp_union_time;
+        double temp_join_time = 0, temp_projection_time = 0, temp_deduplication_time = 0, temp_union_time = 0;
         int *offset;
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
@@ -435,8 +443,8 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
         iterations++;
-        cout << "| " << iterations << " | " << join_result_rows << " | ";
-        cout << projection_rows << " | " << concatenated_rows << " | " << result_rows << " | ";
+        cout << "| " << iterations << " | ";
+        cout << projection_rows << " | " << result_rows << " | ";
         cout << temp_join_time << " | " << temp_deduplication_time << " | " << temp_projection_time << " | ";
         cout << temp_union_time << " |" << endl;
 
@@ -484,7 +492,6 @@ void gpu_tc(const char *data_path, char separator,
     cout << "Memory clear: " << output.memory_clear_time << endl;
     cout << "Union: " << output.union_time << endl;
     cout << "Total: " << output.total_time << endl;
-
 }
 
 long int get_row_size(const char *data_path) {
