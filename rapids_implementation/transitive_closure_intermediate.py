@@ -3,13 +3,16 @@ import cudf
 import time
 import json
 
+
 def display_time(time_start, time_end, message):
     time_took = time_end - time_start
     print(f"Debug: {message}: {time_took:.6f}s")
 
+
 def get_time_spent(time_start, time_end):
     time_took = time_end - time_start
     return round(time_took, 4)
+
 
 def get_join(relation_1, relation_2, column_names=['column 1', 'column 2']):
     return relation_1.merge(relation_2, on=column_names[0],
@@ -38,10 +41,12 @@ def get_dataset(filename, column_names=['column 1', 'column 2'],
                          names=column_names, nrows=nrows)
 
 
-def get_transitive_closure(dataset):
+def get_transitive_closure(dataset, dataset_name=None):
+    if dataset_name != None:
+        print(f"Benchmark for {dataset_name}")
+        print("----------------------------------------------------------")
     COLUMN_NAMES = ['column 1', 'column 2']
     rows = int(re.search('\d+|$', dataset).group())
-    start_time_outer = time.perf_counter()
     time_start = time.perf_counter()
     relation_1 = get_dataset(dataset, COLUMN_NAMES, rows)
     time_end = time.perf_counter()
@@ -49,40 +54,57 @@ def get_transitive_closure(dataset):
     relation_2 = relation_1.copy()
     relation_2.columns = COLUMN_NAMES[::-1]
     time_end = time.perf_counter()
-    read_time = get_time_spent(time_start, time_end)
+    reverse_time = get_time_spent(time_start, time_end)
     temp_result = relation_1
-    i = 0
+    i = 1
     join_time = 0
-    projection_deduplication_time = 0
+    projection_deduplication_union_time = 0
+    memory_clear_time = 0
+    print(
+        "| Iteration | # Deduplicated union | Join(s) | Deduplication+Projection+Union(s) |")
+    print("| --- | --- | --- | --- |")
     while True:
         time_start = time.perf_counter()
         temp_join = get_join(relation_2, relation_1, COLUMN_NAMES)
         time_end = time.perf_counter()
-        join_time += get_time_spent(time_start, time_end)
+        temp_join_time = get_time_spent(time_start, time_end)
+        join_time += temp_join_time
         time_start = time.perf_counter()
         temp_projection = get_projection(temp_join, COLUMN_NAMES)
         time_end = time.perf_counter()
-        projection_deduplication_time += get_time_spent(time_start, time_end)
-        time_end = time.perf_counter()
-        read_time = get_time_spent(time_start, time_end)
-
-        x = len(temp_projection)
+        temp_time = get_time_spent(time_start, time_end)
+        temp_projection_deduplication_union_time = temp_time
+        projection_deduplication_union_time += temp_time
         previous_result_size = len(temp_result)
+        time_start = time.perf_counter()
         temp_result = get_union(temp_result, temp_projection)
+        time_end = time.perf_counter()
+        temp_time = get_time_spent(time_start, time_end)
+        projection_deduplication_union_time += temp_time
+        temp_projection_deduplication_union_time += temp_time
         current_result_size = len(temp_result)
         if previous_result_size == current_result_size:
-            i += 1
             break
+        time_start = time.perf_counter()
         del relation_2
+        time_end = time.perf_counter()
+        memory_clear_time += get_time_spent(time_start, time_end)
         relation_2 = temp_projection
         relation_2.columns = COLUMN_NAMES[::-1]
         i += 1
+        time_start = time.perf_counter()
         del temp_projection
-        # print(f"i: {i}, projection size: {x}, rows: {current_result_size}")
-    end_time_outer = time.perf_counter()
-    time_took = end_time_outer - start_time_outer
-    time_took = f"{time_took:.6f}"
-    # print(temp_result)
+        time_end = time.perf_counter()
+        memory_clear_time += get_time_spent(time_start, time_end)
+        print(f"| {i} | {temp_join_time:.4f} | {current_result_size} |"
+              f"{temp_projection_deduplication_union_time:.4f} |")
+    time_took = read_time + reverse_time + join_time + projection_deduplication_union_time + memory_clear_time
+    print(f"\nRead: {read_time:.4f}, reverse: {reverse_time:.4f}")
+    print(f"Join: {projection_deduplication_union_time:.4f}")
+    print(f"Projection, deduplication, union: "
+          f"{projection_deduplication_union_time:.4f}")
+    print(f"Memory clear: {memory_clear_time:.4f}")
+    print(f"Total: {time_took:.4f}\n")
     return rows, len(temp_result), i, time_took
 
 
@@ -101,28 +123,28 @@ def generate_benchmark(iterative=True, datasets=None):
                 record = get_transitive_closure(dataset)
                 result.append(record)
                 print(
-                    f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.6f} |")
+                    f"| {record[0]} | {record[1]} | {record[2]} | {record[3]:.4f} |")
                 n += increment
             except Exception as ex:
                 print(str(ex))
                 break
             count += 1
     if datasets:
-        print("| Dataset | Number of rows | TC size | Iterations | Time (s) |")
-        print("| --- | --- | --- | --- | --- |")
         for key, dataset in datasets.items():
             try:
-                record = get_transitive_closure(dataset)
+                record = get_transitive_closure(dataset, dataset_name=key)
                 record = list(record)
                 record.insert(0, key)
                 result.append(record)
-                message = " | ".join([str(s) for s in record])
-                message = "| " + message + " |"
-                print(message)
+                print(
+                    "| Dataset | Number of rows | TC size | Iterations | Time (s) |")
+                print("| --- | --- | --- | --- | --- |")
+                print(f"| {record[0]} | {record[1]} | "
+                      f"{record[2]} | {record[3]} | {record[4]:.4f} |")
             except Exception as ex:
                 print(str(ex))
                 break
-    print("\n")
+    # print("\n")
     with open('transitive_closure.json', 'w') as f:
         json.dump(result, f)
 
