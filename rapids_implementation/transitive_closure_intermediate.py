@@ -100,7 +100,7 @@ def get_transitive_closure(dataset, dataset_name=None):
               f"{temp_projection_deduplication_union_time:.4f} |")
     time_took = read_time + reverse_time + join_time + projection_deduplication_union_time + memory_clear_time
     print(f"\nRead: {read_time:.4f}, reverse: {reverse_time:.4f}")
-    print(f"Join: {projection_deduplication_union_time:.4f}")
+    print(f"Join: {join_time:.4f}")
     print(f"Projection, deduplication, union: "
           f"{projection_deduplication_union_time:.4f}")
     print(f"Memory clear: {memory_clear_time:.4f}")
@@ -151,14 +151,14 @@ def generate_benchmark(iterative=True, datasets=None):
 
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
-        "cal.cedge": "../data/data_21693.txt",
         "SF.cedge": "../data/data_223001.txt",
+        "p2p-Gnutella09": "../data/data_26013.txt",
+        "p2p-Gnutella04": "../data/data_39994.txt",
+        "cal.cedge": "../data/data_21693.txt",
         "TG.cedge": "../data/data_23874.txt",
         "OL.cedge": "../data/data_7035.txt",
         # "data_4": "../data/data_4.txt",
         # "data_22": "../data/data_22.txt",
-        "p2p-Gnutella09": "../data/data_26013.txt",
-        "p2p-Gnutella04": "../data/data_39994.txt"
     })
 
     generate_benchmark(iterative=False, datasets={
