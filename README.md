@@ -1,9 +1,23 @@
 # Comparison between cuDF and Pandas for Accelerating Datalog applications with cuDF
-- **Please open [rapids_implementation folder](rapids_implementation) that contains the comparison between cuDF and Pandas.**
+
+- **Please open [rapids_implementation folder](rapids_implementation) that contains the comparison between cuDF and
+  Pandas.**
 - The following sections are for the CUDA implementations of inner joins
 
 ## Transitive closure
+
 - Use hash join (open addressing, linear probing)
+- Theta GPU comparison for CUDA and Rapids using `single-gpu`:
+
+| Dataset  | Number of rows | TC size    | Iterations | Blocks x Threads(CUDA) | CUDA(s) | Rapids(s) |
+|----------|----------------|------------|------------|------------------------|---------|-----------|
+| SF.cedge | 223,001        | 80,498,014 | 287        | 3,456 x 1,024          | 70.2483 | 84.1192   |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 1,024 | 5.1033 | 5.1320 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 1,024 | 22.8499 | 18.0585 |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 1,024 | 1.2274 | 2.8616 |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.3646 | 0.7797 |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.2978 | 0.5904 |
+
 - Theta GPU run:
 
 ```shell
@@ -36,8 +50,8 @@ nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run
 | TG.cedge | 23,874 | 481,121 | 58 | 320 x 1,024 | 0.1619 |
 | OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.1042 |
 
-
 ## Triangle counting
+
 - Use hash join (open addressing, linear probing)
 - Theta GPU run:
 
@@ -59,8 +73,8 @@ Triangle counting computation using CUDA, cuDF and Pandas for same datasets in T
 
 ![alt triangle counting](rapids_implementation/screenshots/triangle_counting_3.png)
 
-
 - Local run
+
 ```shell
 nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 ```
@@ -75,9 +89,6 @@ nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-
 | three_triangles | 10 | 3 | 320 x 1,024 | 0.0013 |
 | one_triangle | 3 | 1 | 320 x 1,024 | 0.0013 |
 
-
-
-
 ## Join of two relations
 
 ### Dataset
@@ -86,12 +97,12 @@ nvcc triangle_counting.cu -run -o join -run-args benchmark -run-args 23874 -run-
     - Collected from: [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
     - Dataset details: [https://sparse.tamu.edu/CPM/cz40948](https://sparse.tamu.edu/CPM/cz40948)
 
-
 ## Hash join
 
 ### Techniques
+
 - Open addressing
-  - Linear probing
+    - Linear probing
 
 - Theta GPU:
 
@@ -116,39 +127,41 @@ nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 412,148 | 3,232,717 | 320X1,024 | 2,097,152 | 0.3000 | N/A | 156,871,557 | 0.0081 (0.0026+0.0017+0.0004+0.0034) |
 
-
 ### Configuration
+
 - Configuration data are collected using `nvidia-smi`, `lscpu`, `free -h`
 - Theta GPU (single-gpu node):
-  - GPU 0: NVIDIA A100-SXM4-40GB
-  - CPU Model name: AMD EPYC 7742 64-Core Processor
-  - CPU(s): 256
-  - Thread(s) per core: 2 
-  - Core(s) per socket: 64 
-  - Socket(s): 2
-  - CPU MHz: 3399.106
-  - L1d cache: 4 MiB
-  - L1i cache: 4 MiB
-  - L2 cache: 64 MiB
-  - L3 cache: 512 MiB
-  - Total memory: 1.0Ti
+    - GPU 0: NVIDIA A100-SXM4-40GB
+    - CPU Model name: AMD EPYC 7742 64-Core Processor
+    - CPU(s): 256
+    - Thread(s) per core: 2
+    - Core(s) per socket: 64
+    - Socket(s): 2
+    - CPU MHz: 3399.106
+    - L1d cache: 4 MiB
+    - L1i cache: 4 MiB
+    - L2 cache: 64 MiB
+    - L3 cache: 512 MiB
+    - Total memory: 1.0Ti
 
 - Local machine:
-  - GPU 0: NVIDIA GeForce GTX 1060 with Max-Q Design
-  - CPU Model name: Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
-  - CPU(s): 12
-  - Thread(s) per core: 2
-  - Core(s) per socket: 6
-  - Socket(s): 1
-  - L1d cache: 192 KiB
-  - L1i cache: 192 KiB
-  - L2 cache: 1.5 MiB
-  - L3 cache: 9 MiB
-  - Total memory: 15Gi
+    - GPU 0: NVIDIA GeForce GTX 1060 with Max-Q Design
+    - CPU Model name: Intel(R) Core(TM) i7-8750H CPU @ 2.20GHz
+    - CPU(s): 12
+    - Thread(s) per core: 2
+    - Core(s) per socket: 6
+    - Socket(s): 1
+    - L1d cache: 192 KiB
+    - L1i cache: 192 KiB
+    - L2 cache: 1.5 MiB
+    - L3 cache: 9 MiB
+    - Total memory: 15Gi
 
 ### Implementation of Hashjoin in GPU
+
 - Used open addressing based hash table with linear probing and Murmur3 hash
 - Comparison between nested loop join for random and graph data (ThetaGPU):
+
 ```shell
 nvcc hashjoin_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-args 412148 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 Join result: 3,232,717 x 3
@@ -177,7 +190,9 @@ Wrote join result (20,000,000 rows) to file: output/gpu_nlj.txt
 | 10,000,000 | 20,000,000 | 9,766X1,024 | 30 | 131.1090 (44.7930+0.0019+86.3141) |
 
 ```
+
 - Comparison between nested loop join for random and graph data (local machine):
+
 ```shell
 nvcc hashjoin_gpu.cu -run -o join -run-args random -run-args 25000 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0
 Duplicate percentage: 30.000000
@@ -334,7 +349,7 @@ Search: 0.031970 seconds
 Total time: 1.756978 seconds
 ```
 
-- Speed up: CPU total time (in seconds) / GPU total time (in seconds)  
+- Speed up: CPU total time (in seconds) / GPU total time (in seconds)
 
 | # pairs | #  size | GPU read | CPU read | GPU build | CPU build | GPU total | CPU total | Speedup |
 |---------|---------|----------|----------|-----------|-----------|-----------|-----------|---------|
@@ -342,10 +357,9 @@ Total time: 1.756978 seconds
 | 50,000  | 111,111 | 0.1156   | 0.0090   | 0.1170    | 6.9729    | 0.3019    | 6.9820    | 23.13x  |
 | 25,000  | 55,555  | 0.1078   | 0.0045   | 0.03842   | 1.7461    | 0.2080    | 2.2702    | 10.91x  |
 
-
 ## Nested loop join
-### Join performance
 
+### Join performance
 
 - Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_size.cu`:
 
@@ -361,7 +375,6 @@ Total time: 1.756978 seconds
 | 450000 | 440 | 1024 | 404982983 | 0.112455 | 0.00172126 | 0.395609 | 0.509785 |
 | 500000 | 489 | 1024 | 499965209 | 0.125456 | 0.00176208 | 0.47409 | 0.601308 |
 | 550000 | 538 | 1024 | 605010431 | 0.138507 | 0.00185872 | 0.554933 | 0.695299 |
-
 
 - Using Theta GPU (NVIDIA A100 - 40536MiB) result for `nested_loop_join_dynamic_atomic.cu`:
 
@@ -379,6 +392,7 @@ Total time: 1.756978 seconds
 | 550000 | 17188 x 17188 | 32 x 32 | 605010431 | 0.757276 | 6.2097e-05 | 2.33137 | 3.08871 |
 
 - Using theta gpu job submission with 512 threads per block for nested loop join:
+
 ```shell
 qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesystems=home -O nested_loop_out join nested_unified
 ```
@@ -407,6 +421,7 @@ qsub -A dist_relational_alg -n 1 -t 15 -q single-gpu --attrs mcdram=flat:filesys
 | 550000 | 538 | 1024 | 605010431 | 0.17582 | 0.00166037 | 0.561509 | 0.738989 |
 
 Overflow at `n=600000`
+
 ```shell
 GPU join operation (non-atomic): (600000, 2) x (600000, 2)
 Blocks per grid: 1172, Threads per block: 512
@@ -416,7 +431,9 @@ Thrust calculate offset: 0.00207949 seconds
 ```
 
 ### Profiling
+
 - Using `nvprof` with threads per block 1024
+
 ```shell
 nvprof ./join                                
 GPU join operation (non-atomic): (500000, 2) x (500000, 2)
@@ -471,7 +488,9 @@ Device "NVIDIA GeForce GTX 1060 with Max-Q Design (0)"
    23837         -         -         -           -  497.1857ms  Gpu page fault groups
 Total CPU Page faults: 24
 ```
+
 - Using `nvprof` with threads per block 512
+
 ```shell
 nvprof ./join
 GPU join operation (non-atomic): (500000, 2) x (500000, 2)
@@ -529,9 +548,11 @@ Total CPU Page faults: 16890
 ```
 
 - Using `nsys`
+
 ```shell
 nsys profile --stats=true ./join
 ```
+
 ```shell
 CUDA Kernel Statistics:
 
@@ -566,6 +587,7 @@ CUDA Memory Operation Statistics (by size):
 ```
 
 - `nvprof` on atomic for `n=300000` (`n=500000`: `CUDA Runtime Error: out of memory`):
+
 ```shell
 # thread 8 x 8
 nvprof ./join
@@ -713,7 +735,9 @@ Write result: 2.09653 seconds
 
 Main method: 2.59259 seconds
 ```
+
 - Output for non-atomic for 412148 rows using unified memory:
+
 ```shell
 nvcc nested_loop_join_dynamic_size.cu -o join -run 
 GPU join operation (non-atomic): (412148, 2) x (412148, 2)
@@ -726,6 +750,7 @@ Wrote join result (3232717 rows) to file: output/join_gpu_412148_atomic.txt
 Write result: 1.10033 seconds
 Total time: 4.13685 seconds
 ```
+
 - Output using GPU non-atomic and atomic operation for 412148 rows:
 
 ```
@@ -759,7 +784,6 @@ Write result: 1.39106 seconds
 Iteration 1: 10.197 seconds
 ```
 
-
 ### Performance comparison
 
 Performance comparison for different grid and block size:
@@ -774,11 +798,8 @@ Performance comparison for different grid and block size:
 | 412148 | 493       | 836        | 0.743906s     | 2.70597s       | 4.80494s |
 | 412148 | 418       | 986        | 0.798028s     | 2.21296s       | 4.38426s |
 
-
-
 Performance comparison for 2 pass implementation using non atomic and atomic operation. Time are given
 in seconds:
-
 
 Using Theta GPU:
 
@@ -814,6 +835,7 @@ Using local machine:
 | 8 | 4.15788 | 9.86398 |
 | 9 | 4.1543 | 10.083 |
 | 10 | 4.36212 | 10.671 |
+
 - Total non atomic time: 41.8316
 - Average non atomic time: 4.18316
 - Total atomic time: 100.504
