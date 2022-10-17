@@ -171,6 +171,18 @@ Time taken = 8.331728e-02 seconds
 Rate = 3.22185e+09 keys/sec
 ```
 
+### Running NCCL code on theta:
+- Use interactive job on theta (single node NCCL)
+```shell
+ssh USERNAME@theta.alcf.anl.gov
+ssh thetagpusn1
+qsub -I -n 1 -t 10 -q full-node -A dist_relational_alg --attrs filesystems=home,grand,theta-fs0
+module load openmpi
+module load nccl
+nvcc -o nccl_ex nccl_test.cu -L/lus/theta-fs0/software/thetagpu/nccl/nccl-v2.12.12-1_gcc-9.4.0-1ubuntu1-20.04/lib -lnccl
+./nccl_ex
+```
+
 
 #### Basic conda commands:
 - List the environments:
