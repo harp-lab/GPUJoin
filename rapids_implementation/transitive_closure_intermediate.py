@@ -151,18 +151,20 @@ def generate_benchmark(iterative=True, datasets=None):
 
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
-        "SF.cedge": "../data/data_223001.txt",
-        "p2p-Gnutella09": "../data/data_26013.txt",
-        "p2p-Gnutella04": "../data/data_39994.txt",
-        "cal.cedge": "../data/data_21693.txt",
-        "TG.cedge": "../data/data_23874.txt",
-        "OL.cedge": "../data/data_7035.txt",
+        # "SF.cedge": "../data/data_223001.txt",
+        # "p2p-Gnutella09": "../data/data_26013.txt",
+        # "p2p-Gnutella04": "../data/data_39994.txt",
+        # "cal.cedge": "../data/data_21693.txt",
+        # "TG.cedge": "../data/data_23874.txt",
+        # "OL.cedge": "../data/data_7035.txt",
         # "data_4": "../data/data_4.txt",
         # "data_22": "../data/data_22.txt",
+        # "cyclic graph": "../data/data_10000001.txt",
+        # "acyclic graph": "../data/data_10000002.txt"
     })
 
     generate_benchmark(iterative=False, datasets={
-        # "data_3": "../data/data_3.txt",
+        "data_3": "../data/data_3.txt",
         # "data_4": "../data/data_4.txt",
         # "data_5": "../data/data_5.txt"
     })

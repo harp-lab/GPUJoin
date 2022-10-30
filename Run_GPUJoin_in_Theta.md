@@ -79,6 +79,13 @@ nvcc hashtable_gpu.cu -run -o join -run-args data/link.facts_412148.txt -run-arg
 nvcc hashtable_gpu.cu -run -o join -run-args random -run-args 150000 -run-args 2 -run-args 0.3 -run-args 1 -run-args 30
 nsys profile --stats=true ./join
 ```
+
+- `NCCL` on theta
+```shell
+module load nccl/nccl-v2.12.12-1_CUDA11.4
+module avail
+```
+
 ### C++ run script example for theta
 ```shell
 #!/bin/bash
