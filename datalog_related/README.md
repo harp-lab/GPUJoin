@@ -17,6 +17,20 @@ time ./tc_dl -j 4
 time ./tc_dl -j 8
 ```
 
+### Error
+```shell
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ ./tc_dl
+./tc_dl: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found (required by ./tc_dl)
+./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by ./tc_dl)
+./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33' not found (required by ./tc_dl)
+./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by ./tc_dl)
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ g++ -o tc_2 tc_dl.cpp 
+tc_dl.cpp:2:10: fatal error: souffle/CompiledSouffle.h: No such file or directory
+    2 | #include "souffle/CompiledSouffle.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+compilation terminated.
+```
+
 
 ### References
 - [Install Souffle](https://souffle-lang.github.io/install.html)

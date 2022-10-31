@@ -1,4 +1,147 @@
 ## Intermediate result
+- Local
+```shell
+nvcc transitive_closure.cu -run -o join
+```
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+Hash table build time: 0.0000
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 320 x 1,024 | 0.2029 |
+
+
+Initialization: 0.0956, Read: 0.0016, reverse: 0.0002
+Hashtable rate: 590,432,228 keys/s, time: 0.0000
+Join: 0.0189
+Projection: 0.0008
+Deduplication: 0.0777
+Memory clear: 0.0024
+Union: 0.0057
+Total: 0.2029
+
+
+```shell
+nvcc transitive_closure.cu -run -o join
+```
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 1,024 | 70.3302 |
+
+
+Initialization: 1.3869, Read: 0.0421, reverse: 0.0009
+Hashtable rate: 6,416,187,133 keys/s, time: 0.0000
+Join: 5.6644
+Projection: 5.8709
+Deduplication: 30.3106
+Memory clear: 12.7738
+Union: 14.2806
+Total: 70.3302
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 1,024 | 5.0006 |
+
+
+Initialization: 0.0005, Read: 0.0306, reverse: 0.0003
+Hashtable rate: 466,467,022 keys/s, time: 0.0001
+Join: 0.7202
+Projection: 0.4836
+Deduplication: 2.4821
+Memory clear: 0.7760
+Union: 0.5072
+Total: 5.0006
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 1,024 | 22.7044 |
+
+
+Initialization: 0.0008, Read: 0.0307, reverse: 0.0003
+Hashtable rate: 522,148,965 keys/s, time: 0.0001
+Join: 2.8524
+Projection: 1.6003
+Deduplication: 13.0366
+Memory clear: 2.5882
+Union: 2.5951
+Total: 22.7044
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 1,024 | 1.2136 |
+
+
+Initialization: 0.0004, Read: 0.0242, reverse: 0.0005
+Hashtable rate: 1,143,843,923 keys/s, time: 0.0000
+Join: 0.2960
+Projection: 0.0037
+Deduplication: 0.7470
+Memory clear: 0.0334
+Union: 0.1083
+Total: 1.2136
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.3808 |
+
+
+Initialization: 0.0005, Read: 0.0322, reverse: 0.0005
+Hashtable rate: 1,173,284,843 keys/s, time: 0.0000
+Join: 0.0852
+Projection: 0.0025
+Deduplication: 0.2214
+Memory clear: 0.0096
+Union: 0.0289
+Total: 0.3808
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |
+| --- | --- | --- | --- | --- | --- | --- |
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.3793 |
+
+
+Initialization: 0.0002, Read: 0.0337, reverse: 0.0001
+Hashtable rate: 358,983,517 keys/s, time: 0.0000
+Join: 0.1160
+Projection: 0.0012
+Deduplication: 0.2220
+Memory clear: 0.0021
+Union: 0.0040
+Total: 0.3793
+
+
 
 ```
 nvcc transitive_closure.cu -run -o join

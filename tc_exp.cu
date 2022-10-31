@@ -376,27 +376,27 @@ void gpu_tc(const char *data_path, char separator,
         temp_join_time += spent_time;
         output.join_time += spent_time;
 
-        // deduplication of projection
-        // first sort the array and then remove consecutive duplicated elements
-        time_point_begin = chrono::high_resolution_clock::now();
-        thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
-                            cmp());
-        long int projection_rows = (thrust::unique(thrust::device,
-                                                   join_result, join_result + join_result_rows,
-                                                   is_equal())) - join_result;
-        time_point_end = chrono::high_resolution_clock::now();
-        spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_deduplication_time += spent_time;
-        output.deduplication_time += spent_time;
+//        // deduplication of projection
+//        // first sort the array and then remove consecutive duplicated elements
+//        time_point_begin = chrono::high_resolution_clock::now();
+//        thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
+//                            cmp());
+//        long int projection_rows = (thrust::unique(thrust::device,
+//                                                   join_result, join_result + join_result_rows,
+//                                                   is_equal())) - join_result;
+//        time_point_end = chrono::high_resolution_clock::now();
+//        spent_time = get_time_spent("", time_point_begin, time_point_end);
+//        temp_deduplication_time += spent_time;
+//        output.deduplication_time += spent_time;
 
         Entity *projection;
-        checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
-        checkCuda(cudaMallocManaged(&reverse_relation, projection_rows * relation_columns * sizeof(int)));
+        checkCuda(cudaMallocManaged(&projection, join_result_rows * sizeof(Entity)));
+        checkCuda(cudaMallocManaged(&reverse_relation, join_result_rows * relation_columns * sizeof(int)));
 
         time_point_begin = chrono::high_resolution_clock::now();
         get_reverse_projection<<<grid_size, block_size>>>
                 (join_result, projection,
-                 reverse_relation, projection_rows, join_result_columns);
+                 reverse_relation, join_result_rows, join_result_columns);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -405,10 +405,10 @@ void gpu_tc(const char *data_path, char separator,
         // concatenated result = result + projection
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
-        long int concatenated_rows = projection_rows + result_rows;
+        long int concatenated_rows = join_result_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
         thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
-        thrust::copy(thrust::device, projection, projection + projection_rows,
+        thrust::copy(thrust::device, projection, projection + join_result_rows,
                      concatenated_result + result_rows);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -434,7 +434,7 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         temp_deduplication_time += spent_time;
         output.deduplication_time += spent_time;
-        reverse_relation_rows = projection_rows;
+        reverse_relation_rows = join_result_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(join_result);
@@ -602,4 +602,4 @@ int main(int argc, char **argv) {
 
 // Benchmark
 // nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
-// nvcc transitive_closure.cu -run -o join
+// nvcc tc_exp.cu -run -o join
