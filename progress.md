@@ -1,3 +1,123 @@
+## Transitive closure vs Transitive closure experiments on Theta
+```shell
+nvcc transitive_closure.cu -o join -run
+```
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+Hash table build time: 0.0003
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 1,024 | 76.5294 |
+
+
+Initialization: 1.4035, Read: 2.5876, reverse: 0.0012
+Hashtable rate: 673,462,669 keys/s, time: 0.0003
+Join: 6.7237
+Projection: 5.7313
+Deduplication: 32.3216
+Memory clear: 12.7487
+Union: 15.0114
+Total: 76.5294
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+Hash table build time: 0.0001
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 1,024 | 5.4428 |
+
+
+Initialization: 0.0005, Read: 0.0074, reverse: 0.0003
+Hashtable rate: 480,361,198 keys/s, time: 0.0001
+Join: 0.7596
+Projection: 0.4682
+Deduplication: 2.8082
+Memory clear: 0.8748
+Union: 0.5238
+Total: 5.4428
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+Hash table build time: 0.0001
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 1,024 | 24.1613 |
+
+
+Initialization: 0.0011, Read: 0.0318, reverse: 0.0003
+Hashtable rate: 537,691,077 keys/s, time: 0.0001
+Join: 2.9343
+Projection: 1.5500
+Deduplication: 14.1789
+Memory clear: 2.7740
+Union: 2.6908
+Total: 24.1613
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+Hash table build time: 0.0002
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 1,024 | 1.2182 |
+
+
+Initialization: 0.0010, Read: 0.0384, reverse: 0.0010
+Hashtable rate: 90,540,664 keys/s, time: 0.0002
+Join: 0.2891
+Projection: 0.0039
+Deduplication: 0.7331
+Memory clear: 0.0321
+Union: 0.1195
+Total: 1.2182
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+Hash table build time: 0.0000
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.7935 |
+
+
+Initialization: 0.0004, Read: 0.3919, reverse: 0.0002
+Hashtable rate: 1,145,035,971 keys/s, time: 0.0000
+Join: 0.1024
+Projection: 0.0031
+Deduplication: 0.2575
+Memory clear: 0.0093
+Union: 0.0286
+Total: 0.7935
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+Hash table build time: 0.0000
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.3254 |
+
+
+Initialization: 0.0003, Read: 0.0329, reverse: 0.0001
+Hashtable rate: 340,200,203 keys/s, time: 0.0000
+Join: 0.0923
+Projection: 0.0014
+Deduplication: 0.1925
+Memory clear: 0.0020
+Union: 0.0039
+Total: 0.3254
+
+```shell
+nvcc tc_exp.cu -o join -run
+```
+
+
+
+
 ## Intermediate result
 - Local
 ```shell

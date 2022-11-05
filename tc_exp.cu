@@ -108,6 +108,17 @@ void show_hash_table(Entity *hash_table, long int hash_table_row_size, const cha
     cout << "" << endl;
 }
 
+long int count_hash_table_row(Entity *hash_table, long int hash_table_row_size) {
+    long int count = 0;
+    for (long int i = 0; i < hash_table_row_size; i++) {
+        if (hash_table[i].key != -1) {
+            count++;
+        }
+    }
+    return count;
+}
+
+
 void show_entity_array(Entity *data, int data_rows, const char *array_name) {
     long int count = 0;
     cout << "Entity name: " << array_name << endl;
@@ -144,6 +155,62 @@ void build_hash_table(Entity *hash_table, long int hash_table_row_size,
         }
     }
 }
+
+
+__global__
+void build_result_table(Entity *hash_table, long int hash_table_row_size,
+                        int *projection, long int projection_row_size) {
+    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= projection_row_size) return;
+
+    int stride = blockDim.x * gridDim.x;
+
+    for (int i = index; i < projection_row_size; i += stride) {
+        int key = projection[(i * 2) + 0];
+        int value = projection[(i * 2) + 1];
+        int position = get_position(key, hash_table_row_size);
+        while (true) {
+            int existing_key = atomicCAS(&hash_table[position].key, -1, key);
+            if (existing_key == -1) {
+                hash_table[position].value = value;
+                break;
+            } else if (existing_key == key) {
+                int existing_value = atomicCAS(&hash_table[position].value, -1, value);
+                if (existing_value == value)
+                    break;
+            }
+            position = (position + 1) & (hash_table_row_size - 1);
+        }
+    }
+}
+
+__global__
+void build_result_table(Entity *hash_table, long int hash_table_row_size,
+                        Entity *projection, long int projection_row_size) {
+    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= projection_row_size) return;
+
+    int stride = blockDim.x * gridDim.x;
+
+    for (int i = index; i < projection_row_size; i += stride) {
+        int key = projection[i].key;
+        int value = projection[i].value;
+        int position = get_position(key, hash_table_row_size);
+        while (true) {
+            int existing_key = atomicCAS(&hash_table[position].key, -1, key);
+            if (existing_key == -1) {
+                hash_table[position].value = value;
+                break;
+            } else if (existing_key == key) {
+                int existing_value = atomicCAS(&hash_table[position].value, -1, value);
+                if (existing_value == value)
+                    break;
+            }
+            position = (position + 1) & (hash_table_row_size - 1);
+        }
+    }
+}
+
 
 __global__
 void initialize_result(Entity *result,
@@ -266,21 +333,19 @@ void gpu_tc(const char *data_path, char separator,
     cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     int block_size, min_grid_size, grid_size;
     int *relation, *reverse_relation;
-    Entity *hash_table, *result;
+    Entity *hash_table, *result_table;
     const char *random_datapath = "random";
     long int join_result_rows;
     long int reverse_relation_rows = relation_rows;
-    long int result_rows = relation_rows;
     long int iterations = 0;
     int join_result_columns = relation_columns;
     long int hash_table_rows = (long int) relation_rows / load_factor;
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
-//    cout << "Hash table rows: " << hash_table_rows << endl;
-
+    long int result_table_rows = pow(2, ceil(log(relation_rows * 100) / log(2)));
     checkCuda(cudaMallocManaged(&relation, relation_rows * relation_columns * sizeof(int)));
     checkCuda(cudaMallocManaged(&reverse_relation, reverse_relation_rows * relation_columns * sizeof(int)));
-    checkCuda(cudaMallocManaged(&result, result_rows * sizeof(Entity)));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity)));
+    checkCuda(cudaMallocManaged(&result_table, result_table_rows * sizeof(Entity)));
     checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
     checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
                                                  build_hash_table, 0, 0));
@@ -316,6 +381,7 @@ void gpu_tc(const char *data_path, char separator,
     negative_entity.value = -1;
     time_point_begin = chrono::high_resolution_clock::now();
     thrust::fill(thrust::device, hash_table, hash_table + hash_table_rows, negative_entity);
+    thrust::fill(thrust::device, result_table, result_table + result_table_rows, negative_entity);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
@@ -334,21 +400,17 @@ void gpu_tc(const char *data_path, char separator,
 
     time_point_begin = chrono::high_resolution_clock::now();
     // initial result is the input relation
-    initialize_result<<<grid_size, block_size>>>
-            (result,
-             relation, relation_rows,
-             relation_columns);
+    build_result_table<<<grid_size, block_size>>>
+            (result_table, result_table_rows,
+             relation, relation_rows);
     checkCuda(cudaDeviceSynchronize());
+    show_hash_table(result_table, result_table_rows, "Initial result");
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.union_time += spent_time;
-
-//    cout
-//            << "| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
-//            << endl;
-//    cout << "| --- | --- | --- | --- | --- | --- | --- |" << endl;
+    long int result_unique_rows = count_hash_table_row(result_table, result_table_rows);
+    Entity *projection;
     while (true) {
-        double temp_join_time = 0, temp_projection_time = 0, temp_deduplication_time = 0, temp_union_time = 0;
         int *offset;
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
@@ -360,12 +422,12 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_join_time += spent_time;
         output.join_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
         checkCuda(cudaMallocManaged(&join_result, join_result_rows * sizeof(Entity)));
+        show_relation(reverse_relation, reverse_relation_rows, 2, "Reverse relation", reverse_relation_rows, 0);
         get_join_result<<<grid_size, block_size>>>
                 (hash_table, hash_table_rows,
                  reverse_relation, reverse_relation_rows,
@@ -373,23 +435,10 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_join_time += spent_time;
         output.join_time += spent_time;
 
-//        // deduplication of projection
-//        // first sort the array and then remove consecutive duplicated elements
-//        time_point_begin = chrono::high_resolution_clock::now();
-//        thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows,
-//                            cmp());
-//        long int projection_rows = (thrust::unique(thrust::device,
-//                                                   join_result, join_result + join_result_rows,
-//                                                   is_equal())) - join_result;
-//        time_point_end = chrono::high_resolution_clock::now();
-//        spent_time = get_time_spent("", time_point_begin, time_point_end);
-//        temp_deduplication_time += spent_time;
-//        output.deduplication_time += spent_time;
-
-        Entity *projection;
+        cudaFree(projection);
+        cudaFree(reverse_relation);
         checkCuda(cudaMallocManaged(&projection, join_result_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, join_result_rows * relation_columns * sizeof(int)));
 
@@ -400,66 +449,39 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_projection_time += spent_time;
         output.projection_time += spent_time;
-        // concatenated result = result + projection
+
         time_point_begin = chrono::high_resolution_clock::now();
-        Entity *concatenated_result;
-        long int concatenated_rows = join_result_rows + result_rows;
-        checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
-        thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
-        thrust::copy(thrust::device, projection, projection + join_result_rows,
-                     concatenated_result + result_rows);
+        build_result_table<<<grid_size, block_size>>>
+                (result_table, result_table_rows,
+                 projection, join_result_rows);
+        checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_union_time += spent_time;
         output.union_time += spent_time;
 
-        // deduplication of projection
-        // first sort the array and then remove consecutive duplicated elements
 
-        time_point_begin = chrono::high_resolution_clock::now();
-        thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
-                            cmp());
-        long int deduplicated_result_rows = (thrust::unique(thrust::device,
-                                                            concatenated_result,
-                                                            concatenated_result + concatenated_rows,
-                                                            is_equal())) - concatenated_result;
-        cudaFree(result);
-        checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
-        // Copy the deduplicated concatenated result to result
-        thrust::copy(thrust::device, concatenated_result,
-                     concatenated_result + deduplicated_result_rows, result);
-        time_point_end = chrono::high_resolution_clock::now();
-        spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_deduplication_time += spent_time;
-        output.deduplication_time += spent_time;
-        reverse_relation_rows = join_result_rows;
-//        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(join_result);
         cudaFree(offset);
         cudaFree(projection);
-        cudaFree(concatenated_result);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
         iterations++;
-//        cout << "| " << iterations << " | ";
-//        cout << projection_rows << " | " << result_rows << " | ";
-//        cout << temp_join_time << " | " << temp_deduplication_time << " | " << temp_projection_time << " | ";
-//        cout << temp_union_time << " |" << endl;
+        long int result_current_unique_rows = count_hash_table_row(result_table, result_table_rows);
+        show_hash_table(result_table, result_table_rows, "Updated result");
 
-        if (result_rows == deduplicated_result_rows) {
+        if (result_unique_rows == result_current_unique_rows) {
             break;
         }
-        result_rows = deduplicated_result_rows;
+        result_unique_rows = result_current_unique_rows;
     }
-//    show_entity_array(result, result_rows, "Result");
+    show_hash_table(result_table, result_table_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(reverse_relation);
-    cudaFree(result);
+    cudaFree(result_table);
     cudaFree(hash_table);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -471,7 +493,7 @@ void gpu_tc(const char *data_path, char separator,
     cout << endl;
     cout << "| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |" << endl;
     cout << "| --- | --- | --- | --- | --- | --- |" << endl;
-    cout << "| " << dataset_name << " | " << relation_rows << " | " << result_rows;
+    cout << "| " << dataset_name << " | " << relation_rows << " | " << result_unique_rows;
     cout << fixed << " | " << iterations << " | ";
     cout << fixed << grid_size << " x " << block_size << " | " << calculated_time << " |\n" << endl;
     output.block_size = block_size;
@@ -482,7 +504,6 @@ void gpu_tc(const char *data_path, char separator,
     output.duplicate_percentage = max_duplicate_percentage;
     output.dataset_name = dataset_name;
     output.total_time = calculated_time;
-
     cout << endl;
     cout << "Initialization: " << output.initialization_time;
     cout << ", Read: " << output.read_time << ", reverse: " << output.reverse_time << endl;
@@ -494,6 +515,58 @@ void gpu_tc(const char *data_path, char separator,
     cout << "Memory clear: " << output.memory_clear_time << endl;
     cout << "Union: " << output.union_time << endl;
     cout << "Total: " << output.total_time << endl;
+}
+
+
+void check_unique_hashtable() {
+    int device_id;
+    cudaGetDevice(&device_id);
+    int block_size = 512, grid_size = 32;
+    Entity *result;
+    int *projection;
+    long int result_size = 1024;
+    long int projection_size = 4;
+    int projection_columns = 2;
+    checkCuda(cudaMallocManaged(&result, result_size * sizeof(Entity)));
+    checkCuda(cudaMallocManaged(&projection, projection_size * projection_columns * sizeof(int)));
+    projection[0] = 2;
+    projection[1] = 1;
+    projection[2] = 2;
+    projection[3] = 5;
+    projection[4] = 2;
+    projection[5] = 1;
+    projection[6] = 2;
+    projection[7] = 1;
+    show_relation(projection, projection_size, 2, "Projection", projection_size, 0);
+    Entity negative_entity;
+    negative_entity.key = -1;
+    negative_entity.value = -1;
+    thrust::fill(thrust::device, result, result + result_size, negative_entity);
+    build_result_table<<<grid_size, block_size>>>
+            (result, result_size,
+             projection, projection_size);
+    checkCuda(cudaDeviceSynchronize());
+    show_hash_table(result, result_size, "Initial Result");
+
+    Entity *temp_projection;
+    checkCuda(cudaMallocManaged(&temp_projection, projection_size * sizeof(Entity)));
+    temp_projection[0].key = 2;
+    temp_projection[0].value = 1;
+    temp_projection[1].key = 2;
+    temp_projection[1].value = 5;
+    temp_projection[2].key = 2;
+    temp_projection[2].value = 2;
+    temp_projection[3].key = 2;
+    temp_projection[3].value = 1;
+
+    build_result_table<<<grid_size, block_size>>>
+            (result, result_size,
+             temp_projection, projection_size);
+    checkCuda(cudaDeviceSynchronize());
+    show_hash_table(result, result_size, "Final Result");
+    cudaFree(result);
+    cudaFree(projection);
+    cudaFree(temp_projection);
 }
 
 long int get_row_size(const char *data_path) {
@@ -513,12 +586,15 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "SF.cedge", "data/data_223001.txt",
-            "p2p-Gnutella09", "data/data_26013.txt",
-            "p2p-Gnutella04", "data/data_39994.txt",
-            "cal.cedge", "data/data_21693.txt",
-            "TG.cedge", "data/data_23874.txt",
-            "OL.cedge", "data/data_7035.txt",
+//            "string 4", "data/data_4.txt",
+            "talk 5", "data/data_5.txt",
+
+//            "SF.cedge", "data/data_223001.txt",
+//            "p2p-Gnutella09", "data/data_26013.txt",
+//            "p2p-Gnutella04", "data/data_39994.txt",
+//            "cal.cedge", "data/data_21693.txt",
+//            "TG.cedge", "data/data_23874.txt",
+//            "OL.cedge", "data/data_7035.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
@@ -584,6 +660,7 @@ int main(int argc, char **argv) {
                    grid_size, block_size, dataset_name, false);
         }
     } else {
+//        check_unique_hashtable();
         run_benchmark(2, 0.3, 0, 0, 0.1);
     }
 
@@ -601,5 +678,5 @@ int main(int argc, char **argv) {
 // nvcc transitive_closure.cu -run -o join -run-args data/data_23874.txt -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 
 // Benchmark
-// nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
+// nvcc tc_exp.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
 // nvcc tc_exp.cu -run -o join
