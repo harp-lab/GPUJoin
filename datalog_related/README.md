@@ -15,6 +15,7 @@ souffle -F . -D . -o tc_dl tc.dl
 ./tc_dl
 time ./tc_dl -j 4
 time ./tc_dl -j 8
+g++ tc_dl.cpp -I .
 ```
 
 ### Error

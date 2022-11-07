@@ -439,7 +439,7 @@ void gpu_tc(const char *data_path, char separator,
     checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
-    cout << "Hash table build time: " << spent_time << endl;
+//    cout << "Hash table build time: " << spent_time << endl;
     output.hashtable_build_time = spent_time;
     output.hashtable_build_rate = relation_rows / spent_time;
     output.join_time += spent_time;
@@ -472,13 +472,13 @@ void gpu_tc(const char *data_path, char separator,
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
         checkCuda(cudaMallocManaged(&join_result, join_result_rows * sizeof(Entity)));
-//        show_relation(reverse_relation, reverse_relation_rows, 2, "Reverse relation", reverse_relation_rows, 0);
+        show_relation(reverse_relation, reverse_relation_rows, 2, "Reverse relation", reverse_relation_rows, 0);
         get_join_result<<<grid_size, block_size>>>
                 (hash_table, hash_table_rows,
                  reverse_relation, reverse_relation_rows,
                  relation_columns, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
-//        show_entity_array(join_result, join_result_rows, "Join result");
+        show_entity_array(join_result, join_result_rows, "Join result");
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
@@ -495,7 +495,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.projection_time += spent_time;
-//        show_entity_array(projection, join_result_rows, "Projection");
+        show_entity_array(projection, join_result_rows, "Projection");
 
         Entity *concatenated_result;
         long int concatenated_result_rows = result_table_rows + join_result_rows;
@@ -523,22 +523,6 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time;
 
-//        long int current_result_table_rows = pow(2, ceil(log(concatenated_result_rows) / log(2)));
-//        cout << "Updated result table rows: " << current_result_table_rows << endl;
-//        Entity *current_result_table;
-//        checkCuda(cudaMallocManaged(&current_result_table, current_result_table_rows * sizeof(Entity)));
-//        thrust::fill(thrust::device, current_result_table, current_result_table + current_result_table_rows,
-//                     negative_entity);
-//
-//        time_point_begin = chrono::high_resolution_clock::now();
-//        build_result_table<<<grid_size, block_size>>>
-//                (current_result_table, current_result_table_rows,
-//                 concatenated_result, concatenated_result_rows);
-//        checkCuda(cudaDeviceSynchronize());
-//        time_point_end = chrono::high_resolution_clock::now();
-//        spent_time = get_time_spent("", time_point_begin, time_point_end);
-//        output.union_time += spent_time;
-
         time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(join_result);
         cudaFree(offset);
@@ -550,14 +534,13 @@ void gpu_tc(const char *data_path, char separator,
         iterations++;
         long int result_current_unique_rows = count_hash_table_row(result_table, result_table_rows);
         show_hash_table(result_table, result_table_rows, "Updated result");
-//        break;
         if (result_unique_rows == result_current_unique_rows) {
             break;
         }
         result_unique_rows = result_current_unique_rows;
         reverse_relation_rows = join_result_rows;
     }
-//    show_hash_table(result_table, result_table_rows, "Result");
+    show_hash_table(result_table, result_table_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(reverse_relation);
@@ -584,17 +567,17 @@ void gpu_tc(const char *data_path, char separator,
     output.duplicate_percentage = max_duplicate_percentage;
     output.dataset_name = dataset_name;
     output.total_time = calculated_time;
-//    cout << endl;
-//    cout << "Initialization: " << output.initialization_time;
-//    cout << ", Read: " << output.read_time << ", reverse: " << output.reverse_time << endl;
-//    cout << "Hashtable rate: " << output.hashtable_build_rate << " keys/s, time: ";
-//    cout << output.hashtable_build_time << endl;
-//    cout << "Join: " << output.join_time << endl;
-//    cout << "Projection: " << output.projection_time << endl;
-//    cout << "Deduplication: " << output.deduplication_time << endl;
-//    cout << "Memory clear: " << output.memory_clear_time << endl;
-//    cout << "Union: " << output.union_time << endl;
-//    cout << "Total: " << output.total_time << endl;
+    cout << endl;
+    cout << "Initialization: " << output.initialization_time;
+    cout << ", Read: " << output.read_time << ", reverse: " << output.reverse_time << endl;
+    cout << "Hashtable rate: " << output.hashtable_build_rate << " keys/s, time: ";
+    cout << output.hashtable_build_time << endl;
+    cout << "Join: " << output.join_time << endl;
+    cout << "Projection: " << output.projection_time << endl;
+    cout << "Deduplication: " << output.deduplication_time << endl;
+    cout << "Memory clear: " << output.memory_clear_time << endl;
+    cout << "Union: " << output.union_time << endl;
+    cout << "Total: " << output.total_time << endl;
 }
 
 
