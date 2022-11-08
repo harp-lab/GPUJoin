@@ -327,7 +327,7 @@ void gpu_tc(const char *data_path, char separator,
     checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
-    cout << "Hash table build time: " << spent_time << endl;
+//    cout << "Hash table build time: " << spent_time << endl;
     output.hashtable_build_time = spent_time;
     output.hashtable_build_rate = relation_rows / spent_time;
     output.join_time += spent_time;
@@ -513,14 +513,14 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "SF.cedge", "data/data_223001.txt",
-            "p2p-Gnutella09", "data/data_26013.txt",
-            "p2p-Gnutella04", "data/data_39994.txt",
-            "cal.cedge", "data/data_21693.txt",
-            "TG.cedge", "data/data_23874.txt",
+//            "SF.cedge", "data/data_223001.txt",
+//            "p2p-Gnutella09", "data/data_26013.txt",
+//            "p2p-Gnutella04", "data/data_39994.txt",
+//            "cal.cedge", "data/data_21693.txt",
+//            "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
-            "string 4", "data/data_4.txt",
-            "talk 5", "data/data_5.txt",
+//            "string 4", "data/data_4.txt",
+//            "talk 5", "data/data_5.txt",
 
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {

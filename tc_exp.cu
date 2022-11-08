@@ -242,7 +242,8 @@ void get_reverse_relation(int *relation, long int relation_rows, int relation_co
 
 __global__
 void get_reverse_projection(Entity *join_result, Entity *projection,
-                            int *reverse_relation, long int projection_rows, int join_result_columns) {
+                            int *reverse_relation, long int projection_rows, int join_result_columns
+                            ) {
     long int index = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (index >= projection_rows) return;
 
@@ -251,6 +252,12 @@ void get_reverse_projection(Entity *join_result, Entity *projection,
     for (long int i = index; i < projection_rows; i += stride) {
         int key = join_result[i].key;
         int value = join_result[i].value;
+        if (key == -1) continue;
+//        int pos = atomicAdd(deduplication_position, 1);
+//        reverse_relation[(pos * join_result_columns) + 0] = key;
+//        reverse_relation[(pos * join_result_columns) + 1] = value;
+//        projection[pos].key = value;
+//        projection[pos].value = key;
         reverse_relation[(i * join_result_columns) + 0] = key;
         reverse_relation[(i * join_result_columns) + 1] = value;
         projection[i].key = value;
@@ -436,11 +443,34 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
 
+//        Entity *deduplicated_join_result;
+//        long int deduplicated_join_result_rows = pow(2, ceil(log(join_result_rows) / log(2)));
+//        time_point_begin = chrono::high_resolution_clock::now();
+//        checkCuda(cudaMallocManaged(&deduplicated_join_result, deduplicated_join_result_rows * sizeof(Entity)));
+//        thrust::fill(thrust::device, deduplicated_join_result, deduplicated_join_result + deduplicated_join_result_rows,
+//                     negative_entity);
+//        build_result_table<<<grid_size, block_size>>>
+//                (deduplicated_join_result, deduplicated_join_result_rows,
+//                 join_result, join_result_rows);
+//        checkCuda(cudaDeviceSynchronize());
+//        time_point_end = chrono::high_resolution_clock::now();
+//        spent_time = get_time_spent("", time_point_begin, time_point_end);
+//        long int join_unique_rows = count_hash_table_row(deduplicated_join_result, deduplicated_join_result_rows);
+//        output.deduplication_time += spent_time;
+//        show_entity_array(deduplicated_join_result, deduplicated_join_result_rows, "Deduplicated Join result");
+//        cout << "Join unique rows: " << join_unique_rows << endl;
+
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, join_result_rows * sizeof(Entity)));
         checkCuda(cudaMallocManaged(&reverse_relation, join_result_rows * relation_columns * sizeof(int)));
+        thrust::fill(thrust::device, projection, projection + join_result_rows, negative_entity);
+        thrust::fill(thrust::device, reverse_relation, reverse_relation + (join_result_rows * relation_columns), -1);
 
         time_point_begin = chrono::high_resolution_clock::now();
+
+//        int *deduplication_position;
+//        checkCuda(cudaMallocManaged(&deduplication_position, sizeof(int)));
+//        deduplication_position = 0;
         get_reverse_projection<<<grid_size, block_size>>>
                 (join_result, projection,
                  reverse_relation, join_result_rows, join_result_columns);
@@ -448,7 +478,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.projection_time += spent_time;
-//        show_entity_array(projection, join_result_rows, "Projection");
+//        show_entity_array(projection, join_unique_rows, "Projection");
 
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
@@ -479,20 +509,24 @@ void gpu_tc(const char *data_path, char separator,
         cudaFree(offset);
         cudaFree(projection);
         cudaFree(concatenated_result);
+//        cudaFree(deduplicated_join_result);
+//        cudaFree(deduplication_position);
+
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
         iterations++;
         long int result_current_unique_rows = count_hash_table_row(result_table, result_table_rows);
-//        cout << "Iterations: " << iterations << endl;
+        cout << "Iterations: " << iterations <<", Result unique rows: " << result_current_unique_rows << endl;
 //        show_hash_table(result_table, result_table_rows, "Updated result");
+//break;
         if (result_unique_rows == result_current_unique_rows) {
             break;
         }
         result_unique_rows = result_current_unique_rows;
         reverse_relation_rows = join_result_rows;
     }
-//    show_hash_table(result_table, result_table_rows, "Result");
+    show_hash_table(result_table, result_table_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(reverse_relation);
@@ -596,14 +630,14 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "SF.cedge", "data/data_223001.txt",
-            "p2p-Gnutella09", "data/data_26013.txt",
-            "p2p-Gnutella04", "data/data_39994.txt",
-            "cal.cedge", "data/data_21693.txt",
-            "TG.cedge", "data/data_23874.txt",
+//            "SF.cedge", "data/data_223001.txt",
+//            "p2p-Gnutella09", "data/data_26013.txt",
+//            "p2p-Gnutella04", "data/data_39994.txt",
+//            "cal.cedge", "data/data_21693.txt",
+//            "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
-            "string 4", "data/data_4.txt",
-            "talk 5", "data/data_5.txt",
+//            "string 4", "data/data_4.txt",
+//            "talk 5", "data/data_5.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
