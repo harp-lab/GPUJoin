@@ -64,6 +64,13 @@ struct is_equal {
     }
 };
 
+struct is_not_empty {
+    __host__ __device__
+    bool operator()(const Entity &x) {
+        return (x.key != -1);
+    }
+};
+
 
 struct cmp {
     __host__ __device__
@@ -242,8 +249,7 @@ void get_reverse_relation(int *relation, long int relation_rows, int relation_co
 
 __global__
 void get_reverse_projection(Entity *join_result, Entity *projection,
-                            int *reverse_relation, long int projection_rows, int join_result_columns
-                            ) {
+                            int *reverse_relation, long int projection_rows, int join_result_columns) {
     long int index = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (index >= projection_rows) return;
 
@@ -253,11 +259,6 @@ void get_reverse_projection(Entity *join_result, Entity *projection,
         int key = join_result[i].key;
         int value = join_result[i].value;
         if (key == -1) continue;
-//        int pos = atomicAdd(deduplication_position, 1);
-//        reverse_relation[(pos * join_result_columns) + 0] = key;
-//        reverse_relation[(pos * join_result_columns) + 1] = value;
-//        projection[pos].key = value;
-//        projection[pos].value = key;
         reverse_relation[(i * join_result_columns) + 0] = key;
         reverse_relation[(i * join_result_columns) + 1] = value;
         projection[i].key = value;
@@ -443,37 +444,40 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
 
-//        Entity *deduplicated_join_result;
-//        long int deduplicated_join_result_rows = pow(2, ceil(log(join_result_rows) / log(2)));
-//        time_point_begin = chrono::high_resolution_clock::now();
-//        checkCuda(cudaMallocManaged(&deduplicated_join_result, deduplicated_join_result_rows * sizeof(Entity)));
-//        thrust::fill(thrust::device, deduplicated_join_result, deduplicated_join_result + deduplicated_join_result_rows,
-//                     negative_entity);
-//        build_result_table<<<grid_size, block_size>>>
-//                (deduplicated_join_result, deduplicated_join_result_rows,
-//                 join_result, join_result_rows);
-//        checkCuda(cudaDeviceSynchronize());
-//        time_point_end = chrono::high_resolution_clock::now();
-//        spent_time = get_time_spent("", time_point_begin, time_point_end);
-//        long int join_unique_rows = count_hash_table_row(deduplicated_join_result, deduplicated_join_result_rows);
-//        output.deduplication_time += spent_time;
+        Entity *deduplicated_join_result;
+        long int deduplicated_join_result_rows = pow(2, ceil(log(join_result_rows) / log(2)));
+        time_point_begin = chrono::high_resolution_clock::now();
+        checkCuda(cudaMallocManaged(&deduplicated_join_result, deduplicated_join_result_rows * sizeof(Entity)));
+        thrust::fill(thrust::device, deduplicated_join_result, deduplicated_join_result + deduplicated_join_result_rows,
+                     negative_entity);
+        build_result_table<<<grid_size, block_size>>>
+                (deduplicated_join_result, deduplicated_join_result_rows,
+                 join_result, join_result_rows);
+        checkCuda(cudaDeviceSynchronize());
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        long int join_unique_rows = count_hash_table_row(deduplicated_join_result, deduplicated_join_result_rows);
+        output.deduplication_time += spent_time;
 //        show_entity_array(deduplicated_join_result, deduplicated_join_result_rows, "Deduplicated Join result");
-//        cout << "Join unique rows: " << join_unique_rows << endl;
+        cout << "Join unique rows: " << join_unique_rows << endl;
+
+        Entity *deduplicated_projection;
+        checkCuda(cudaMallocManaged(&deduplicated_projection, join_unique_rows * sizeof(Entity)));
+        thrust::copy_if(thrust::device, deduplicated_join_result,
+                        deduplicated_join_result + deduplicated_join_result_rows, deduplicated_projection,
+                        is_not_empty());
+//        show_entity_array(deduplicated_projection, join_unique_rows, "Deduplicated Projection");
+
 
         Entity *projection;
-        checkCuda(cudaMallocManaged(&projection, join_result_rows * sizeof(Entity)));
-        checkCuda(cudaMallocManaged(&reverse_relation, join_result_rows * relation_columns * sizeof(int)));
-        thrust::fill(thrust::device, projection, projection + join_result_rows, negative_entity);
-        thrust::fill(thrust::device, reverse_relation, reverse_relation + (join_result_rows * relation_columns), -1);
+        checkCuda(cudaMallocManaged(&projection, join_unique_rows * sizeof(Entity)));
+        checkCuda(cudaMallocManaged(&reverse_relation, join_unique_rows * relation_columns * sizeof(int)));
 
         time_point_begin = chrono::high_resolution_clock::now();
 
-//        int *deduplication_position;
-//        checkCuda(cudaMallocManaged(&deduplication_position, sizeof(int)));
-//        deduplication_position = 0;
         get_reverse_projection<<<grid_size, block_size>>>
-                (join_result, projection,
-                 reverse_relation, join_result_rows, join_result_columns);
+                (deduplicated_projection, projection,
+                 reverse_relation, join_unique_rows, join_result_columns);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -482,10 +486,10 @@ void gpu_tc(const char *data_path, char separator,
 
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
-        long int concatenated_result_rows = result_table_rows + join_result_rows;
+        long int concatenated_result_rows = result_table_rows + join_unique_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_result_rows * sizeof(Entity)));
         thrust::copy(thrust::device, result_table, result_table + result_table_rows, concatenated_result);
-        thrust::copy(thrust::device, projection, projection + join_result_rows,
+        thrust::copy(thrust::device, projection, projection + join_unique_rows,
                      concatenated_result + result_table_rows);
 //        show_entity_array(concatenated_result, concatenated_result_rows, "Concatenated result");
         result_table_rows = pow(2, ceil(log(concatenated_result_rows) / log(2)));
@@ -509,7 +513,8 @@ void gpu_tc(const char *data_path, char separator,
         cudaFree(offset);
         cudaFree(projection);
         cudaFree(concatenated_result);
-//        cudaFree(deduplicated_join_result);
+        cudaFree(deduplicated_join_result);
+        cudaFree(deduplicated_projection);
 //        cudaFree(deduplication_position);
 
         time_point_end = chrono::high_resolution_clock::now();
@@ -517,16 +522,16 @@ void gpu_tc(const char *data_path, char separator,
         output.memory_clear_time += spent_time;
         iterations++;
         long int result_current_unique_rows = count_hash_table_row(result_table, result_table_rows);
-        cout << "Iterations: " << iterations <<", Result unique rows: " << result_current_unique_rows << endl;
+        cout << "Iterations: " << iterations << ", Result unique rows: " << result_current_unique_rows << endl;
 //        show_hash_table(result_table, result_table_rows, "Updated result");
-//break;
+//        break;
         if (result_unique_rows == result_current_unique_rows) {
             break;
         }
         result_unique_rows = result_current_unique_rows;
-        reverse_relation_rows = join_result_rows;
+        reverse_relation_rows = join_unique_rows;
     }
-    show_hash_table(result_table, result_table_rows, "Result");
+//    show_hash_table(result_table, result_table_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(reverse_relation);
