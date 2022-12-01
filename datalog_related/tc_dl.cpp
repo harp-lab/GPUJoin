@@ -1,5 +1,5 @@
 
-#include "souffle1/CompiledSouffle.h"
+#include "souffle/CompiledSouffle.h"
 
 namespace functors {
  extern "C" {

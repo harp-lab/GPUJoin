@@ -456,17 +456,33 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
+        time_point_begin = chrono::high_resolution_clock::now();
         long int join_unique_rows = count_hash_table_row(deduplicated_join_result, deduplicated_join_result_rows);
+        time_point_end = chrono::high_resolution_clock::now();
+//        cout << "CPU Unique rows: " << join_unique_rows << endl;
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+//        time_point_begin = chrono::high_resolution_clock::now();
+//        long int thrust_unique_rows = thrust::count_if(thrust::device, deduplicated_join_result, deduplicated_join_result+deduplicated_join_result_rows, is_not_empty());
+//        time_point_end = chrono::high_resolution_clock::now();
+//        cout << "GPU Unique rows: " << thrust_unique_rows << endl;
+//        spent_time = get_time_spent("GPU unique count", time_point_begin, time_point_end);
+
         output.deduplication_time += spent_time;
 //        show_entity_array(deduplicated_join_result, deduplicated_join_result_rows, "Deduplicated Join result");
-        cout << "Join unique rows: " << join_unique_rows << endl;
+//        cout << "Join unique rows: " << join_unique_rows << endl;
 
+        time_point_begin = chrono::high_resolution_clock::now();
         Entity *deduplicated_projection;
         checkCuda(cudaMallocManaged(&deduplicated_projection, join_unique_rows * sizeof(Entity)));
         thrust::copy_if(thrust::device, deduplicated_join_result,
                         deduplicated_join_result + deduplicated_join_result_rows, deduplicated_projection,
                         is_not_empty());
-//        show_entity_array(deduplicated_projection, join_unique_rows, "Deduplicated Projection");
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("Thrust copy if", time_point_begin, time_point_end);
+
+
+
+        //        show_entity_array(deduplicated_projection, join_unique_rows, "Deduplicated Projection");
 
 
         Entity *projection;
@@ -522,7 +538,7 @@ void gpu_tc(const char *data_path, char separator,
         output.memory_clear_time += spent_time;
         iterations++;
         long int result_current_unique_rows = count_hash_table_row(result_table, result_table_rows);
-        cout << "Iterations: " << iterations << ", Result unique rows: " << result_current_unique_rows << endl;
+        cout << "Iterations: " << iterations << ", Result unique rows: " << result_current_unique_rows << endl << endl;
 //        show_hash_table(result_table, result_table_rows, "Updated result");
 //        break;
         if (result_unique_rows == result_current_unique_rows) {
