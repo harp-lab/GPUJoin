@@ -219,6 +219,100 @@ git clean -f
 sbank allocations
 ```
 
+## Using spack in thetagpu
+
+```commandline
+arsho@thetalogin4:~> module load cobalt/cobalt-gpu
+qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
+arsho@thetagpu06:~$ mkdir -p .spack/linux
+git clone https://github.com/spack/spack.git
+cd spack/bin/
+./spack install cmake@3.23.1
+./spack module tcl find cmake@3.23.1
+module use ~/spack/share/spack/modules/linux-ubuntu20.04-zen2
+arsho@thetagpu06:~/spack/bin$ module avail cmake
+-------------------- /home/arsho/spack/share/spack/modules/linux-ubuntu20.04-zen2 --------------------
+   cmake-3.23.1-gcc-9.4.0-byiudpe
+module load cmake-3.23.1-gcc-9.4.0-byiudpe
+arsho@thetagpu06:~/spack/bin$ cmake --version
+cmake version 3.23.1
+/home/arsho/spack/bin
+/lus/theta-fs0/projects/dist_relational_alg/shovon/cu_hashmap
+
+```
+
+### Unsuccessful attempt
+- Creating directory for Spack:
+```commandline
+mkdir -p .spack/linux
+```
+- Creating configuration:
+```
+vim ~/.spack/linux/upstreams.yaml
+```
+`upstreams.yaml`:
+```commandline
+upstreams:
+alcf-spack:
+install_tree: /lus/theta-fs0/software/thetagpu/spack/root/opt/spack
+modules:
+tcl: /lus/theta-fs0/software/spack/share/spack/modules/linux-ubuntu20.04-zen2
+```
+- Cloning spack from Github:
+```
+git clone https://github.com/spack/spack.git
+cd spack/bin/
+```
+- Installing a package:
+```
+./spack install cmake@3.23.1
+./spack find cmake
+```
+- Loading and using a package:
+```
+spack load cmake@3.23.1
+```
+- This may give an error:
+```commandline
+Error: `spack load` requires Spack's shell support.  
+  To set up shell support, run the command below for your shell.
+```
+- Add spack's shell support:
+```commandline
+. /lus/swift/home/arsho/spack/share/spack/setup-env.sh
+```
+- Load and use an installed package:
+```commandline
+spack load cmake@3.23.1
+which cmake
+/lus/swift/home/arsho/spack/opt/spack/cray-cnl7-haswell/gcc-11.2.0/cmake-3.23.1-l4orfxc3d2vw463cddpguzm25aaiicv2/bin/cmake
+```
+As it can be seen, "spack" command can be used in the login node.
+
+- Then I started an interactive session on ThetaGPU and it does not know spack command:
+```
+arsho@thetagpu06:~$ spack --version
+Command 'spack' not found, did you mean:
+```
+- I tried to use ./spack from that folder. It finds the version number but not the installed cmake package:
+```
+arsho@thetagpu06:~$ cd spack/bin/
+arsho@thetagpu06:~/spack/bin$ ./spack --version
+0.20.0.dev0 (f66ec00fa9378cff3e97616f97e4bc676a0999ba)
+arsho@thetagpu06:~/spack/bin$ ./spack find cmake
+==> Error: /home/arsho/.spack/linux/upstreams.yaml:1: Additional properties are not allowed ('install_tree', 'alcf-spack', 'tcl', 'modules' were unexpected)
+```
+- I tried to install the cmake version again from the interactive session but it returns the same error:
+```
+arsho@thetagpu06:~/spack/bin$ ./spack install cmake@3.23.1
+==> Error: /home/arsho/.spack/linux/upstreams.yaml:1: Additional properties are not allowed ('install_tree', 'tcl', 'modules', 'alcf-spack' were unexpected)
+arsho@thetagpu06:~/spack/bin$ cat /home/arsho/.spack/linux/upstreams.yaml
+upstreams:
+alcf-spack:
+install_tree: /lus/theta-fs0/software/thetagpu/spack/root/opt/spack
+modules:
+tcl: /lus/theta-fs0/software/spack/share/spack/modules/linux-ubuntu20.04-x86_64
+```
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
 - [nVidia CUDA C programming guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)
@@ -229,3 +323,4 @@ sbank allocations
 - [Running jobs at Theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
 - [Interactive job on theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
 - [Running jobs at theta](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/running-jobs-thetagpu)
+- [Spack documentation](https://spack.readthedocs.io/en/latest/index.html)
