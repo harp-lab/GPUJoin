@@ -237,8 +237,13 @@ module load cmake-3.23.1-gcc-9.4.0-byiudpe
 arsho@thetagpu06:~/spack/bin$ cmake --version
 cmake version 3.23.1
 /home/arsho/spack/bin
-/lus/theta-fs0/projects/dist_relational_alg/shovon/cu_hashmap
-
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/cu_hashmap
+rm -r build
+mkdir build
+cd build
+cmake ..
+make
+./main
 ```
 
 ### Unsuccessful attempt
@@ -324,3 +329,5 @@ tcl: /lus/theta-fs0/software/spack/share/spack/modules/linux-ubuntu20.04-x86_64
 - [Interactive job on theta](https://www.alcf.anl.gov/support-center/theta/running-jobs-and-submission-scripts)
 - [Running jobs at theta](https://www.alcf.anl.gov/support-center/theta-gpu-nodes/running-jobs-thetagpu)
 - [Spack documentation](https://spack.readthedocs.io/en/latest/index.html)
+- [cuCollections Github repo](https://github.com/NVIDIA/cuCollections)
+- 
