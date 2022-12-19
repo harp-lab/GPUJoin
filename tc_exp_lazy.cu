@@ -545,7 +545,7 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
             "string 4", "data/data_4.txt",
             "talk 5", "data/data_5.txt",
             "cyclic 3", "data/data_3.txt",
-            "string 555555", "data/data_555555.txt",
+            "string 55555", "data/data_55555.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
