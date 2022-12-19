@@ -244,7 +244,7 @@ void get_join_result(Entity *hash_table, int hash_table_row_size,
 void gpu_tc(const char *data_path, char separator,
             long int relation_rows, int relation_columns, double load_factor, int max_duplicate_percentage,
             int preferred_grid_size, int preferred_block_size, const char *dataset_name, bool benchmark) {
-    int lazy_step = 5;
+    int lazy_step = 3;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     std::cout << std::fixed;
@@ -542,10 +542,11 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
             "cal.cedge", "data/data_21693.txt",
             "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
-            "string 4", "data/data_4.txt",
-            "talk 5", "data/data_5.txt",
-            "cyclic 3", "data/data_3.txt",
+//            "string 4", "data/data_4.txt",
+//            "talk 5", "data/data_5.txt",
+//            "cyclic 3", "data/data_3.txt",
             "string 55555", "data/data_55555.txt",
+            "roadNet-TX", "data/data_3843320.txt"
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;

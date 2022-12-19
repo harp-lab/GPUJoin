@@ -119,7 +119,8 @@ if __name__ == "__main__":
         "OL.cedge": "../data/data_7035.txt",
         # "data_4": "../data/data_4.txt",
         # "data_22": "../data/data_22.txt",
-        "string 55555": "../data/data_55555.txt"
+        "string 55555": "../data/data_55555.txt",
+        "roadNet-TX": "../data/data_3843320.txt"
     })
 
     generate_benchmark(iterative=False, datasets={
