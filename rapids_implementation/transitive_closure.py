@@ -118,7 +118,8 @@ if __name__ == "__main__":
         # "data_4": "../data/data_4.txt",
         # "data_22": "../data/data_22.txt",
         "p2p-Gnutella09": "../data/data_26013.txt",
-        "p2p-Gnutella04": "../data/data_39994.txt"
+        "p2p-Gnutella04": "../data/data_39994.txt",
+        "string 555555": "../data/data_555555.txt"
     })
 
     generate_benchmark(iterative=False, datasets={

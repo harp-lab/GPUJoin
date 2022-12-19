@@ -13,6 +13,7 @@
 #include <thrust/unique.h>
 #include <thrust/copy.h>
 #include <thrust/fill.h>
+#include <thrust/set_operations.h>
 #include "utils.h"
 
 
@@ -243,6 +244,7 @@ void get_join_result(Entity *hash_table, int hash_table_row_size,
 void gpu_tc(const char *data_path, char separator,
             long int relation_rows, int relation_columns, double load_factor, int max_duplicate_percentage,
             int preferred_grid_size, int preferred_block_size, const char *dataset_name, bool benchmark) {
+    int lazy_step = 5;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     std::cout << std::fixed;
@@ -342,6 +344,7 @@ void gpu_tc(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.union_time += spent_time;
+    long int previous_unique_result_rows = result_rows;
 
 //    cout
 //            << "| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
@@ -406,7 +409,10 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
+//        cout << "Concatenated rows: " << concatenated_rows << endl;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
+//        concatenated_rows = thrust::set_union(thrust::device, result, result + result_rows, projection, projection+projection_rows, concatenated_result, cmp()) - concatenated_result;
+//        cout << "Unique concatenated rows: " << concatenated_rows << endl;
         thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
         thrust::copy(thrust::device, projection, projection + projection_rows,
                      concatenated_result + result_rows);
@@ -417,23 +423,35 @@ void gpu_tc(const char *data_path, char separator,
 
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
-
-        time_point_begin = chrono::high_resolution_clock::now();
-        thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
-                            cmp());
-        long int deduplicated_result_rows = (thrust::unique(thrust::device,
-                                                            concatenated_result,
-                                                            concatenated_result + concatenated_rows,
-                                                            is_equal())) - concatenated_result;
-        cudaFree(result);
-        checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
-        // Copy the deduplicated concatenated result to result
-        thrust::copy(thrust::device, concatenated_result,
-                     concatenated_result + deduplicated_result_rows, result);
-        time_point_end = chrono::high_resolution_clock::now();
-        spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_deduplication_time += spent_time;
-        output.deduplication_time += spent_time;
+        long int deduplicated_result_rows;
+        if (iterations % lazy_step == 0) {
+            time_point_begin = chrono::high_resolution_clock::now();
+            thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
+                                cmp());
+            deduplicated_result_rows = (thrust::unique(thrust::device,
+                                                       concatenated_result,
+                                                       concatenated_result + concatenated_rows,
+                                                       is_equal())) - concatenated_result;
+            cudaFree(result);
+            checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
+            // Copy the deduplicated concatenated result to result
+            thrust::copy(thrust::device, concatenated_result,
+                         concatenated_result + deduplicated_result_rows, result);
+            time_point_end = chrono::high_resolution_clock::now();
+            spent_time = get_time_spent("", time_point_begin, time_point_end);
+            temp_deduplication_time += spent_time;
+            output.deduplication_time += spent_time;
+        } else {
+            time_point_begin = chrono::high_resolution_clock::now();
+            cudaFree(result);
+            checkCuda(cudaMallocManaged(&result, concatenated_rows * sizeof(Entity)));
+//             Copy the deduplicated concatenated result to result
+            thrust::copy(thrust::device, concatenated_result,
+                         concatenated_result + concatenated_rows, result);
+            time_point_end = chrono::high_resolution_clock::now();
+            spent_time = get_time_spent("", time_point_begin, time_point_end);
+            output.deduplication_time += spent_time;
+        }
         reverse_relation_rows = projection_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         time_point_begin = chrono::high_resolution_clock::now();
@@ -444,16 +462,21 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
-        iterations++;
 //        cout << "| " << iterations << " | ";
 //        cout << projection_rows << " | " << result_rows << " | ";
 //        cout << temp_join_time << " | " << temp_deduplication_time << " | " << temp_projection_time << " | ";
 //        cout << temp_union_time << " |" << endl;
-
-        if (result_rows == deduplicated_result_rows) {
-            break;
+        if (iterations % lazy_step == 0) {
+            result_rows = deduplicated_result_rows;
+            if (previous_unique_result_rows == deduplicated_result_rows) {
+                break;
+            }
+            previous_unique_result_rows = result_rows;
+        } else {
+            result_rows = concatenated_rows;
         }
-        result_rows = deduplicated_result_rows;
+//        cout << "Iteration: " << iterations << ", result rows: " << result_rows << endl;
+        iterations++;
     }
 //    show_entity_array(result, result_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
@@ -606,4 +629,4 @@ int main(int argc, char **argv) {
 
 // Benchmark
 // nvcc transitive_closure.cu -run -o join -run-args benchmark -run-args 23874 -run-args 2 -run-args 0.3 -run-args 30 -run-args 0 -run-args 0 -run-args TG.cedge
-// nvcc transitive_closure.cu -run -o join
+// nvcc tc_exp_lazy.cu -run -o join
