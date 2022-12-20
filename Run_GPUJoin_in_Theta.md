@@ -178,6 +178,24 @@ Time taken = 8.331728e-02 seconds
 Rate = 3.22185e+09 keys/sec
 ```
 
+### Comparing TC using cuDF and Cuda
+```shell
+ssh USERNAME@theta.alcf.anl.gov
+ssh thetagpusn1
+qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
+module load conda/2022-07-01
+conda activate /home/arsho/gpujoinenv
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/rapids_implementation/
+git fetch
+git reset --hard origin/main
+python transitive_closure.py
+cd ..
+nvcc transitive_closure.cu -o join -run
+nvcc tc_exp_lazy.cu -o join -run
+```
+
+
+
 ### Running NCCL code on theta:
 - Use interactive job on theta (single node NCCL)
 ```shell
@@ -317,6 +335,12 @@ alcf-spack:
 install_tree: /lus/theta-fs0/software/thetagpu/spack/root/opt/spack
 modules:
 tcl: /lus/theta-fs0/software/spack/share/spack/modules/linux-ubuntu20.04-x86_64
+```
+
+### Useful commands
+- Check lines of a file:
+```commandline
+less -N +F <filepath>
 ```
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
