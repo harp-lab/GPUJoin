@@ -284,8 +284,9 @@ void gpu_tc(const char *data_path, char separator,
     checkCuda(cudaMallocManaged(&result, result_rows * sizeof(Entity)));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity)));
     checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
-    checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
-                                                 build_hash_table, 0, 0));
+//    checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
+//                                                 build_hash_table, 0, 0));
+    block_size = 512;
     grid_size = 32 * number_of_sm;
     if ((preferred_grid_size != 0) && (preferred_block_size != 0)) {
         grid_size = preferred_grid_size;

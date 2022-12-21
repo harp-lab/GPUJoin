@@ -1,3 +1,77 @@
+## Effect of thread and block size
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 3,456 x 1,024 | 62.8423 |
+
+
+Initialization: 1.4085, Read: 0.0857, reverse: 0.0009
+Hashtable rate: 6,427,282,683 keys/s, time: 0.0000
+Join: 5.5368
+Projection: 5.5291
+Deduplication: 26.6935
+Memory clear: 10.0709
+Union: 13.5169
+Total: 62.8423
+
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 108 x 256 | 70.0522 |
+
+
+Initialization: 1.3923, Read: 0.0423, reverse: 0.0009
+Hashtable rate: 4,637,063,067 keys/s, time: 0.0000
+Join: 10.2093
+Projection: 8.1948
+Deduplication: 26.5984
+Memory clear: 9.9847
+Union: 13.6295
+Total: 70.0522
+
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 108 x 512 | 67.1945 |
+
+
+Initialization: 1.3924, Read: 0.0422, reverse: 0.0012
+Hashtable rate: 5,993,039,505 keys/s, time: 0.0000
+Join: 8.2265
+Projection: 7.2282
+Deduplication: 26.7085
+Memory clear: 10.0509
+Union: 13.5446
+Total: 67.1945
+
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 1,080 x 512 | 61.7453 |
+
+
+Initialization: 1.3871, Read: 0.0435, reverse: 0.0007
+Hashtable rate: 6,840,101,834 keys/s, time: 0.0000
+Join: 5.2562
+Projection: 4.7619
+Deduplication: 26.6653
+Memory clear: 10.0295
+Union: 13.6010
+Total: 61.7453
+```
+
 ## TC (Rapids) vs TC vs TC (lazy loading = 5)
 - Rapids:
 
@@ -170,26 +244,97 @@ Union: 0.0001
 Total: 0.0221
 
 ```
-- TC (lazy loading = 5):
-```commandline
-nvcc tc_exp_lazy.cu -o join -run
+- TC (lazy loading = 1):
+```shell
 Benchmark for SF.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| SF.cedge | 223,001 | 80,498,014 | 290 | 3,456 x 1,024 | 76.1674 |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 3,456 x 1,024 | 62.4054 |
 
+Initialization: 1.4293, Read: 0.0409, reverse: 0.0009
+Hashtable rate: 6,273,412,664 keys/s, time: 0.0000
+Join: 5.4906
+Projection: 5.5553
+Deduplication: 26.5324
+Memory clear: 9.9033
+Union: 13.4527
+Total: 62.4054
+```
+- TC (lazy loading = 2):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
 
-Initialization: 1.4248, Read: 0.0405, reverse: 0.0005
-Hashtable rate: 6,487,301,818 keys/s, time: 0.0000
-Join: 5.5451
-Projection: 5.6146
-Deduplication: 30.5209
-Memory clear: 12.9802
-Union: 20.0406
-Total: 76.1674
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 288 | 3,456 x 1,024 | 63.5584 |
 
+Initialization: 1.4007, Read: 0.0434, reverse: 0.0006
+Hashtable rate: 6,330,399,977 keys/s, time: 0.0000
+Join: 5.5199
+Projection: 5.6183
+Deduplication: 25.1898
+Memory clear: 10.6272
+Union: 15.1586
+Total: 63.5584
+```
+- TC (lazy loading = 3):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 288 | 3,456 x 1,024 | 67.2856 |
+
+Initialization: 1.3922, Read: 0.0816, reverse: 0.0008
+Hashtable rate: 6,548,452,457 keys/s, time: 0.0000
+Join: 5.6016
+Projection: 5.5829
+Deduplication: 26.4585
+Memory clear: 11.3442
+Union: 16.8238
+Total: 67.2856
+```
+- TC (lazy loading = 4):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 292 | 3,456 x 1,024 | 72.1289 |
+
+Initialization: 1.4068, Read: 0.0403, reverse: 0.0009
+Hashtable rate: 6,442,322,692 keys/s, time: 0.0000
+Join: 5.6002
+Projection: 5.6443
+Deduplication: 28.6515
+Memory clear: 12.2014
+Union: 18.5833
+Total: 72.1289
+```
+- TC (lazy loading = 5):
+```commandline
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 290 | 3,456 x 1,024 | 75.7609 |
+
+Initialization: 1.3882, Read: 0.0418, reverse: 0.0006
+Hashtable rate: 6,357,651,955 keys/s, time: 0.0000
+Join: 5.5508
+Projection: 5.6479
+Deduplication: 30.2953
+Memory clear: 12.7712
+Union: 20.0649
+Total: 75.7609
+```
+```shell
 Benchmark for p2p-Gnutella09
 ----------------------------------------------------------
 
