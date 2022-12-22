@@ -237,14 +237,13 @@ git clean -f
 sbank allocations
 ```
 
-## Using spack in thetagpu
-
+## Using spack in thetagpu (cmake)
 ```commandline
 arsho@thetalogin4:~> module load cobalt/cobalt-gpu
 qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
 arsho@thetagpu06:~$ mkdir -p .spack/linux
 git clone https://github.com/spack/spack.git
-cd spack/bin/
+cd spack/bin/ # cd ~/spack/bin/
 ./spack install cmake@3.23.1
 ./spack module tcl find cmake@3.23.1
 module use ~/spack/share/spack/modules/linux-ubuntu20.04-zen2
@@ -263,6 +262,31 @@ cmake ..
 make
 ./main
 ```
+
+## Using spack in thetagpu (g++)
+```commandline
+arsho@thetalogin4:~> ssh thetagpusn1
+qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
+# create directory and clone spack from the above section if that is not installed already 
+cd ~/spack/bin/
+./spack install gcc@11.3.0
+./spack module tcl find gcc@11.3.0
+gcc-11.3.0-gcc-9.4.0-tqxatvi
+module use ~/spack/share/spack/modules/linux-ubuntu20.04-zen2
+arsho@thetagpu06:~/spack/bin$ module avail gcc
+module load gcc-11.3.0-gcc-9.4.0-tqxatvi
+arsho@thetagpu06:~/spack/bin$ g++ --version
+g++ (Spack GCC) 11.3.0
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ g++ tc_dl.cpp -I .
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out
+path	80498014
+
+real	3m55.989s
+user	3m54.894s
+sys	0m1.052s
+```
+
 
 ### Unsuccessful attempt
 - Creating directory for Spack:
