@@ -57,7 +57,7 @@ void gpu_tc(const char *data_path, char separator,
     cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     int block_size, grid_size;
     int *relation, *reverse_relation;
-    Entity *hash_table, *result;
+    Entity *hash_table, *result, *t_delta;
     long int join_result_rows;
     long int reverse_relation_rows = relation_rows;
     long int result_rows = relation_rows;
@@ -68,8 +68,9 @@ void gpu_tc(const char *data_path, char separator,
 //    cout << "Hash table rows: " << hash_table_rows << endl;
 
     checkCuda(cudaMallocManaged(&relation, relation_rows * relation_columns * sizeof(int)));
-    checkCuda(cudaMallocManaged(&reverse_relation, reverse_relation_rows * relation_columns * sizeof(int)));
+//    checkCuda(cudaMallocManaged(&reverse_relation, reverse_relation_rows * relation_columns * sizeof(int)));
     checkCuda(cudaMallocManaged(&result, result_rows * sizeof(Entity)));
+    checkCuda(cudaMallocManaged(&t_delta, relation_rows * sizeof(Entity)));
     checkCuda(cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity)));
     checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
 //    checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
@@ -93,8 +94,7 @@ void gpu_tc(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.read_time = spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
-    get_reverse_relation<<<grid_size, block_size>>>(relation, relation_rows, relation_columns,
-                                                    reverse_relation);
+    get_reverse_relation<<<grid_size, block_size>>>(relation, relation_rows, relation_columns, t_delta);
     checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -143,10 +143,9 @@ void gpu_tc(const char *data_path, char separator,
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
         time_point_begin = chrono::high_resolution_clock::now();
-        get_join_result_size<<<grid_size, block_size>>>
+        get_join_result_size_t<<<grid_size, block_size>>>
                 (hash_table, hash_table_rows,
-                 reverse_relation, reverse_relation_rows,
-                 relation_columns, offset);
+                 t_delta, reverse_relation_rows, offset);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -156,10 +155,9 @@ void gpu_tc(const char *data_path, char separator,
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
         checkCuda(cudaMallocManaged(&join_result, join_result_rows * sizeof(Entity)));
-        get_join_result<<<grid_size, block_size>>>
+        get_join_result_t<<<grid_size, block_size>>>
                 (hash_table, hash_table_rows,
-                 reverse_relation, reverse_relation_rows,
-                 relation_columns, offset, join_result);
+                 t_delta, reverse_relation_rows, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -178,6 +176,9 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         temp_deduplication_time += spent_time;
         output.deduplication_time += spent_time;
+
+        show_entity_array(join_result, projection_rows, "join_result");
+        break;
 
         Entity *projection;
         checkCuda(cudaMallocManaged(&projection, projection_rows * sizeof(Entity)));
@@ -314,9 +315,9 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "p2p-Gnutella04", "data/data_39994.txt",
 //            "cal.cedge", "data/data_21693.txt",
 //            "TG.cedge", "data/data_23874.txt",
-            "OL.cedge", "../data/data_7035.txt",
+//            "OL.cedge", "../data/data_7035.txt",
 ////            "string 4", "data/data_4.txt",
-////            "talk 5", "data/data_5.txt",
+            "talk 5", "../data/data_5.txt",
 ////            "cyclic 3", "data/data_3.txt",
 //            "string 55555", "data/data_55555.txt",
 //            "roadNet-TX", "data/data_3843320.txt"
