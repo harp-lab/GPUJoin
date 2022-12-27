@@ -361,11 +361,23 @@ modules:
 tcl: /lus/theta-fs0/software/spack/share/spack/modules/linux-ubuntu20.04-x86_64
 ```
 
+### Useful Theta queue commands
+- To check the job status by user:
+```
+qstat -u $USER
+```
+- To delete job (to delete an interactive session, run this from gpu node `ssh thetagpusn1`):
+```
+qdel $JOB_ID
+```
+
+
 ### Useful commands
 - Check lines of a file:
 ```commandline
 less -N +F <filepath>
 ```
+
 ### References
 - [Short CUDA tutorial](https://cuda-tutorial.readthedocs.io/en/latest/tutorials/tutorial01/)
 - [nVidia CUDA C programming guide](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html)

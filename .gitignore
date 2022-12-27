@@ -18,3 +18,4 @@ output/gpu_nlj.txt
 check.py
 so.cu
 datalog_related/a.out
+*.out
