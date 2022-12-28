@@ -36,6 +36,8 @@ void gpu_tc(const char *data_path, char separator,
     int relation_columns = 2;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
+    std::chrono::high_resolution_clock::time_point temp_time_begin;
+    std::chrono::high_resolution_clock::time_point temp_time_end;
     std::cout << std::fixed;
     std::cout << std::setprecision(4);
     time_point_begin = chrono::high_resolution_clock::now();
@@ -47,6 +49,9 @@ void gpu_tc(const char *data_path, char separator,
     output.memory_clear_time = 0;
     output.union_time = 0;
     output.total_time = 0;
+    double sort_time = 0.0;
+    double unique_time = 0.0;
+    double temp_spent_time = 0.0;
 
     // Added to display comma separated integer values
     std::locale loc("");
@@ -133,7 +138,6 @@ void gpu_tc(const char *data_path, char separator,
 //            << endl;
 //    cout << "| --- | --- | --- | --- | --- | --- | --- |" << endl;
     while (true) {
-        double temp_join_time = 0, temp_projection_time = 0, temp_deduplication_time = 0, temp_union_time = 0;
         int *offset;
         Entity *join_result;
         checkCuda(cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int)));
@@ -143,7 +147,6 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_join_time += spent_time;
         output.join_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
@@ -154,7 +157,6 @@ void gpu_tc(const char *data_path, char separator,
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_join_time += spent_time;
         output.join_time += spent_time;
 //        show_entity_array(t_delta, reverse_relation_rows, "Reverse");
 //        show_entity_array(join_result, join_result_rows, "Join result");
@@ -162,13 +164,20 @@ void gpu_tc(const char *data_path, char separator,
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
         time_point_begin = chrono::high_resolution_clock::now();
+        temp_time_begin = chrono::high_resolution_clock::now();
         thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows, cmp());
+        temp_time_end = chrono::high_resolution_clock::now();
+        temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+        sort_time += temp_spent_time;
+        temp_time_begin = chrono::high_resolution_clock::now();
         long int projection_rows = (thrust::unique(thrust::device,
                                                    join_result, join_result + join_result_rows,
                                                    is_equal())) - join_result;
+        temp_time_end = chrono::high_resolution_clock::now();
+        temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+        unique_time += temp_spent_time;
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_deduplication_time += spent_time;
         output.deduplication_time += spent_time;
 
         // show_entity_array(join_result, projection_rows, "join_result");
@@ -191,18 +200,25 @@ void gpu_tc(const char *data_path, char separator,
                      concatenated_result + result_rows);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
-        temp_union_time += spent_time;
         output.union_time += spent_time;
 
         long int deduplicated_result_rows;
         if (iterations % lazy_step == 0) {
             time_point_begin = chrono::high_resolution_clock::now();
+            temp_time_begin = chrono::high_resolution_clock::now();
             thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
                                 cmp());
+            temp_time_end = chrono::high_resolution_clock::now();
+            temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+            sort_time += temp_spent_time;
+            temp_time_begin = chrono::high_resolution_clock::now();
             deduplicated_result_rows = (thrust::unique(thrust::device,
                                                        concatenated_result,
                                                        concatenated_result + concatenated_rows,
                                                        is_equal())) - concatenated_result;
+            temp_time_end = chrono::high_resolution_clock::now();
+            temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+            unique_time += temp_spent_time;
             cudaFree(result);
             checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
             // Copy the deduplicated concatenated result to result
@@ -210,7 +226,6 @@ void gpu_tc(const char *data_path, char separator,
                          concatenated_result + deduplicated_result_rows, result);
             time_point_end = chrono::high_resolution_clock::now();
             spent_time = get_time_spent("", time_point_begin, time_point_end);
-            temp_deduplication_time += spent_time;
             output.deduplication_time += spent_time;
         } else {
             time_point_begin = chrono::high_resolution_clock::now();
@@ -232,10 +247,6 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
-//        cout << "| " << iterations << " | ";
-//        cout << projection_rows << " | " << result_rows << " | ";
-//        cout << temp_join_time << " | " << temp_deduplication_time << " | " << temp_projection_time << " | ";
-//        cout << temp_union_time << " |" << endl;
         if (iterations % lazy_step == 0) {
             result_rows = deduplicated_result_rows;
             if (previous_unique_result_rows == deduplicated_result_rows) {
@@ -245,10 +256,9 @@ void gpu_tc(const char *data_path, char separator,
         } else {
             result_rows = concatenated_rows;
         }
-//        cout << "Iteration: " << iterations << ", result rows: " << result_rows << endl;
         iterations++;
     }
-//    show_entity_array(result, result_rows, "Result");
+    show_entity_array(result, result_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(t_delta);
@@ -282,7 +292,8 @@ void gpu_tc(const char *data_path, char separator,
     cout << output.hashtable_build_time << endl;
     cout << "Join: " << output.join_time << endl;
     cout << "Projection: " << output.projection_time << endl;
-    cout << "Deduplication: " << output.deduplication_time << endl;
+    cout << "Deduplication: " << output.deduplication_time;
+    cout << " (sort: " << sort_time << ", unique: " << unique_time << ")"<< endl;
     cout << "Memory clear: " << output.memory_clear_time << endl;
     cout << "Union: " << output.union_time << endl;
     cout << "Total: " << output.total_time << endl;
@@ -293,13 +304,13 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
 //            "SF.cedge", "../data/data_223001.txt",
-            "p2p-Gnutella09", "../data/data_26013.txt",
+//            "p2p-Gnutella09", "../data/data_26013.txt",
 //            "p2p-Gnutella04", "data/data_39994.txt",
 //            "cal.cedge", "data/data_21693.txt",
 //            "TG.cedge", "data/data_23874.txt",
 //            "OL.cedge", "../data/data_7035.txt",
 ////            "string 4", "data/data_4.txt",
-//            "talk 5", "../data/data_5.txt",
+            "talk 5", "../data/data_5.txt",
 ////            "cyclic 3", "data/data_3.txt",
 //            "string 55555", "data/data_55555.txt",
 //            "roadNet-TX", "data/data_3843320.txt"
