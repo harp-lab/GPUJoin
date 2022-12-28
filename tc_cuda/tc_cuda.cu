@@ -131,12 +131,15 @@ void gpu_tc(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.union_time += spent_time;
+    temp_time_begin = chrono::high_resolution_clock::now();
+    thrust::stable_sort(thrust::device, result, result + relation_rows, cmp());
+    temp_time_end = chrono::high_resolution_clock::now();
+    temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+    sort_time += temp_spent_time;
+    output.deduplication_time += temp_spent_time;
+
     long int previous_unique_result_rows = result_rows;
 
-//    cout
-//            << "| Iteration | # Deduplicated join | # Deduplicated union | Join(s) | Deduplication(s) | Projection(s) | Union(s) |"
-//            << endl;
-//    cout << "| --- | --- | --- | --- | --- | --- | --- |" << endl;
     while (true) {
         int *offset;
         Entity *join_result;
@@ -191,13 +194,14 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
-//        cout << "Concatenated rows: " << concatenated_rows << endl;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
-//        concatenated_rows = thrust::set_union(thrust::device, result, result + result_rows, projection, projection+projection_rows, concatenated_result, cmp()) - concatenated_result;
-//        cout << "Unique concatenated rows: " << concatenated_rows << endl;
-        thrust::copy(thrust::device, result, result + result_rows, concatenated_result);
-        thrust::copy(thrust::device, join_result, join_result + projection_rows,
-                     concatenated_result + result_rows);
+        // merge two sorted array: previous result and join result
+        thrust::merge(thrust::device,
+                      result, result + result_rows,
+                      join_result, join_result + projection_rows,
+                      concatenated_result, cmp());
+
+
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time;
@@ -205,12 +209,6 @@ void gpu_tc(const char *data_path, char separator,
         long int deduplicated_result_rows;
         if (iterations % lazy_step == 0) {
             time_point_begin = chrono::high_resolution_clock::now();
-            temp_time_begin = chrono::high_resolution_clock::now();
-            thrust::stable_sort(thrust::device, concatenated_result, concatenated_result + concatenated_rows,
-                                cmp());
-            temp_time_end = chrono::high_resolution_clock::now();
-            temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
-            sort_time += temp_spent_time;
             temp_time_begin = chrono::high_resolution_clock::now();
             deduplicated_result_rows = (thrust::unique(thrust::device,
                                                        concatenated_result,
@@ -258,7 +256,7 @@ void gpu_tc(const char *data_path, char separator,
         }
         iterations++;
     }
-    show_entity_array(result, result_rows, "Result");
+//    show_entity_array(result, result_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(relation);
     cudaFree(t_delta);
@@ -293,7 +291,7 @@ void gpu_tc(const char *data_path, char separator,
     cout << "Join: " << output.join_time << endl;
     cout << "Projection: " << output.projection_time << endl;
     cout << "Deduplication: " << output.deduplication_time;
-    cout << " (sort: " << sort_time << ", unique: " << unique_time << ")"<< endl;
+    cout << " (sort: " << sort_time << ", unique: " << unique_time << ")" << endl;
     cout << "Memory clear: " << output.memory_clear_time << endl;
     cout << "Union: " << output.union_time << endl;
     cout << "Total: " << output.total_time << endl;
@@ -304,13 +302,13 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
 //            "SF.cedge", "../data/data_223001.txt",
-//            "p2p-Gnutella09", "../data/data_26013.txt",
+            "p2p-Gnutella09", "../data/data_26013.txt",
 //            "p2p-Gnutella04", "data/data_39994.txt",
 //            "cal.cedge", "data/data_21693.txt",
 //            "TG.cedge", "data/data_23874.txt",
 //            "OL.cedge", "../data/data_7035.txt",
 ////            "string 4", "data/data_4.txt",
-            "talk 5", "../data/data_5.txt",
+//            "talk 5", "../data/data_5.txt",
 ////            "cyclic 3", "data/data_3.txt",
 //            "string 55555", "data/data_55555.txt",
 //            "roadNet-TX", "data/data_3843320.txt"
