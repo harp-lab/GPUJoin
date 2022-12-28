@@ -244,7 +244,7 @@ void get_join_result(Entity *hash_table, int hash_table_row_size,
 void gpu_tc(const char *data_path, char separator,
             long int relation_rows, int relation_columns, double load_factor, int max_duplicate_percentage,
             int preferred_grid_size, int preferred_block_size, const char *dataset_name, bool benchmark) {
-    int lazy_step = 3;
+    int lazy_step = 1;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     std::cout << std::fixed;
@@ -537,8 +537,8 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "SF.cedge", "data/data_223001.txt",
-//            "p2p-Gnutella09", "data/data_26013.txt",
+//            "SF.cedge", "data/data_223001.txt",
+            "p2p-Gnutella09", "data/data_26013.txt",
 //            "p2p-Gnutella04", "data/data_39994.txt",
 //            "cal.cedge", "data/data_21693.txt",
 //            "TG.cedge", "data/data_23874.txt",
