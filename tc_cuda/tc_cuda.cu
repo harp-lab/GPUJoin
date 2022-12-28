@@ -217,24 +217,36 @@ void gpu_tc(const char *data_path, char separator,
             temp_time_end = chrono::high_resolution_clock::now();
             temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
             unique_time += temp_spent_time;
+            time_point_end = chrono::high_resolution_clock::now();
+            spent_time = get_time_spent("", time_point_begin, time_point_end);
+            output.deduplication_time += spent_time;
+            time_point_begin = chrono::high_resolution_clock::now();
             cudaFree(result);
+            time_point_end = chrono::high_resolution_clock::now();
+            spent_time = get_time_spent("", time_point_begin, time_point_end);
+            output.memory_clear_time += spent_time;
+            time_point_begin = chrono::high_resolution_clock::now();
             checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
             // Copy the deduplicated concatenated result to result
             thrust::copy(thrust::device, concatenated_result,
                          concatenated_result + deduplicated_result_rows, result);
             time_point_end = chrono::high_resolution_clock::now();
             spent_time = get_time_spent("", time_point_begin, time_point_end);
-            output.deduplication_time += spent_time;
+            output.union_time += spent_time;
         } else {
             time_point_begin = chrono::high_resolution_clock::now();
             cudaFree(result);
+            time_point_end = chrono::high_resolution_clock::now();
+            spent_time = get_time_spent("", time_point_begin, time_point_end);
+            output.memory_clear_time += spent_time;
+            time_point_begin = chrono::high_resolution_clock::now();
             checkCuda(cudaMallocManaged(&result, concatenated_rows * sizeof(Entity)));
 //             Copy the deduplicated concatenated result to result
             thrust::copy(thrust::device, concatenated_result,
                          concatenated_result + concatenated_rows, result);
             time_point_end = chrono::high_resolution_clock::now();
             spent_time = get_time_spent("", time_point_begin, time_point_end);
-            output.deduplication_time += spent_time;
+            output.union_time += spent_time;
         }
         reverse_relation_rows = projection_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
@@ -307,7 +319,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
             "cal.cedge", "../data/data_21693.txt",
             "TG.cedge", "../data/data_23874.txt",
             "OL.cedge", "../data/data_7035.txt",
-            "String 11990", "../data/data_11990.txt",
+            "String 4444", "../data/data_4444.txt",
 //            "string 4", "data/data_4.txt",
 //            "talk 5", "../data/data_5.txt",
 ////            "cyclic 3", "data/data_3.txt",

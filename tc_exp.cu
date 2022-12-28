@@ -657,7 +657,7 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
             "cal.cedge", "data/data_21693.txt",
             "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
-            "String 11990", "data/data_11990.txt",
+            "String 4444", "data/data_4444.txt",
 //            "string 4", "data/data_4.txt",
 //            "talk 5", "data/data_5.txt",
     };

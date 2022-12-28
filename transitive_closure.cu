@@ -519,11 +519,12 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
             "cal.cedge", "data/data_21693.txt",
             "TG.cedge", "data/data_23874.txt",
             "OL.cedge", "data/data_7035.txt",
+            "String 4444", "data/data_4444.txt",
 //            "string 4", "data/data_4.txt",
 //            "talk 5", "data/data_5.txt",
 //            "cyclic 3", "data/data_3.txt",
-            "string 55555", "data/data_55555.txt",
-            "roadNet-TX", "data/data_3843320.txt"
+//            "string 55555", "data/data_55555.txt",
+//            "roadNet-TX", "data/data_3843320.txt"
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
