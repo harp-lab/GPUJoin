@@ -1,5 +1,496 @@
+### Optimization
+- Fused projection with join
+- Rather than doing sort and unique in union, merge the two sorted array and then applied unique
+- Changed block size to 512 from 1024
+- Removed two intermediate buffer
+- Changed the logic of join to join on first column
+- Tried n = 1 to 5 for lazy loading of this optimized version
 ## Comparing fuse and merge with stable
-- Fuse and merge:
+- Fuse and merge (n=5):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 290 | 3,456 x 512 | 61.2475 |
+
+
+Initialization: 1.4275, Read: 0.0724, reverse: 0.0009
+Hashtable rate: 6,746,770,338 keys/s, time: 0.0000
+Join: 9.4269
+Projection: 0.0000
+Deduplication: 2.6018 (sort: 1.8068, unique: 0.7946)
+Memory clear: 18.9617
+Union: 28.7562
+Total: 61.2475
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 25 | 3,456 x 512 | 7.5463 |
+
+
+Initialization: 0.0005, Read: 0.0057, reverse: 0.0005
+Hashtable rate: 662,009,467 keys/s, time: 0.0000
+Join: 1.2022
+Projection: 0.0000
+Deduplication: 2.9702 (sort: 2.8398, unique: 0.1303)
+Memory clear: 1.4634
+Union: 1.9038
+Total: 7.5463
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 30 | 3,456 x 512 | 22.7293 |
+
+
+Initialization: 0.0008, Read: 0.0088, reverse: 0.0005
+Hashtable rate: 713,974,578 keys/s, time: 0.0001
+Join: 3.4206
+Projection: 0.0000
+Deduplication: 9.9342 (sort: 9.6530, unique: 0.2811)
+Memory clear: 4.1074
+Union: 5.2569
+Total: 22.7293
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 200 | 3,456 x 512 | 1.0061 |
+
+
+Initialization: 0.0007, Read: 0.0050, reverse: 0.0003
+Hashtable rate: 1,366,918,714 keys/s, time: 0.0000
+Join: 0.3074
+Projection: 0.0000
+Deduplication: 0.3184 (sort: 0.1451, unique: 0.1731)
+Memory clear: 0.0568
+Union: 0.3176
+Total: 1.0061
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 65 | 3,456 x 512 | 0.3501 |
+
+
+Initialization: 0.0004, Read: 0.0052, reverse: 0.0002
+Hashtable rate: 1,586,523,125 keys/s, time: 0.0000
+Join: 0.1110
+Projection: 0.0000
+Deduplication: 0.1094 (sort: 0.0518, unique: 0.0575)
+Memory clear: 0.0212
+Union: 0.1027
+Total: 0.3501
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 70 | 3,456 x 512 | 0.3125 |
+
+
+Initialization: 0.0003, Read: 0.0017, reverse: 0.0002
+Hashtable rate: 475,723,559 keys/s, time: 0.0000
+Join: 0.1041
+Projection: 0.0000
+Deduplication: 0.1100 (sort: 0.0486, unique: 0.0613)
+Memory clear: 0.0064
+Union: 0.0897
+Total: 0.3125
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,450 | 3,456 x 512 | 66.1094 |
+
+
+Initialization: 0.0001, Read: 0.0012, reverse: 0.0001
+Hashtable rate: 326,620,608 keys/s, time: 0.0000
+Join: 7.4891
+Projection: 0.0000
+Deduplication: 7.9060 (sort: 3.5419, unique: 4.3593)
+Memory clear: 17.0185
+Union: 33.6943
+Total: 66.1094
+```
+- Fuse and merge (n=4):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 292 | 3,456 x 512 | 57.0826 |
+
+
+Initialization: 1.4333, Read: 0.0460, reverse: 0.0011
+Hashtable rate: 6,846,401,817 keys/s, time: 0.0000
+Join: 9.2575
+Projection: 0.0000
+Deduplication: 2.6001 (sort: 1.7974, unique: 0.8023)
+Memory clear: 17.7369
+Union: 26.0076
+Total: 57.0826
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 24 | 3,456 x 512 | 6.8997 |
+
+
+Initialization: 0.0005, Read: 0.0057, reverse: 0.0005
+Hashtable rate: 671,580,523 keys/s, time: 0.0000
+Join: 1.1444
+Projection: 0.0000
+Deduplication: 3.0120 (sort: 2.8851, unique: 0.1269)
+Memory clear: 1.2795
+Union: 1.4570
+Total: 6.8997
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 28 | 3,456 x 512 | 20.1989 |
+
+
+Initialization: 0.0010, Read: 0.0085, reverse: 0.0003
+Hashtable rate: 732,987,555 keys/s, time: 0.0001
+Join: 3.2320
+Projection: 0.0000
+Deduplication: 9.0445 (sort: 8.7853, unique: 0.2591)
+Memory clear: 3.4569
+Union: 4.4556
+Total: 20.1989
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 200 | 3,456 x 512 | 1.0326 |
+
+
+Initialization: 0.0005, Read: 0.0049, reverse: 0.0003
+Hashtable rate: 1,478,933,733 keys/s, time: 0.0000
+Join: 0.3121
+Projection: 0.0000
+Deduplication: 0.3310 (sort: 0.1448, unique: 0.1860)
+Memory clear: 0.0579
+Union: 0.3260
+Total: 1.0326
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 60 | 3,456 x 512 | 0.3167 |
+
+
+Initialization: 0.0004, Read: 0.0051, reverse: 0.0002
+Hashtable rate: 1,557,440,146 keys/s, time: 0.0000
+Join: 0.0952
+Projection: 0.0000
+Deduplication: 0.1036 (sort: 0.0478, unique: 0.0556)
+Memory clear: 0.0193
+Union: 0.0931
+Total: 0.3167
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 68 | 3,456 x 512 | 0.3071 |
+
+
+Initialization: 0.0002, Read: 0.0017, reverse: 0.0002
+Hashtable rate: 441,619,585 keys/s, time: 0.0000
+Join: 0.1059
+Projection: 0.0000
+Deduplication: 0.1122 (sort: 0.0486, unique: 0.0635)
+Memory clear: 0.0062
+Union: 0.0806
+Total: 0.3071
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,448 | 3,456 x 512 | 65.9970 |
+
+
+Initialization: 0.0001, Read: 0.0012, reverse: 0.0002
+Hashtable rate: 323,294,049 keys/s, time: 0.0000
+Join: 7.2676
+Projection: 0.0000
+Deduplication: 7.9353 (sort: 3.4181, unique: 4.5121)
+Memory clear: 17.0658
+Union: 33.7268
+Total: 65.9970
+```
+- Fuse and merge (n=3):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 288 | 3,456 x 512 | 53.2742 |
+
+
+Initialization: 1.4357, Read: 0.0461, reverse: 0.0009
+Hashtable rate: 6,897,222,565 keys/s, time: 0.0000
+Join: 9.3349
+Projection: 0.0000
+Deduplication: 2.6969 (sort: 1.8112, unique: 0.8853)
+Memory clear: 16.0893
+Union: 23.6704
+Total: 53.2742
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 21 | 3,456 x 512 | 5.5665 |
+
+
+Initialization: 0.0006, Read: 0.0121, reverse: 0.0005
+Hashtable rate: 656,131,766 keys/s, time: 0.0000
+Join: 0.9920
+Projection: 0.0000
+Deduplication: 2.5487 (sort: 2.4452, unique: 0.1034)
+Memory clear: 0.9699
+Union: 1.0427
+Total: 5.5665
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 27 | 3,456 x 512 | 18.7739 |
+
+
+Initialization: 0.0006, Read: 0.0084, reverse: 0.0003
+Hashtable rate: 718,864,024 keys/s, time: 0.0001
+Join: 3.0525
+Projection: 0.0000
+Deduplication: 9.0101 (sort: 8.7041, unique: 0.3059)
+Memory clear: 3.0930
+Union: 3.6089
+Total: 18.7739
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 198 | 3,456 x 512 | 1.0193 |
+
+
+Initialization: 0.0006, Read: 0.0048, reverse: 0.0003
+Hashtable rate: 1,293,405,676 keys/s, time: 0.0000
+Join: 0.2990
+Projection: 0.0000
+Deduplication: 0.3402 (sort: 0.1440, unique: 0.1959)
+Memory clear: 0.0559
+Union: 0.3185
+Total: 1.0193
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 60 | 3,456 x 512 | 0.3144 |
+
+
+Initialization: 0.0003, Read: 0.0050, reverse: 0.0002
+Hashtable rate: 1,590,645,612 keys/s, time: 0.0000
+Join: 0.0921
+Projection: 0.0000
+Deduplication: 0.1068 (sort: 0.0477, unique: 0.0591)
+Memory clear: 0.0179
+Union: 0.0921
+Total: 0.3144
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 66 | 3,456 x 512 | 0.3174 |
+
+
+Initialization: 0.0003, Read: 0.0018, reverse: 0.0002
+Hashtable rate: 481,915,330 keys/s, time: 0.0000
+Join: 0.1075
+Projection: 0.0000
+Deduplication: 0.1237 (sort: 0.0481, unique: 0.0754)
+Memory clear: 0.0057
+Union: 0.0781
+Total: 0.3174
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,446 | 3,456 x 512 | 69.2022 |
+
+
+Initialization: 0.0001, Read: 0.0011, reverse: 0.0001
+Hashtable rate: 323,294,049 keys/s, time: 0.0000
+Join: 8.9365
+Projection: 0.0000
+Deduplication: 9.2758 (sort: 3.7174, unique: 5.5534)
+Memory clear: 16.9847
+Union: 34.0038
+Total: 69.2022
+```
+- Fuse and merge (n=2):
+```shell
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 288 | 3,456 x 512 | 49.5977 |
+
+
+Initialization: 1.4610, Read: 0.0467, reverse: 0.0007
+Hashtable rate: 7,050,300,347 keys/s, time: 0.0000
+Join: 9.4856
+Projection: 0.0000
+Deduplication: 2.7475 (sort: 1.8043, unique: 0.9427)
+Memory clear: 14.6436
+Union: 21.2127
+Total: 49.5977
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 512 | 4.5036 |
+
+
+Initialization: 0.0005, Read: 0.0056, reverse: 0.0003
+Hashtable rate: 737,413,538 keys/s, time: 0.0000
+Join: 0.9243
+Projection: 0.0000
+Deduplication: 1.9258 (sort: 1.8564, unique: 0.0693)
+Memory clear: 0.8117
+Union: 0.8354
+Total: 4.5036
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 512 | 17.0311 |
+
+
+Initialization: 0.0006, Read: 0.0087, reverse: 0.0003
+Hashtable rate: 716,931,074 keys/s, time: 0.0001
+Join: 2.9760
+Projection: 0.0000
+Deduplication: 8.3772 (sort: 8.0355, unique: 0.3416)
+Memory clear: 2.6463
+Union: 3.0219
+Total: 17.0311
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 196 | 3,456 x 512 | 1.0338 |
+
+
+Initialization: 0.0005, Read: 0.0049, reverse: 0.0003
+Hashtable rate: 1,398,646,034 keys/s, time: 0.0000
+Join: 0.3046
+Projection: 0.0000
+Deduplication: 0.3605 (sort: 0.1399, unique: 0.2202)
+Memory clear: 0.0521
+Union: 0.3109
+Total: 1.0338
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 512 | 0.3094 |
+
+
+Initialization: 0.0003, Read: 0.0052, reverse: 0.0002
+Hashtable rate: 1,647,960,240 keys/s, time: 0.0000
+Join: 0.0900
+Projection: 0.0000
+Deduplication: 0.1110 (sort: 0.0464, unique: 0.0646)
+Memory clear: 0.0154
+Union: 0.0871
+Total: 0.3094
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 512 | 0.3213 |
+
+
+Initialization: 0.0003, Read: 0.0017, reverse: 0.0001
+Hashtable rate: 460,737,441 keys/s, time: 0.0000
+Join: 0.1060
+Projection: 0.0000
+Deduplication: 0.1300 (sort: 0.0538, unique: 0.0761)
+Memory clear: 0.0054
+Union: 0.0778
+Total: 0.3213
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,444 | 3,456 x 512 | 67.6178 |
+
+
+Initialization: 0.0001, Read: 0.0011, reverse: 0.0001
+Hashtable rate: 324,237,560 keys/s, time: 0.0000
+Join: 7.4350
+Projection: 0.0000
+Deduplication: 8.8757 (sort: 3.3898, unique: 5.4794)
+Memory clear: 17.0300
+Union: 34.2757
+Total: 67.6178
+```
+- Fuse and merge (n=1):
 ```shell
 GPUJoin/tc_cuda$ make run
 nvcc tc_cuda.cu -o tc_cuda.out
@@ -9,209 +500,241 @@ Benchmark for SF.cedge
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| SF.cedge | 223,001 | 80,498,014 | 286 | 3,456 x 512 | 45.5820 |
+| SF.cedge | 223,001 | 80,498,014 | 286 | 3,456 x 512 | 45.3974 |
 
 
-Initialization: 1.4531, Read: 0.1242, reverse: 0.0007
-Hashtable rate: 7,092,907,124 keys/s, time: 0.0000
-Join: 9.3444
+Initialization: 1.4189, Read: 0.0461, reverse: 0.0007
+Hashtable rate: 6,773,410,685 keys/s, time: 0.0000
+Join: 9.3327
 Projection: 0.0000
-Deduplication: 17.7666 (sort: 1.8192, unique: 1.2425)
-Memory clear: 8.5560
-Union: 8.3371
-Total: 45.5820
+Deduplication: 3.0285 (sort: 1.8030, unique: 1.2250)
+Memory clear: 13.1608
+Union: 18.4096
+Total: 45.3974
 
 Benchmark for p2p-Gnutella09
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella09 | 26,013 | 21,402,960 | 19 | 3,456 x 512 | 3.9104 |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 19 | 3,456 x 512 | 3.8946 |
 
 
-Initialization: 0.0005, Read: 0.0334, reverse: 0.0003
-Hashtable rate: 654,826,935 keys/s, time: 0.0000
-Join: 0.8609
+Initialization: 0.0005, Read: 0.0057, reverse: 0.0003
+Hashtable rate: 654,003,771 keys/s, time: 0.0000
+Join: 0.8822
 Projection: 0.0000
-Deduplication: 2.1347 (sort: 1.7489, unique: 0.0753)
-Memory clear: 0.5723
-Union: 0.3083
-Total: 3.9104
+Deduplication: 1.8127 (sort: 1.7360, unique: 0.0766)
+Memory clear: 0.6750
+Union: 0.5181
+Total: 3.8946
 
 Benchmark for p2p-Gnutella04
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 25 | 3,456 x 512 | 15.2005 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 25 | 3,456 x 512 | 15.2284 |
 
 
-Initialization: 0.0010, Read: 0.0363, reverse: 0.0003
-Hashtable rate: 722,500,225 keys/s, time: 0.0001
-Join: 2.2636
+Initialization: 0.0008, Read: 0.0091, reverse: 0.0005
+Hashtable rate: 729,644,427 keys/s, time: 0.0001
+Join: 2.2978
 Projection: 0.0000
-Deduplication: 9.8682 (sort: 7.7682, unique: 1.1013)
-Memory clear: 1.8446
-Union: 1.1864
-Total: 15.2005
+Deduplication: 8.7430 (sort: 7.6436, unique: 1.0992)
+Memory clear: 2.2683
+Union: 1.9087
+Total: 15.2284
 
 Benchmark for cal.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| cal.cedge | 21,693 | 501,755 | 194 | 3,456 x 512 | 1.1299 |
+| cal.cedge | 21,693 | 501,755 | 194 | 3,456 x 512 | 1.0997 |
 
 
-Initialization: 0.0006, Read: 0.0250, reverse: 0.0004
-Hashtable rate: 1,338,165,443 keys/s, time: 0.0000
-Join: 0.2939
+Initialization: 0.0004, Read: 0.0050, reverse: 0.0003
+Hashtable rate: 1,409,643,251 keys/s, time: 0.0000
+Join: 0.2981
 Projection: 0.0000
-Deduplication: 0.5747 (sort: 0.1503, unique: 0.2979)
-Memory clear: 0.0265
-Union: 0.2088
-Total: 1.1299
+Deduplication: 0.4396 (sort: 0.1462, unique: 0.2930)
+Memory clear: 0.0520
+Union: 0.3043
+Total: 1.0997
 
 Benchmark for TG.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| TG.cedge | 23,874 | 481,121 | 57 | 3,456 x 512 | 0.3886 |
+| TG.cedge | 23,874 | 481,121 | 57 | 3,456 x 512 | 0.3222 |
 
 
-Initialization: 0.0003, Read: 0.0439, reverse: 0.0003
-Hashtable rate: 1,587,472,571 keys/s, time: 0.0000
-Join: 0.0949
+Initialization: 0.0003, Read: 0.0049, reverse: 0.0002
+Hashtable rate: 1,568,697,023 keys/s, time: 0.0000
+Join: 0.0881
 Projection: 0.0000
-Deduplication: 0.1771 (sort: 0.0513, unique: 0.0933)
-Memory clear: 0.0078
-Union: 0.0643
-Total: 0.3886
+Deduplication: 0.1298 (sort: 0.0459, unique: 0.0838)
+Memory clear: 0.0142
+Union: 0.0847
+Total: 0.3222
 
 Benchmark for OL.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| OL.cedge | 7,035 | 146,120 | 63 | 3,456 x 512 | 0.3435 |
+| OL.cedge | 7,035 | 146,120 | 63 | 3,456 x 512 | 0.3460 |
 
 
-Initialization: 0.0003, Read: 0.0365, reverse: 0.0003
-Hashtable rate: 491,030,920 keys/s, time: 0.0000
-Join: 0.0945
+Initialization: 0.0003, Read: 0.0016, reverse: 0.0002
+Hashtable rate: 447,519,083 keys/s, time: 0.0000
+Join: 0.1099
 Projection: 0.0000
-Deduplication: 0.1560 (sort: 0.0472, unique: 0.0921)
-Memory clear: 0.0031
-Union: 0.0528
-Total: 0.3435
+Deduplication: 0.1550 (sort: 0.0534, unique: 0.1015)
+Memory clear: 0.0053
+Union: 0.0737
+Total: 0.3460
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,443 | 3,456 x 512 | 69.9004 |
+
+
+Initialization: 0.0001, Read: 0.0153, reverse: 0.0001
+Hashtable rate: 323,529,411 keys/s, time: 0.0000
+Join: 7.3161
+Projection: 0.0000
+Deduplication: 11.1496 (sort: 3.5336, unique: 7.6086)
+Memory clear: 16.9173
+Union: 34.5018
+Total: 69.9004
 ```
 - Stable:
 ```shell
-nvcc tc_exp_lazy.cu -run -o join
-tc_exp_lazy.cu(269): warning: variable "min_grid_size" was declared but never referenced
-
+GPUJoin$ nvcc transitive_closure.cu -run -o join
 Benchmark for SF.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| SF.cedge | 223,001 | 80,498,014 | 286 | 3,456 x 512 | 64.1833 |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 1,024 | 63.2732 |
 
 
-Initialization: 2.5029, Read: 0.5220, reverse: 0.0007
-Hashtable rate: 6,990,626,959 keys/s, time: 0.0000
-Join: 5.2959
-Projection: 5.1770
-Deduplication: 26.9088
-Memory clear: 10.0447
-Union: 13.7313
-Total: 64.1833
+Initialization: 1.3947, Read: 0.0430, reverse: 0.0005
+Hashtable rate: 6,419,881,391 keys/s, time: 0.0000
+Join: 5.5883
+Projection: 5.5493
+Deduplication: 26.8710
+Memory clear: 10.0702
+Union: 13.7561
+Total: 63.2732
 
 Benchmark for p2p-Gnutella09
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella09 | 26,013 | 21,402,960 | 19 | 3,456 x 512 | 5.0870 |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 1,024 | 4.6557 |
 
 
-Initialization: 0.0007, Read: 0.4711, reverse: 0.0006
-Hashtable rate: 709,206,903 keys/s, time: 0.0000
-Join: 0.6744
-Projection: 0.4172
-Deduplication: 2.3627
-Memory clear: 0.6697
-Union: 0.4907
-Total: 5.0870
+Initialization: 0.0005, Read: 0.0052, reverse: 0.0003
+Hashtable rate: 561,375,113 keys/s, time: 0.0000
+Join: 0.6780
+Projection: 0.4341
+Deduplication: 2.3811
+Memory clear: 0.6741
+Union: 0.4824
+Total: 4.6557
 
 Benchmark for p2p-Gnutella04
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 25 | 3,456 x 512 | 21.6349 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 1,024 | 21.3235 |
 
 
-Initialization: 0.0006, Read: 0.3517, reverse: 0.0003
-Hashtable rate: 901,699,959 keys/s, time: 0.0000
-Join: 2.7202
-Projection: 1.3411
-Deduplication: 12.4600
-Memory clear: 2.2595
-Union: 2.5014
-Total: 21.6349
+Initialization: 0.0009, Read: 0.0083, reverse: 0.0004
+Hashtable rate: 809,857,443 keys/s, time: 0.0000
+Join: 2.7933
+Projection: 1.4209
+Deduplication: 12.3554
+Memory clear: 2.2515
+Union: 2.4926
+Total: 21.3235
 
 Benchmark for cal.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| cal.cedge | 21,693 | 501,755 | 194 | 3,456 x 512 | 1.5665 |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 1,024 | 1.1699 |
 
 
-Initialization: 0.0005, Read: 0.3848, reverse: 0.0003
-Hashtable rate: 1,435,861,795 keys/s, time: 0.0000
-Join: 0.2984
-Projection: 0.0029
-Deduplication: 0.7388
-Memory clear: 0.0307
-Union: 0.1101
-Total: 1.5665
+Initialization: 0.0006, Read: 0.0044, reverse: 0.0003
+Hashtable rate: 1,329,227,941 keys/s, time: 0.0000
+Join: 0.2924
+Projection: 0.0032
+Deduplication: 0.7300
+Memory clear: 0.0299
+Union: 0.1091
+Total: 1.1699
 
 Benchmark for TG.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| TG.cedge | 23,874 | 481,121 | 57 | 3,456 x 512 | 0.6514 |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 1,024 | 0.4224 |
 
 
-Initialization: 0.0004, Read: 0.3003, reverse: 0.0004
-Hashtable rate: 1,409,992,912 keys/s, time: 0.0000
-Join: 0.0859
-Projection: 0.0026
-Deduplication: 0.2214
-Memory clear: 0.0098
-Union: 0.0307
-Total: 0.6514
+Initialization: 0.0004, Read: 0.0047, reverse: 0.0002
+Hashtable rate: 1,362,437,938 keys/s, time: 0.0000
+Join: 0.1056
+Projection: 0.0021
+Deduplication: 0.2636
+Memory clear: 0.0086
+Union: 0.0371
+Total: 0.4224
 
 Benchmark for OL.cedge
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| OL.cedge | 7,035 | 146,120 | 63 | 3,456 x 512 | 0.6305 |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 1,024 | 0.4394 |
 
 
-Initialization: 0.0002, Read: 0.3055, reverse: 0.0002
-Hashtable rate: 424,536,841 keys/s, time: 0.0000
-Join: 0.0993
-Projection: 0.0010
-Deduplication: 0.2182
-Memory clear: 0.0020
-Union: 0.0041
-Total: 0.6305
+Initialization: 0.0003, Read: 0.0016, reverse: 0.0002
+Hashtable rate: 401,931,097 keys/s, time: 0.0000
+Join: 0.1419
+Projection: 0.0012
+Deduplication: 0.2867
+Memory clear: 0.0021
+Union: 0.0055
+Total: 0.4394
+
+Benchmark for String 4444
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| String 4444 | 4,444 | 9,876,790 | 4,444 | 3,456 x 1,024 | 86.2359 |
+
+
+Initialization: 0.0001, Read: 0.0011, reverse: 0.0001
+Hashtable rate: 241,063,195 keys/s, time: 0.0000
+Join: 7.3468
+Projection: 0.0880
+Deduplication: 51.3605
+Memory clear: 8.5620
+Union: 18.8774
+Total: 86.2359
 ```
 
 
