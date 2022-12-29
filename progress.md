@@ -1,10 +1,14 @@
 ### Optimization
 - Fused projection with join
-- Rather than doing sort and unique in union, merge the two sorted array and then applied unique
+- Granular timing in deduplication and found that sort takes significantly higher time than unique
+- Rather than doing sort and unique in union, merged the two sorted array and then applied unique
 - Changed block size to 512 from 1024
-- Removed two intermediate buffer
+- Removed two intermediate buffers thus reduced memory free time
 - Changed the logic of join to join on first column
 - Tried n = 1 to 5 for lazy loading of this optimized version
+- Included string graph in benchmark
+- Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
+
 ## Comparing fuse and merge with stable
 - Fuse and merge (n=5):
 ```shell
