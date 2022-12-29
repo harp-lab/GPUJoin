@@ -513,7 +513,7 @@ void run_benchmark(int relation_columns, int max_duplicate_percentage,
                    int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "CA-CondMat", "data/data_186936.txt",
+            "CA-HepTh", "data/data_51971.txt",
             "SF.cedge", "data/data_223001.txt",
             "p2p-Gnutella31", "data/data_147892.txt",
             "p2p-Gnutella09", "data/data_26013.txt",
