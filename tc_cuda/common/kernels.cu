@@ -27,7 +27,7 @@ void build_hash_table(Entity *hash_table, long int hash_table_row_size,
 }
 
 __global__
-void initialize_result(Entity *result,
+void initialize_result_t_delta(Entity *result, Entity *t_delta,
                        int *relation, long int relation_rows, int relation_columns) {
     int index = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (index >= relation_rows) return;
@@ -35,8 +35,8 @@ void initialize_result(Entity *result,
     int stride = blockDim.x * gridDim.x;
 
     for (int i = index; i < relation_rows; i += stride) {
-        result[i].key = relation[(i * relation_columns) + 0];
-        result[i].value = relation[(i * relation_columns) + 1];
+        t_delta[i].key = result[i].key = relation[(i * relation_columns) + 0];
+        t_delta[i].value = result[i].value = relation[(i * relation_columns) + 1];
     }
 }
 

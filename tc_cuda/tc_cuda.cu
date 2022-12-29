@@ -95,12 +95,6 @@ void gpu_tc(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.read_time = spent_time;
-    time_point_begin = chrono::high_resolution_clock::now();
-    get_reverse_relation<<<grid_size, block_size>>>(relation, relation_rows, relation_columns, t_delta);
-    checkCuda(cudaDeviceSynchronize());
-    time_point_end = chrono::high_resolution_clock::now();
-    spent_time = get_time_spent("", time_point_begin, time_point_end);
-    output.reverse_time = spent_time;
 
     Entity negative_entity;
     negative_entity.key = -1;
@@ -124,8 +118,8 @@ void gpu_tc(const char *data_path, char separator,
     output.join_time += spent_time;
 
     time_point_begin = chrono::high_resolution_clock::now();
-    // initial result is the input relation
-    initialize_result<<<grid_size, block_size>>>(result, relation, relation_rows, relation_columns);
+    // initial result and t delta both are same as the input relation
+    initialize_result_t_delta<<<grid_size, block_size>>>(result, t_delta, relation, relation_rows, relation_columns);
     checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -301,7 +295,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
             "cal.cedge", "../data/data_21693.txt",
             "TG.cedge", "../data/data_23874.txt",
             "OL.cedge", "../data/data_7035.txt",
-            "String 4444", "../data/data_4444.txt",
+            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
 //            "string 4", "../data/data_4.txt",
