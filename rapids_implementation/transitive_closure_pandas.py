@@ -136,6 +136,7 @@ if __name__ == "__main__":
     # })
 
     generate_benchmark(iterative=False, datasets={
+        "ca-AstroPh": "../data/data_396160.txt",
         "SF.cedge": "../data/data_223001.txt",
         "p2p-Gnutella31": "../data/data_147892.txt",
         "p2p-Gnutella09": "../data/data_26013.txt",
