@@ -102,11 +102,14 @@ void gpu_tc(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.reverse_time = spent_time;
 
-    Entity negative_entity;
-    negative_entity.key = -1;
-    negative_entity.value = -1;
+//    Entity negative_entity;
+//    negative_entity.key = -1;
+//    negative_entity.value = -1;
     time_point_begin = chrono::high_resolution_clock::now();
-    thrust::fill(thrust::device, hash_table, hash_table + hash_table_rows, negative_entity);
+    negative_fill_struct<<<grid_size, block_size>>>(hash_table, hash_table_rows);
+    checkCuda(cudaDeviceSynchronize());
+
+//    thrust::fill(thrust::device, hash_table, hash_table + hash_table_rows, negative_entity);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
@@ -185,7 +188,11 @@ void gpu_tc(const char *data_path, char separator,
         // show_entity_array(join_result, projection_rows, "join_result");
         time_point_begin = chrono::high_resolution_clock::now();
         checkCuda(cudaMallocManaged(&t_delta, projection_rows * sizeof(Entity)));
-        thrust::copy(thrust::device, join_result, join_result + projection_rows, t_delta);
+
+        copy_struct<<<grid_size, block_size>>>(join_result, projection_rows, t_delta);
+        checkCuda(cudaDeviceSynchronize());
+
+//        thrust::copy(thrust::device, join_result, join_result + projection_rows, t_delta);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
@@ -225,8 +232,10 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         checkCuda(cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity)));
         // Copy the deduplicated concatenated result to result
-        thrust::copy(thrust::device, concatenated_result,
-                     concatenated_result + deduplicated_result_rows, result);
+        copy_struct<<<grid_size, block_size>>>(concatenated_result, deduplicated_result_rows, result);
+        checkCuda(cudaDeviceSynchronize());
+//        thrust::copy(thrust::device, concatenated_result,
+//                     concatenated_result + deduplicated_result_rows, result);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time; // changed this time from deduplication to union
@@ -306,6 +315,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "string 4", "../data/data_4.txt",
 //            "talk 5", "../data/data_5.txt",
 ////            "cyclic 3", "../data/data_3.txt",
+//            "roadNet-TX", "../data/data_3843320.txt"
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;

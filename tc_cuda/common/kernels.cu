@@ -41,6 +41,32 @@ void initialize_result(Entity *result,
 }
 
 __global__
+void copy_struct(Entity *source, long int source_rows, Entity *destination) {
+    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= source_rows) return;
+
+    int stride = blockDim.x * gridDim.x;
+
+    for (int i = index; i < source_rows; i += stride) {
+        destination[i].key = source[i].key;
+        destination[i].value = source[i].value;
+    }
+}
+
+__global__
+void negative_fill_struct(Entity *source, long int source_rows) {
+    int index = (blockIdx.x * blockDim.x) + threadIdx.x;
+    if (index >= source_rows) return;
+
+    int stride = blockDim.x * gridDim.x;
+
+    for (int i = index; i < source_rows; i += stride) {
+        source[i].key = -1;
+        source[i].value = -1;
+    }
+}
+
+__global__
 void get_reverse_relation(int *relation, long int relation_rows, int relation_columns, Entity *t_delta) {
     int index = (blockIdx.x * blockDim.x) + threadIdx.x;
     if (index >= relation_rows) return;

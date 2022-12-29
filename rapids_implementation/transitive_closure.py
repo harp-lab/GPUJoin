@@ -112,6 +112,7 @@ def generate_benchmark(iterative=True, datasets=None):
 if __name__ == "__main__":
     generate_benchmark(iterative=False, datasets={
         "SF.cedge": "../data/data_223001.txt",
+        "p2p-Gnutella31": "../data/data_147892.txt",
         "p2p-Gnutella09": "../data/data_26013.txt",
         "p2p-Gnutella04": "../data/data_39994.txt",
         "cal.cedge": "../data/data_21693.txt",
@@ -119,8 +120,8 @@ if __name__ == "__main__":
         "OL.cedge": "../data/data_7035.txt",
         # "data_4": "../data/data_4.txt",
         # "data_22": "../data/data_22.txt",
-        "string 55555": "../data/data_55555.txt",
-        "roadNet-TX": "../data/data_3843320.txt"
+        "String 9990": "../data/data_9990.txt",
+        # "roadNet-TX": "../data/data_3843320.txt"
     })
 
     generate_benchmark(iterative=False, datasets={
