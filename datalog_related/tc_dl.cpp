@@ -402,11 +402,23 @@ signalHandler->setMsg(R"_(path(x,y) :-
 in file tc.dl [8:1-8:38])_");
 if(!(rel_3_delta_path->empty()) && !(rel_1_edge->empty())) {
 [&](){
+auto part = rel_3_delta_path->partition();
+PARALLEL_START
 CREATE_OP_CONTEXT(rel_1_edge_op_ctxt,rel_1_edge->createContext());
 CREATE_OP_CONTEXT(rel_3_delta_path_op_ctxt,rel_3_delta_path->createContext());
 CREATE_OP_CONTEXT(rel_4_new_path_op_ctxt,rel_4_new_path->createContext());
 CREATE_OP_CONTEXT(rel_2_path_op_ctxt,rel_2_path->createContext());
-for(const auto& env0 : *rel_3_delta_path) {
+
+                   #if defined _OPENMP && _OPENMP < 200805
+                           auto count = std::distance(part.begin(), part.end());
+                           auto base = part.begin();
+                           pfor(int index  = 0; index < count; index++) {
+                               auto it = base + index;
+                   #else
+                           pfor(auto it = part.begin(); it < part.end(); it++) {
+                   #endif
+                   try{
+for(const auto& env0 : *it) {
 auto range = rel_1_edge->lowerUpperRange_10(Tuple<RamDomain,2>{{ramBitCast(env0[1]), ramBitCast<RamDomain>(MIN_RAM_SIGNED)}},Tuple<RamDomain,2>{{ramBitCast(env0[1]), ramBitCast<RamDomain>(MAX_RAM_SIGNED)}},READ_OP_CONTEXT(rel_1_edge_op_ctxt));
 for(const auto& env1 : range) {
 if( !(rel_2_path->contains(Tuple<RamDomain,2>{{ramBitCast(env0[0]),ramBitCast(env1[1])}},READ_OP_CONTEXT(rel_2_path_op_ctxt)))) {
@@ -415,6 +427,9 @@ rel_4_new_path->insert(tuple,READ_OP_CONTEXT(rel_4_new_path_op_ctxt));
 }
 }
 }
+} catch(std::exception &e) { signalHandler->error(e.what());}
+}
+PARALLEL_END
 }
 ();}
 if(rel_4_new_path->empty()) break;
@@ -471,7 +486,7 @@ R"()",
 R"()",
 false,
 R"()",
-1);
+0);
 if (!opt.parse(argc,argv)) return 1;
 souffle::Sf_tc_dl obj;
 #if defined(_OPENMP) 

@@ -10,13 +10,28 @@ sudo apt install souffle
 ### Running Souffle program
 ```
 souffle --version
+```
+- Run interpreter/compiler in parallel using N threads, N=auto for system default:
+```
 souffle -F . -D . tc.dl
-souffle -F . -D . -o tc_dl tc.dl
-./tc_dl
-time ./tc_dl -j 4
-time ./tc_dl -j 8
-g++ tc_dl.cpp -I .
-./a.out
+
+souffle -F . -D . -o tc_dl tc.dl -j auto
+time ./tc_dl
+path    74619885
+./tc_dl  177.81s user 1.97s system 764% cpu 23.505 total
+g++ tc_dl.cpp -I . -O3                  
+time ./a.out                            
+path    74619885
+./a.out  67.21s user 0.58s system 99% cpu 1:07.91 total
+
+souffle -F . -D . -o tc_dl tc.dl        
+time ./tc_dl                    
+path    74619885
+./tc_dl  90.57s user 0.79s system 99% cpu 1:31.37 total
+g++ tc_dl.cpp -I . -O3
+time ./a.out
+path    74619885
+./a.out  70.93s user 0.38s system 99% cpu 1:11.32 total
 ```
 
 ### Running Souffle in ThetaGPU
@@ -60,3 +75,4 @@ compilation terminated.
 
 ### References
 - [Install Souffle](https://souffle-lang.github.io/install.html)
+- [Run Souffle](https://souffle-lang.github.io/execute)
