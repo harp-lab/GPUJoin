@@ -43,6 +43,23 @@ g++ tc_dl.cpp -I . -O3
 time ./a.out
 path    74619885
 ./a.out  70.93s user 0.38s system 99% cpu 1:11.32 total
+
+
+cp sf.data edge.facts 
+time ./a.out -j 128
+cp p2p31.data edge.facts 
+time ./a.out -j 128
+cp p2p09.data edge.facts 
+time ./a.out -j 128
+cp p2p04.data edge.facts 
+time ./a.out -j 128
+cp cal.data edge.facts 
+time ./a.out -j 128
+cp tg.data edge.facts 
+time ./a.out -j 128
+cp ol.data edge.facts 
+time ./a.out -j 128
+
 ```
 
 ### Running Souffle in ThetaGPU
