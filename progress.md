@@ -10,15 +10,20 @@
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
 ## Comparing CUDA versions with Souffle
-- Souffle:
-```shell
-| Dataset | Number of rows | TC size | Threads (Souffle) | Blocks x Threads (CUDA) | Souffle (s) | CUDA (s) | cuDF |
-| --- | --- | --- | --- | --- | --- | --- | --- | 
-| CA-HepTh | 51,971 | 74,619,885 | 128 | 3,456 x 512 | 14.696 | 11.4740 | 26.115098 |
-| SF.cedge | 223,001 | 80,498,014 | 128 | 3,456 x 512 | 16.758 | 45.8111 |
-| p2p-Gnutella31 | 147,892 | 884,179,859 | 128 | 3,456 x 512 | 130.593 | 218.7626 |
+- Souffle vs CUDA vs cuDF:
 
-```
+| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Blocks x Threads(CUDA) | Souffle(s) | CUDA(s) | cuDF(s)      |
+| --- | --- | --- |------------|------------------| --- | --- | --- |--------------| 
+| CA-HepTh | 51,971 | 74,619,885 | 18         | 128              | 3,456 x 512 | 15.206 | 11.4740 | 26.115098    |
+| SF.cedge | 223,001 | 80,498,014 | 287        | 128              | 3,456 x 512      | 17.073 | 45.8111 | 64.417961    |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31         | 128              | 3,456 x 512      | 128.917 | 218.7626 | out of memory |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20         | 128              | 3,456 x 512      | 3.094 | 2.2187 | 3.906619     |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26         | 128              | 3,456 x 512      | 7.537 | 7.2060 | 14.005228    |
+| cal.cedge | 21,693 | 501,755 | 195        | 128              | 3,456 x 512      | 0.455 | 1.1027 | 2.756417     |
+| TG.cedge | 23,874 | 481,121 | 58         | 128              | 3,456 x 512      | 0.219 | 0.3526 | 0.857208     |
+| OL.cedge | 7,035 | 146,120 | 64 | 128              | 3,456 x 512      | 0.181 | 0.3934 | 0.523132     |
+
+
 - Fuse
 ```shell
 Benchmark for CA-HepTh
@@ -327,6 +332,15 @@ std::bad_alloc: out_of_memory: CUDA error at: /workspace/.conda-bld/work/include
 | cal.cedge | 21693 | 501755 | 195 | 2.756417 |
 | TG.cedge | 23874 | 481121 | 58 | 0.857208 |
 | OL.cedge | 7035 | 146120 | 64 | 0.523132 |
+```
+
+- Pandas:
+```shell
+rapids_implementation$ python transitive_closure_pandas.py 
+| Dataset | Number of rows | TC size | Iterations | Time (s) |
+| --- | --- | --- | --- | --- |
+| CA-HepTh | 51971 | 74619885 | 18 | 810.248380 |
+
 ```
 
 ## Comparing fuse and merge with stable

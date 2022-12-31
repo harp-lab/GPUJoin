@@ -14,6 +14,7 @@ souffle --version
 - Run interpreter/compiler in parallel using N threads, N=auto for system default:
 ```
 souffle -F . -D . tc.dl
+souffle -F . -D . -o tc_dl tc.dl -j auto
 
 souffle -F . -D . -o tc_dl tc.dl -j 128
 time ./tc_dl
@@ -22,7 +23,7 @@ path    74619885
 
 
 g++ tc_dl.cpp -I . -O3 -fopenmp
-arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j auto
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
 path	74619885
 real	0m13.442s
 

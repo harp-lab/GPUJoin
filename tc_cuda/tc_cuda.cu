@@ -295,7 +295,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
             "cal.cedge", "../data/data_21693.txt",
             "TG.cedge", "../data/data_23874.txt",
             "OL.cedge", "../data/data_7035.txt",
-            "String 9990", "../data/data_9990.txt",
+//            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
 //            "string 4", "../data/data_4.txt",
