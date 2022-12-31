@@ -293,15 +293,15 @@ void gpu_tc(const char *data_path, char separator,
 void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "CA-HepTh", "../data/data_51971.txt",
-            "SF.cedge", "../data/data_223001.txt",
-            "p2p-Gnutella31", "../data/data_147892.txt",
-            "p2p-Gnutella09", "../data/data_26013.txt",
-            "p2p-Gnutella04", "../data/data_39994.txt",
-            "cal.cedge", "../data/data_21693.txt",
-            "TG.cedge", "../data/data_23874.txt",
+//            "CA-HepTh", "../data/data_51971.txt",
+//            "SF.cedge", "../data/data_223001.txt",
+//            "p2p-Gnutella31", "../data/data_147892.txt",
+//            "p2p-Gnutella09", "../data/data_26013.txt",
+//            "p2p-Gnutella04", "../data/data_39994.txt",
+//            "cal.cedge", "../data/data_21693.txt",
+//            "TG.cedge", "../data/data_23874.txt",
             "OL.cedge", "../data/data_7035.txt",
-            "String 9990", "../data/data_9990.txt",
+//            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
 //            "string 4", "../data/data_4.txt",

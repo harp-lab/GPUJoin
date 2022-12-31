@@ -15,14 +15,24 @@ souffle --version
 ```
 souffle -F . -D . tc.dl
 
-souffle -F . -D . -o tc_dl tc.dl -j auto
+souffle -F . -D . -o tc_dl tc.dl -j 128
 time ./tc_dl
 path    74619885
 ./tc_dl  177.81s user 1.97s system 764% cpu 23.505 total
+
+
+g++ tc_dl.cpp -I . -O3 -fopenmp
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j auto
+path	74619885
+real	0m13.442s
+
+
 g++ tc_dl.cpp -I . -O3                  
 time ./a.out                            
 path    74619885
 ./a.out  67.21s user 0.58s system 99% cpu 1:07.91 total
+
+
 
 souffle -F . -D . -o tc_dl tc.dl        
 time ./tc_dl                    
@@ -60,16 +70,27 @@ sys	0m1.052s
 
 ### Error
 ```shell
-arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ ./tc_dl
+time ./tc_dl
+-bash: ./tc_dl: Permission denied
+
+real	0m0.001s
+user	0m0.001s
+sys	0m0.000s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ chmod +x tc_dl
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./tc_dl
 ./tc_dl: /usr/lib/x86_64-linux-gnu/libstdc++.so.6: version `GLIBCXX_3.4.29' not found (required by ./tc_dl)
 ./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.32' not found (required by ./tc_dl)
 ./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.33' not found (required by ./tc_dl)
 ./tc_dl: /usr/lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found (required by ./tc_dl)
-arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ g++ -o tc_2 tc_dl.cpp 
-tc_dl.cpp:2:10: fatal error: souffle/CompiledSouffle.h: No such file or directory
-    2 | #include "souffle/CompiledSouffle.h"
-      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~
-compilation terminated.
+
+/GPUJoin/datalog_related$ g++ tc_dl.cpp -I . -O3
+time ./a.out
+path	74619885
+
+real	1m19.381s
+user	1m18.715s
+sys	0m0.640s
+
 ```
 
 

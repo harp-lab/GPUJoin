@@ -454,8 +454,8 @@ if (!outputDirectory.empty()) {directiveMap["output-dir"] = outputDirectory;}
 IOSystem::getInstance().getWriter(directiveMap, symTable, recordTable)->writeAll(*rel_2_path);
 } catch (std::exception& e) {std::cerr << e.what();exit(1);}
 }
-if (pruneImdtRels) rel_2_path->purge();
 if (pruneImdtRels) rel_1_edge->purge();
+if (pruneImdtRels) rel_2_path->purge();
 }
 #ifdef _MSC_VER
 #pragma warning(default: 4100)
@@ -486,7 +486,7 @@ R"()",
 R"()",
 false,
 R"()",
-0);
+128);
 if (!opt.parse(argc,argv)) return 1;
 souffle::Sf_tc_dl obj;
 #if defined(_OPENMP) 

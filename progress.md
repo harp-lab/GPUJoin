@@ -9,7 +9,16 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
-## Comparing CUDA versions
+## Comparing CUDA versions with Souffle
+- Souffle:
+```shell
+| Dataset | Number of rows | TC size | Threads (Souffle) | Blocks x Threads (CUDA) | Souffle (s) | CUDA (s) | cuDF |
+| --- | --- | --- | --- | --- | --- | --- | --- | 
+| CA-HepTh | 51,971 | 74,619,885 | 128 | 3,456 x 512 | 14.696 | 11.4740 | 26.115098 |
+| SF.cedge | 223,001 | 80,498,014 | 128 | 3,456 x 512 | 16.758 | 45.8111 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 128 | 3,456 x 512 | 130.593 | 218.7626 |
+
+```
 - Fuse
 ```shell
 Benchmark for CA-HepTh
