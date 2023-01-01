@@ -54,9 +54,9 @@ void gpu_tc(const char *data_path, char separator,
     cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     int block_size, grid_size;
     int *relation;
-    int *relation_host;
+//    int *relation_host;
     Entity *hash_table, *result, *t_delta;
-    Entity *result_host;
+//    Entity *result_host;
     long int join_result_rows;
     long int reverse_relation_rows = relation_rows;
     long int result_rows = relation_rows;
@@ -65,14 +65,14 @@ void gpu_tc(const char *data_path, char separator,
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
 //    cout << "Hash table rows: " << hash_table_rows << endl;
 
-    cudaMalloc((void **) &relation, relation_rows * relation_columns * sizeof(int));
-    cudaMalloc((void **) &result, result_rows * sizeof(Entity));
+    cudaMallocManaged(&relation, relation_rows * relation_columns * sizeof(int));
+    cudaMallocManaged(&result, result_rows * sizeof(Entity));
 
-    relation_host = (int *)malloc(relation_rows * relation_columns * sizeof(int));
+//    relation_host = (int *)malloc(relation_rows * relation_columns * sizeof(int));
 
 
-    cudaMalloc((void **) &t_delta, relation_rows * sizeof(Entity));
-    cudaMalloc((void **) &hash_table, hash_table_rows * sizeof(Entity));
+    cudaMallocManaged(&t_delta, relation_rows * sizeof(Entity));
+    cudaMallocManaged(&hash_table, hash_table_rows * sizeof(Entity));
 //    cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id);
 //    cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
 //                                                 build_hash_table, 0, 0));
@@ -88,14 +88,12 @@ void gpu_tc(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
-    relation_host = get_relation_from_file(data_path,
-                                       relation_rows, relation_columns, separator);
-    cudaMemcpy(relation, relation_host, relation_rows * relation_columns * sizeof(int),
-               cudaMemcpyHostToDevice);
-//    show_relation(relation_host, relation_rows, relation_columns, "input", 0, 0);
-//    return;
-//    get_relation_from_file_gpu(relation, data_path,
-//                               relation_rows, relation_columns, separator);
+//    relation_host = get_relation_from_file(data_path,
+//                                       relation_rows, relation_columns, separator);
+//    cudaMemcpy(relation, relation_host, relation_rows * relation_columns * sizeof(int),
+//               cudaMemcpyHostToDevice);
+    get_relation_from_file_gpu(relation, data_path,
+                               relation_rows, relation_columns, separator);
 
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -141,7 +139,7 @@ void gpu_tc(const char *data_path, char separator,
     while (true) {
         int *offset;
         Entity *join_result;
-        cudaMalloc((void **) &offset, reverse_relation_rows * sizeof(int));
+        cudaMallocManaged(&offset, reverse_relation_rows * sizeof(int));
         time_point_begin = chrono::high_resolution_clock::now();
         get_join_result_size<<<grid_size, block_size>>>(hash_table, hash_table_rows, t_delta, reverse_relation_rows,
                                                         offset);
@@ -152,7 +150,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
-        cudaMalloc((void **) &join_result, join_result_rows * sizeof(Entity));
+        cudaMallocManaged(&join_result, join_result_rows * sizeof(Entity));
         get_join_result<<<grid_size, block_size>>>(hash_table, hash_table_rows,
                                                    t_delta, reverse_relation_rows, offset, join_result);
         cudaDeviceSynchronize();
@@ -183,7 +181,7 @@ void gpu_tc(const char *data_path, char separator,
 
         // show_entity_array(join_result, projection_rows, "join_result");
         time_point_begin = chrono::high_resolution_clock::now();
-        cudaMalloc((void **) &t_delta, projection_rows * sizeof(Entity));
+        cudaMallocManaged(&t_delta, projection_rows * sizeof(Entity));
         thrust::copy(thrust::device, join_result, join_result + projection_rows, t_delta);
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -192,7 +190,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
-        cudaMalloc((void **) &concatenated_result, concatenated_rows * sizeof(Entity));
+        cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity));
 
         temp_time_begin = chrono::high_resolution_clock::now();
         // merge two sorted array: previous result and join result
@@ -227,7 +225,7 @@ void gpu_tc(const char *data_path, char separator,
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
-        cudaMalloc((void **) &result, deduplicated_result_rows * sizeof(Entity));
+        cudaMallocManaged(&result, deduplicated_result_rows * sizeof(Entity));
         // Copy the deduplicated concatenated result to result
         thrust::copy(thrust::device, concatenated_result,
                      concatenated_result + deduplicated_result_rows, result);
@@ -254,9 +252,9 @@ void gpu_tc(const char *data_path, char separator,
     }
 
     time_point_begin = chrono::high_resolution_clock::now();
-    result_host = (Entity *)malloc(result_rows * sizeof(Entity));
-    cudaMemcpy(result_host, result, result_rows * sizeof(Entity),
-               cudaMemcpyDeviceToHost);
+//    result_host = (Entity *)malloc(result_rows * sizeof(Entity));
+//    cudaMemcpy(result_host, result, result_rows * sizeof(Entity),
+//               cudaMemcpyDeviceToHost);
 //    show_entity_array(result_host, result_rows, "Result");
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -266,8 +264,8 @@ void gpu_tc(const char *data_path, char separator,
     cudaFree(t_delta);
     cudaFree(result);
     cudaFree(hash_table);
-    free(relation_host);
-    free(result_host);
+//    free(relation_host);
+//    free(result_host);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.memory_clear_time += spent_time;
