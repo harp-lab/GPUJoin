@@ -17,7 +17,7 @@ test:
 run: build test
 
 exp:
-	nvcc $(SRC_EXP) -o $(TARGET_EXP).out
+	nvcc $(SRC_EXP) -o $(TARGET_EXP).out $(COMPILER_FLAGS)
 	./$(TARGET_EXP).out
 
 debug:

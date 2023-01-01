@@ -107,6 +107,21 @@ void show_relation(int *data, int total_rows,
     cout << "" << endl;
 }
 
+int *get_relation_from_file(const char *file_path, int total_rows, int total_columns, char separator) {
+    int *data = (int *) malloc(total_rows * total_columns * sizeof(int));
+    FILE *data_file = fopen(file_path, "r");
+    for (int i = 0; i < total_rows; i++) {
+        for (int j = 0; j < total_columns; j++) {
+            if (j != (total_columns - 1)) {
+                fscanf(data_file, "%d%c", &data[(i * total_columns) + j], &separator);
+            } else {
+                fscanf(data_file, "%d", &data[(i * total_columns) + j]);
+            }
+        }
+    }
+    return data;
+}
+
 void get_relation_from_file_gpu(int *data, const char *file_path, int total_rows, int total_columns, char separator) {
     FILE *data_file = fopen(file_path, "r");
     for (int i = 0; i < total_rows; i++) {
