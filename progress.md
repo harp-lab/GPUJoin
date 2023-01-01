@@ -9,6 +9,124 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
+
+## Different block size
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 108 x 512 | 235.9298 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 1,024 x 512 | 212.5212 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 2,048 x 512 | 217.5908 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,072 x 512 | 212.0779 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,456 x 512 | 211.1591 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 4,096 x 512 | 212.0866 |
+
+
+```shell
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 108 x 512 | 235.9298 |
+
+
+Initialization: 1.4321, Read: 0.0301, reverse: 0.0000
+Hashtable rate: 272,442,740 keys/s, time: 0.0005
+Join: 62.9955
+Projection: 0.0000
+Deduplication: 64.6069 (sort: 62.4187, unique: 2.1881)
+Memory clear: 36.7907
+Union: 70.0740
+Total: 235.9298
+
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 1,024 x 512 | 212.5212 |
+
+Initialization: 1.4315, Read: 0.0301, reverse: 0.0000
+Hashtable rate: 389,745,373 keys/s, time: 0.0004
+Join: 41.0681
+Projection: 0.0000
+Deduplication: 64.3892 (sort: 62.1673, unique: 2.2219)
+Memory clear: 35.7560
+Union: 69.8459
+Total: 212.5212
+
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 2,048 x 512 | 217.5908 |
+
+
+Initialization: 1.5598, Read: 0.0308, reverse: 0.0000
+Hashtable rate: 377,446,901 keys/s, time: 0.0004
+Join: 40.3055
+Projection: 0.0000
+Deduplication: 69.1505 (sort: 66.5406, unique: 2.6099)
+Memory clear: 36.0645
+Union: 70.4793
+Total: 217.5908
+
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,072 x 512 | 212.0779 |
+
+
+Initialization: 1.4348, Read: 0.0308, reverse: 0.0000
+Hashtable rate: 383,827,006 keys/s, time: 0.0004
+Join: 40.3820
+Projection: 0.0000
+Deduplication: 64.7673 (sort: 62.4203, unique: 2.3469)
+Memory clear: 35.6050
+Union: 69.8575
+Total: 212.0779
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,456 x 512 | 211.1591 |
+
+
+Initialization: 1.4309, Read: 0.0306, reverse: 0.0000
+Hashtable rate: 372,353,228 keys/s, time: 0.0004
+Join: 38.7834
+Projection: 0.0000
+Deduplication: 64.6296 (sort: 62.4148, unique: 2.2147)
+Memory clear: 36.5726
+Union: 69.7117
+Total: 211.1591
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 4,096 x 512 | 212.0866 |
+
+
+Initialization: 1.4297, Read: 0.0303, reverse: 0.0000
+Hashtable rate: 221,806,281 keys/s, time: 0.0007
+Join: 40.9215
+Projection: 0.0000
+Deduplication: 64.4157 (sort: 62.2199, unique: 2.1958)
+Memory clear: 34.9987
+Union: 70.2901
+Total: 212.0866
+```
+
+## Different number of threads for Souffle
+
+- Souffle performance using different number of threads for the same graph:
+
+| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Souffle(s) | 
+| --- | --- | --- |----|------------------| --- |  
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 1                | 547.514 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 2                | 321.823 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 4                | 202.916 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 8                | 143.917 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 16               | 117.251 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 32               | 122.175 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 64               | 124.879 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 128              | 132.129 | 
+
+
 ## Comparing CUDA versions with Souffle
 - Souffle vs CUDA vs cuDF:
 

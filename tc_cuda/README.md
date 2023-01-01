@@ -13,3 +13,5 @@ cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
 make run
 ```
 
+### References
+- [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)

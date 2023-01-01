@@ -62,6 +62,60 @@ time ./a.out -j 128
 
 ```
 
+- Souffle performance using different number of threads:
+
+```shell
+
+g++ tc_dl.cpp -I . -O3 -fopenmp
+
+time ./a.out -j 1
+path	884179859
+
+real	9m7.514s
+user	9m1.992s
+sys	0m5.018s
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 32
+path	884179859
+
+real	2m2.175s
+user	11m32.363s
+sys	0m10.700s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 64
+path	884179859
+
+real	2m4.879s
+user	11m55.119s
+sys	0m17.087s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 16
+path	884179859
+
+real	1m57.251s
+user	9m34.587s
+sys	0m7.887s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	884179859
+
+real	2m12.129s
+user	13m40.888s
+sys	0m22.758s
+
+```
+
+- Souffle performance using different number of threads for the same graph:
+
+| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Souffle(s) | 
+| --- | --- | --- |----|------------------| --- |  
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 1                | 547.514 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 2                | 321.823 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 4                | 202.916 | 
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 8                | 143.917 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 16               | 117.251 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 32               | 122.175 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 64               | 124.879 |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 128              | 132.129 | 
+
+
 ### Running Souffle in ThetaGPU
 ```shell
 arsho@thetalogin4:~> ssh thetagpusn1

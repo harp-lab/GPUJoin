@@ -50,6 +50,7 @@ void gpu_tc(const char *data_path, char separator,
     output.total_time = 0;
     double sort_time = 0.0;
     double unique_time = 0.0;
+    double merge_time = 0.0;
     double temp_spent_time = 0.0;
 
     // Added to display comma separated integer values
@@ -83,7 +84,7 @@ void gpu_tc(const char *data_path, char separator,
         grid_size = preferred_grid_size;
     }
     if (preferred_block_size != 0) {
-        block_size = preferred_block_size * number_of_sm;
+        block_size = preferred_block_size;
     }
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
@@ -188,11 +189,16 @@ void gpu_tc(const char *data_path, char separator,
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMallocManaged(&concatenated_result, concatenated_rows * sizeof(Entity)));
+
+        temp_time_begin = chrono::high_resolution_clock::now();
         // merge two sorted array: previous result and join result
         thrust::merge(thrust::device,
                       result, result + result_rows,
                       join_result, join_result + projection_rows,
                       concatenated_result, cmp());
+        temp_time_end = chrono::high_resolution_clock::now();
+        temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
+        merge_time += temp_spent_time;
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time;
@@ -279,7 +285,7 @@ void gpu_tc(const char *data_path, char separator,
     cout << "Deduplication: " << output.deduplication_time;
     cout << " (sort: " << sort_time << ", unique: " << unique_time << ")" << endl;
     cout << "Memory clear: " << output.memory_clear_time << endl;
-    cout << "Union: " << output.union_time << endl;
+    cout << "Union: " << output.union_time << " (merge: " << merge_time << ")" << endl;
     cout << "Total: " << output.total_time << endl;
 }
 
@@ -287,14 +293,14 @@ void gpu_tc(const char *data_path, char separator,
 void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "CA-HepTh", "../data/data_51971.txt",
-            "SF.cedge", "../data/data_223001.txt",
+//            "CA-HepTh", "../data/data_51971.txt",
+//            "SF.cedge", "../data/data_223001.txt",
             "p2p-Gnutella31", "../data/data_147892.txt",
-            "p2p-Gnutella09", "../data/data_26013.txt",
-            "p2p-Gnutella04", "../data/data_39994.txt",
-            "cal.cedge", "../data/data_21693.txt",
-            "TG.cedge", "../data/data_23874.txt",
-            "OL.cedge", "../data/data_7035.txt",
+//            "p2p-Gnutella09", "../data/data_26013.txt",
+//            "p2p-Gnutella04", "../data/data_39994.txt",
+//            "cal.cedge", "../data/data_21693.txt",
+//            "TG.cedge", "../data/data_23874.txt",
+//            "OL.cedge", "../data/data_7035.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
