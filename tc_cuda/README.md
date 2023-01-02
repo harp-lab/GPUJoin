@@ -56,7 +56,18 @@ Union: 2.1491 (merge: 1.4007)
 Total: 22.2674
 
 ````
+- Pageable memory vs pinned memory:
+```shell
+# Pageable memory
+CUDA memcpy HtoD: 25.856us
+CUDA memcpy DtoH: 180.32ms
+
+# Pinned memory
+CUDA memcpy HtoD: 25.983us
+CUDA memcpy DtoH: 28.998ms
+```
 
 ### References
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)
 - [CUDA — Memory Model blog](https://medium.com/analytics-vidhya/cuda-memory-model-823f02cef0bf)
+- [CUDA - Pinned memory](https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/)

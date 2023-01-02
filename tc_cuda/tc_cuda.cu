@@ -62,13 +62,17 @@ void gpu_tc(const char *data_path, char separator,
     Entity *hash_table, *result, *t_delta;
     Entity *result_host;
     long int join_result_rows;
-    long int reverse_relation_rows = relation_rows;
+    long int t_delta_rows = relation_rows;
     long int result_rows = relation_rows;
     long int iterations = 0;
     long int hash_table_rows = (long int) relation_rows / load_factor;
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
 //    cout << "Hash table rows: " << hash_table_rows << endl;
-    relation_host = (int *) malloc(relation_rows * relation_columns * sizeof(int));
+// pageable memory
+//    relation_host = (int *) malloc(relation_rows * relation_columns * sizeof(int));
+// pinned memory
+    checkCuda(cudaMallocHost((void **) &relation_host, relation_rows * relation_columns * sizeof(int)));
+
     checkCuda(cudaMalloc((void **) &relation, relation_rows * relation_columns * sizeof(int)));
     checkCuda(cudaMalloc((void **) &result, result_rows * sizeof(Entity)));
     checkCuda(cudaMalloc((void **) &t_delta, relation_rows * sizeof(Entity)));
@@ -136,30 +140,42 @@ void gpu_tc(const char *data_path, char separator,
     sort_time += temp_spent_time;
     output.deduplication_time += temp_spent_time;
 
-    long int previous_unique_result_rows = result_rows;
+    time_point_begin = chrono::high_resolution_clock::now();
+    cudaFree(relation);
+    // pageable memory
+//    free(relation_host);
+    // pinned memory
+    cudaFreeHost(relation_host);
+
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.memory_clear_time += spent_time;
+
 
     while (true) {
+        cout << "Iteration: " << iterations << endl;
         int *offset;
         Entity *join_result;
-        checkCuda(cudaMalloc((void **) &offset, reverse_relation_rows * sizeof(int)));
+        checkCuda(cudaMalloc((void **) &offset, t_delta_rows * sizeof(int)));
         time_point_begin = chrono::high_resolution_clock::now();
-        get_join_result_size<<<grid_size, block_size>>>(hash_table, hash_table_rows, t_delta, reverse_relation_rows,
+        get_join_result_size<<<grid_size, block_size>>>(hash_table, hash_table_rows, t_delta, t_delta_rows,
                                                         offset);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
-        join_result_rows = thrust::reduce(thrust::device, offset, offset + reverse_relation_rows, 0);
-        thrust::exclusive_scan(thrust::device, offset, offset + reverse_relation_rows, offset);
+        join_result_rows = thrust::reduce(thrust::device, offset, offset + t_delta_rows, 0);
+        thrust::exclusive_scan(thrust::device, offset, offset + t_delta_rows, offset);
         checkCuda(cudaMalloc((void **) &join_result, join_result_rows * sizeof(Entity)));
         get_join_result<<<grid_size, block_size>>>(hash_table, hash_table_rows,
-                                                   t_delta, reverse_relation_rows, offset, join_result);
+                                                   t_delta, t_delta_rows, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
-//        show_entity_array(t_delta, reverse_relation_rows, "Reverse");
+        cout << "join_result_rows: " << join_result_rows << endl;
+//        show_entity_array(t_delta, t_delta_rows, "Reverse");
 //        show_entity_array(join_result, join_result_rows, "Join result");
 
         // deduplication of projection
@@ -167,6 +183,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_begin = chrono::high_resolution_clock::now();
         temp_time_begin = chrono::high_resolution_clock::now();
         thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows, cmp());
+
         temp_time_end = chrono::high_resolution_clock::now();
         temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
         sort_time += temp_spent_time;
@@ -180,6 +197,7 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.deduplication_time += spent_time;
+        cout << "projection_rows: " << projection_rows << endl;
 
         // show_entity_array(join_result, projection_rows, "join_result");
         time_point_begin = chrono::high_resolution_clock::now();
@@ -198,6 +216,7 @@ void gpu_tc(const char *data_path, char separator,
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMalloc((void **) &concatenated_result, concatenated_rows * sizeof(Entity)));
+        cout << "concatenated_rows: " << concatenated_rows << endl;
 
         temp_time_begin = chrono::high_resolution_clock::now();
         // merge two sorted array: previous result and join result
@@ -239,8 +258,9 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time; // changed this time from deduplication to union
+        cout << "deduplicated_result_rows:" << deduplicated_result_rows << "\n" << endl;
 
-        reverse_relation_rows = projection_rows;
+        t_delta_rows = projection_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(join_result);
@@ -249,27 +269,30 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.memory_clear_time += spent_time;
-        result_rows = deduplicated_result_rows;
-        if (previous_unique_result_rows == deduplicated_result_rows) {
+        if (result_rows == deduplicated_result_rows) {
             iterations++;
             break;
         }
-        previous_unique_result_rows = result_rows;
+        result_rows = deduplicated_result_rows;
         iterations++;
     }
 //    show_entity_array(result, result_rows, "Result");
-    result_host = (Entity *) malloc(result_rows * sizeof(Entity));
+// Pageable memory
+//    result_host = (Entity *) malloc(result_rows * sizeof(Entity));
+//    Pinned memory
+    checkCuda(cudaMallocHost((void **) &result_host, result_rows * sizeof(Entity)));
+
     cudaMemcpy(result_host, result, result_rows * sizeof(Entity),
                cudaMemcpyDeviceToHost);
 //    show_entity_array(result_host, result_rows, "Result");
     time_point_begin = chrono::high_resolution_clock::now();
-    cudaFree(relation);
     cudaFree(t_delta);
     cudaFree(result);
     cudaFree(hash_table);
-
-    free(relation_host);
-    free(result_host);
+//    pageable memory
+//    free(result_host);
+// pinned memory
+    cudaFreeHost(result_host);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.memory_clear_time += spent_time;
@@ -309,14 +332,14 @@ void gpu_tc(const char *data_path, char separator,
 void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-            "CA-HepTh", "../data/data_51971.txt",
-            "SF.cedge", "../data/data_223001.txt",
-            "p2p-Gnutella31", "../data/data_147892.txt",
-            "p2p-Gnutella09", "../data/data_26013.txt",
+//            "CA-HepTh", "../data/data_51971.txt",
+//            "SF.cedge", "../data/data_223001.txt",
+//            "p2p-Gnutella31", "../data/data_147892.txt",
+//            "p2p-Gnutella09", "../data/data_26013.txt",
             "p2p-Gnutella04", "../data/data_39994.txt",
-            "cal.cedge", "../data/data_21693.txt",
-            "TG.cedge", "../data/data_23874.txt",
-            "OL.cedge", "../data/data_7035.txt",
+//            "cal.cedge", "../data/data_21693.txt",
+//            "TG.cedge", "../data/data_23874.txt",
+//            "OL.cedge", "../data/data_7035.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
