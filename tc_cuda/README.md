@@ -14,6 +14,8 @@ make run
 
 # debug
 make debug
+cuda-memcheck  ./tc_cuda.out
+cuda-memcheck --leak-check full ./tc_cuda.out
 ```
 
 ### Optimization

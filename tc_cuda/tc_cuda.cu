@@ -92,10 +92,10 @@ void gpu_tc(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
-//    get_relation_from_file_gpu(relation, data_path,
-//                               relation_rows, relation_columns, separator);
-    relation_host = get_relation_from_file(data_path,
-                                           relation_rows, relation_columns, separator);
+    get_relation_from_file_gpu(relation_host, data_path,
+                               relation_rows, relation_columns, separator);
+//    relation_host = get_relation_from_file(data_path,
+//                                           relation_rows, relation_columns, separator);
     cudaMemcpy(relation, relation_host, relation_rows * relation_columns * sizeof(int),
                cudaMemcpyHostToDevice);
     time_point_end = chrono::high_resolution_clock::now();
@@ -341,9 +341,9 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     string datasets[] = {
 //            "CA-HepTh", "../data/data_51971.txt",
 //            "SF.cedge", "../data/data_223001.txt",
-//            "p2p-Gnutella31", "../data/data_147892.txt",
+            "p2p-Gnutella31", "../data/data_147892.txt",
 //            "p2p-Gnutella09", "../data/data_26013.txt",
-            "p2p-Gnutella04", "../data/data_39994.txt",
+//            "p2p-Gnutella04", "../data/data_39994.txt",
 //            "cal.cedge", "../data/data_21693.txt",
 //            "TG.cedge", "../data/data_23874.txt",
 //            "OL.cedge", "../data/data_7035.txt",
