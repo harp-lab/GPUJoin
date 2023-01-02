@@ -16,6 +16,63 @@ make run
 make debug
 cuda-memcheck  ./tc_cuda.out
 cuda-memcheck --leak-check full ./tc_cuda.out
+
+cuda-memcheck --leak-check full ./tc_cuda.out     
+========= CUDA-MEMCHECK
+========= This tool is deprecated and will be removed in a future release of the CUDA toolkit
+========= Please use the compute-sanitizer tool as a drop-in replacement
+Benchmark for talk 5
+----------------------------------------------------------
+....
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors
+
+compute-sanitizer ./tc_cuda.out
+========= COMPUTE-SANITIZER
+Benchmark for talk 5
+----------------------------------------------------------
+
+...
+========= ERROR SUMMARY: 0 errors
+
+
+Iteration: 9
+join_result_rows: 1,533,673,887
+projection_rows: 735,564,909
+concatenated_rows: 1,399,870,967
+deduplicated_result_rows:754,453,946
+
+Iteration: 10
+join_result_rows: 1,749,702,039
+========= Program hit cudaErrorMemoryAllocation (error 2) due to "out of memory" on CUDA API call to cudaMalloc.
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/lib/x86_64-linux-gnu/libcuda.so.1 [0x3d6d23]
+=========     Host Frame:./tc_cuda.out [0x5dbdb]
+=========     Host Frame:./tc_cuda.out [0x169b4]
+=========     Host Frame:./tc_cuda.out [0x1b5bd]
+=========     Host Frame:./tc_cuda.out [0xfa6e]
+=========     Host Frame:./tc_cuda.out [0x115ef]
+=========     Host Frame:./tc_cuda.out [0xc869]
+=========     Host Frame:/lib/x86_64-linux-gnu/libc.so.6 (__libc_start_main + 0xf3) [0x24083]
+=========     Host Frame:./tc_cuda.out [0xc9ce]
+=========
+========= Program hit cudaErrorMemoryAllocation (error 2) due to "out of memory" on CUDA API call to cudaGetLastError.
+=========     Saved host backtrace up to driver entry point at error
+=========     Host Frame:/lib/x86_64-linux-gnu/libcuda.so.1 [0x3d6d23]
+=========     Host Frame:./tc_cuda.out [0x56134]
+=========     Host Frame:./tc_cuda.out [0x16a5d]
+=========     Host Frame:./tc_cuda.out [0x1b5bd]
+=========     Host Frame:./tc_cuda.out [0xfa6e]
+=========     Host Frame:./tc_cuda.out [0x115ef]
+=========     Host Frame:./tc_cuda.out [0xc869]
+=========     Host Frame:/lib/x86_64-linux-gnu/libc.so.6 (__libc_start_main + 0xf3) [0x24083]
+=========     Host Frame:./tc_cuda.out [0xc9ce]
+=========
+terminate called after throwing an instance of 'thrust::system::detail::bad_alloc'
+  what():  std::bad_alloc: cudaErrorMemoryAllocation: out of memory
+========= Error: process didn't terminate successfully
+========= No CUDA-MEMCHECK results found
+
 ```
 
 ### Optimization
@@ -76,3 +133,4 @@ CUDA memcpy DtoH: 28.998ms
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)
 - [CUDA — Memory Model blog](https://medium.com/analytics-vidhya/cuda-memory-model-823f02cef0bf)
 - [CUDA - Pinned memory](https://developer.nvidia.com/blog/how-optimize-data-transfers-cuda-cc/)
+- [Stanford Large Network Dataset Collection](https://snap.stanford.edu/data/index.html)

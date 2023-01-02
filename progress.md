@@ -9,6 +9,132 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
+## Impact of cudaHostAlloc
+```shell
+make run
+nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
+./tc_cuda.out
+Benchmark for CA-HepTh
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| CA-HepTh | 51,971 | 74,619,885 | 18 | 3,456 x 512 | 4.3180 |
+
+
+Initialization: 1.4829, Read: 0.0347, reverse: 0.0000
+Hashtable rate: 794,979,655 keys/s, time: 0.0001
+Join: 0.6127
+Projection: 0.0000
+Deduplication: 1.8861 (sort: 1.6880, unique: 0.1981)
+Memory clear: 0.1768
+Union: 0.1247 (merge: 0.0590)
+Total: 4.3180
+
+Benchmark for SF.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 512 | 11.2749 |
+
+
+Initialization: 0.0068, Read: 0.1030, reverse: 0.0000
+Hashtable rate: 7,184,773,503 keys/s, time: 0.0000
+Join: 1.8039
+Projection: 0.0000
+Deduplication: 3.4207 (sort: 2.1190, unique: 1.3014)
+Memory clear: 0.9775
+Union: 4.9631 (merge: 0.7488)
+Total: 11.2749
+
+Benchmark for p2p-Gnutella09
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 512 | 0.7202 |
+
+
+Initialization: 0.0045, Read: 0.0347, reverse: 0.0000
+Hashtable rate: 650,552,693 keys/s, time: 0.0000
+Join: 0.1822
+Projection: 0.0000
+Deduplication: 0.3559 (sort: 0.2734, unique: 0.0825)
+Memory clear: 0.0685
+Union: 0.0744 (merge: 0.0331)
+Total: 0.7202
+
+Benchmark for p2p-Gnutella04
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 512 | 2.0920 |
+
+
+Initialization: 0.0033, Read: 0.0389, reverse: 0.0000
+Hashtable rate: 733,659,860 keys/s, time: 0.0001
+Join: 0.4378
+Projection: 0.0000
+Deduplication: 1.3333 (sort: 1.1708, unique: 0.1625)
+Memory clear: 0.1312
+Union: 0.1474 (merge: 0.0598)
+Total: 2.0920
+
+Benchmark for cal.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 512 | 0.4894 |
+
+
+Initialization: 0.0053, Read: 0.0263, reverse: 0.0000
+Hashtable rate: 1,287,265,606 keys/s, time: 0.0000
+Join: 0.0187
+Projection: 0.0000
+Deduplication: 0.0233 (sort: 0.0077, unique: 0.0156)
+Memory clear: 0.1380
+Union: 0.2778 (merge: 0.0063)
+Total: 0.4894
+
+Benchmark for TG.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 512 | 0.1989 |
+
+
+Initialization: 0.0049, Read: 0.0410, reverse: 0.0000
+Hashtable rate: 1,415,930,253 keys/s, time: 0.0000
+Join: 0.0079
+Projection: 0.0000
+Deduplication: 0.0304 (sort: 0.0254, unique: 0.0050)
+Memory clear: 0.0392
+Union: 0.0756 (merge: 0.0021)
+Total: 0.1989
+
+Benchmark for OL.cedge
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 512 | 0.1481 |
+
+
+Initialization: 0.0026, Read: 0.0378, reverse: 0.0000
+Hashtable rate: 452,702,702 keys/s, time: 0.0000
+Join: 0.0070
+Projection: 0.0000
+Deduplication: 0.0097 (sort: 0.0050, unique: 0.0047)
+Memory clear: 0.0339
+Union: 0.0571 (merge: 0.0020)
+Total: 0.1481
+
+```
+
 ## Impact of cudaMalloc
 ```shell
 make run
@@ -295,18 +421,18 @@ Total: 212.0866
 
 
 ## Comparing CUDA versions with Souffle
-- Souffle vs CUDA(Malloc) vs CUDA(MallocManaged) vs cuDF:
+- Souffle vs CUDA(MallocHost) vs CUDA(Malloc) vs CUDA(MallocManaged) vs cuDF:
 
-| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Blocks x Threads(CUDA) | Souffle(s) | CUDAMalloc(s)           | CUDAMallocManaged(s) | cuDF(s)       |
-| --- | --- | --- |------------|------------------| --- |------------|-------------------------|---------------------|---------------| 
-| CA-HepTh | 51,971 | 74,619,885 | 18         | 128              | 3,456 x 512 | 15.206     | 4.1433                  | 11.4198             | 26.115098     |
-| SF.cedge | 223,001 | 80,498,014 | 287        | 128              | 3,456 x 512      | 17.073     | 11.2582                 | 45.7082             | 64.417961     |
-| p2p-Gnutella31 | 147,892 | 884,179,859 | 31         | 128              | 3,456 x 512      | 128.917    | Out of Memory | 219.7610            | Out of memory |
-| p2p-Gnutella09 | 26,013 | 21,402,960 | 20         | 128              | 3,456 x 512      | 3.094      | 0.5640  | 2.2018                  | 3.906619      |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 26         | 128              | 3,456 x 512      | 7.537 | 2.2445       | 7.3043                  | 14.005228     |
-| cal.cedge | 21,693 | 501,755 | 195        | 128              | 3,456 x 512      | 0.455 | 0.4455       | 1.1011                  | 2.756417      |
-| TG.cedge | 23,874 | 481,121 | 58         | 128              | 3,456 x 512      | 0.219 | 0.2342       | 0.3776                  | 0.857208      |
-| OL.cedge | 7,035 | 146,120 | 64 | 128              | 3,456 x 512      | 0.181 | 0.1574       | 0.3453                  | 0.523132      |
+| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Blocks x Threads(CUDA) | Souffle(s) | CUDAMallocHost(s) | CUDAMalloc(s)           | CUDAMallocManaged(s) | cuDF(s)       |
+| --- | --- | --- |------------|------------------| --- |------------|-------------------|---------------------|---------------|---| 
+| CA-HepTh | 51,971 | 74,619,885 | 18         | 128              | 3,456 x 512 | 15.206 | 4.3180      | 4.1433            | 11.4198             | 26.115098     |
+| SF.cedge | 223,001 | 80,498,014 | 287        | 128              | 3,456 x 512      | 17.073 | 11.2749      | 11.2582           | 45.7082             | 64.417961     |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31         | 128              | 3,456 x 512      | 128.917    | Out of Memory    | Out of Memory     | 219.7610            | Out of memory |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20         | 128              | 3,456 x 512      | 3.094 | 0.7202       | 0.5640            | 2.2018                  | 3.906619      |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26         | 128              | 3,456 x 512      | 7.537 | 2.0920  | 2.2445            | 7.3043                  | 14.005228     |
+| cal.cedge | 21,693 | 501,755 | 195        | 128              | 3,456 x 512      | 0.455 | 0.4894  | 0.4455            | 1.1011                  | 2.756417      |
+| TG.cedge | 23,874 | 481,121 | 58         | 128              | 3,456 x 512      | 0.219 | 0.1989  | 0.2342            | 0.3776                  | 0.857208      |
+| OL.cedge | 7,035 | 146,120 | 64 | 128              | 3,456 x 512      | 0.181 | 0.1481  | 0.1574            | 0.3453                  | 0.523132      |
 
 
 - Fuse (O3 flag)

@@ -341,7 +341,10 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     string datasets[] = {
 //            "CA-HepTh", "../data/data_51971.txt",
 //            "SF.cedge", "../data/data_223001.txt",
-            "p2p-Gnutella31", "../data/data_147892.txt",
+//            "p2p-Gnutella31", "../data/data_147892.txt",
+            "p2p-Gnutella30", "../data/data_88328.txt",
+            "p2p-Gnutella25", "../data/data_54705.txt",
+            "p2p-Gnutella24", "../data/data_65369.txt",
 //            "p2p-Gnutella09", "../data/data_26013.txt",
 //            "p2p-Gnutella04", "../data/data_39994.txt",
 //            "cal.cedge", "../data/data_21693.txt",
