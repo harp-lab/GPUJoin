@@ -9,6 +9,48 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
+## Impact of checkCuda assert
+```shell
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda$ make run
+nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
+./tc_cuda.out
+Benchmark for p2p-Gnutella31
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,456 x 512 | 248.1438 |
+
+
+Initialization: 1.4350, Read: 0.0296, reverse: 0.0000
+Hashtable rate: 323,945,204 keys/s, time: 0.0005
+Join: 43.1088
+Projection: 0.0000
+Deduplication: 95.9716 (sort: 93.1034, unique: 2.8681)
+Memory clear: 37.0255
+Union: 70.5729 (merge: 50.9652)
+Total: 248.1438
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda$ make exp
+nvcc tc_cuda_exp.cu -o tc_cuda_exp.out -O3 -w
+./tc_cuda_exp.out
+Benchmark for p2p-Gnutella31
+----------------------------------------------------------
+   
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31 | 3,456 x 512 | 248.6810 |
+
+
+Initialization: 1.4252, Read: 0.0304, reverse: 0.0000
+Hashtable rate: 206,623,774 keys/s, time: 0.0007
+Join: 42.8971
+Projection: 0.0000
+Deduplication: 96.3826 (sort: 93.5085, unique: 2.8741)
+Memory clear: 37.1401
+Union: 70.8049 (merge: 51.2805)
+Total: 248.6810
+```
 
 ## Different block size
 

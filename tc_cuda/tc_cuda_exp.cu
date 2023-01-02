@@ -157,8 +157,6 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
-//        show_entity_array(t_delta, reverse_relation_rows, "Reverse");
-//        show_entity_array(join_result, join_result_rows, "Join result");
 
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
@@ -180,6 +178,11 @@ void gpu_tc(const char *data_path, char separator,
         output.deduplication_time += spent_time;
 
         // show_entity_array(join_result, projection_rows, "join_result");
+        time_point_begin = chrono::high_resolution_clock::now();
+        cudaFree(t_delta);
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        output.memory_clear_time += spent_time;
         time_point_begin = chrono::high_resolution_clock::now();
         cudaMallocManaged(&t_delta, projection_rows * sizeof(Entity));
         thrust::copy(thrust::device, join_result, join_result + projection_rows, t_delta);
@@ -305,20 +308,20 @@ void gpu_tc(const char *data_path, char separator,
 void run_benchmark(int grid_size, int block_size, double load_factor) {
     char separator = '\t';
     string datasets[] = {
-//            "CA-HepTh", "../data/data_51971.txt",
-//            "SF.cedge", "../data/data_223001.txt",
+            "CA-HepTh", "../data/data_51971.txt",
+            "SF.cedge", "../data/data_223001.txt",
             "p2p-Gnutella31", "../data/data_147892.txt",
-//            "p2p-Gnutella09", "../data/data_26013.txt",
-//            "p2p-Gnutella04", "../data/data_39994.txt",
-//            "cal.cedge", "../data/data_21693.txt",
-//            "TG.cedge", "../data/data_23874.txt",
-//            "OL.cedge", "../data/data_7035.txt",
+            "p2p-Gnutella09", "../data/data_26013.txt",
+            "p2p-Gnutella04", "../data/data_39994.txt",
+            "cal.cedge", "../data/data_21693.txt",
+            "TG.cedge", "../data/data_23874.txt",
+            "OL.cedge", "../data/data_7035.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
 //            "string 4", "../data/data_4.txt",
 //            "talk 5", "../data/data_5.txt",
-////            "cyclic 3", "../data/data_3.txt",
+//            "cyclic 3", "../data/data_3.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
