@@ -285,6 +285,10 @@ path	80498014
 real	3m55.989s
 user	3m54.894s
 sys	0m1.052s
+
+for default gcc
+module unload gcc-11.3.0-gcc-9.4.0-tqxatvi
+module load openmpi/openmpi-4.1.4_ucx-1.12.1_gcc-9.4.0
 ```
 
 

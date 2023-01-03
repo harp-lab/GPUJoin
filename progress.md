@@ -9,8 +9,102 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
-## Impact of graph size
+## Impact of new graphs
 ```shell
+
+Benchmark for loc-Brightkite
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 17.2650 |
+
+
+Initialization: 1.4291, Read: 0.0419, reverse: 0.0000
+Hashtable rate: 1,553,304,648 keys/s, time: 0.0001
+Join: 3.2349
+Projection: 0.0000
+Deduplication: 11.9648 (sort: 11.3530, unique: 0.6118)
+Memory clear: 0.3764
+Union: 0.2177 (merge: 0.0985)
+Total: 17.2650
+
+time ./a.out -j 128
+path	138269412
+
+real	0m29.184s
+
+Benchmark for fe_body
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 48.8223 |
+
+
+Initialization: 1.6223, Read: 0.0322, reverse: 0.0000
+Hashtable rate: 4,248,086,552 keys/s, time: 0.0000
+Join: 9.2351
+Projection: 0.0000
+Deduplication: 34.2409 (sort: 31.5139, unique: 2.7269)
+Memory clear: 1.5815
+Union: 2.1101 (merge: 0.9040)
+Total: 48.8223
+
+
+time ./a.out -j 128
+path	156120489
+
+real	0m29.070s
+
+
+Benchmark for delaunay_n16
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 3.6124 |
+
+
+Initialization: 1.5354, Read: 0.0383, reverse: 0.0000
+Hashtable rate: 4,840,914,128 keys/s, time: 0.0000
+Join: 0.5634
+Projection: 0.0000
+Deduplication: 0.6591 (sort: 0.2570, unique: 0.4020)
+Memory clear: 0.3872
+Union: 0.4289 (merge: 0.1919)
+Total: 3.6124
+
+time ./a.out -j 128
+path	6137959
+
+real	0m1.612s
+
+
+Benchmark for usroads-48
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| usroads-48 | 161,950 | 871,272,878 | 606 | 3,456 x 512 | 365.3486 |
+
+
+Initialization: 1.5385, Read: 0.0333, reverse: 0.0000
+Hashtable rate: 6,040,431,166 keys/s, time: 0.0000
+Join: 48.1104
+Projection: 0.0000
+Deduplication: 116.1380 (sort: 96.6520, unique: 19.4855)
+Memory clear: 29.8171
+Union: 169.7112 (merge: 9.8942)
+Total: 365.3486
+
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	871272878
+
+real	3m42.173s 222.173
+
+
 Benchmark for usroads
 ----------------------------------------------------------
 

@@ -23,27 +23,9 @@ path    74619885
 
 
 g++ tc_dl.cpp -I . -O3 -fopenmp
-arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+time ./a.out -j 128
 path	74619885
 real	0m13.442s
-
-
-g++ tc_dl.cpp -I . -O3                  
-time ./a.out                            
-path    74619885
-./a.out  67.21s user 0.58s system 99% cpu 1:07.91 total
-
-
-
-souffle -F . -D . -o tc_dl tc.dl        
-time ./tc_dl                    
-path    74619885
-./tc_dl  90.57s user 0.79s system 99% cpu 1:31.37 total
-g++ tc_dl.cpp -I . -O3
-time ./a.out
-path    74619885
-./a.out  70.93s user 0.38s system 99% cpu 1:11.32 total
-
 
 cp sf.data edge.facts 
 time ./a.out -j 128

@@ -113,9 +113,6 @@ Memory clear: 1.5815
 Union: 2.1101 (merge: 0.9040)
 Total: 48.8223
 
-make run
-nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
-./tc_cuda.out
 Benchmark for delaunay_n16
 ----------------------------------------------------------
 

@@ -10,9 +10,6 @@
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
-#include <thrust/host_vector.h>
-#include <thrust/device_vector.h>
-#include <thrust/remove.h>
 #include <thrust/unique.h>
 #include <thrust/copy.h>
 #include <thrust/fill.h>
@@ -153,9 +150,6 @@ void gpu_tc(const char *data_path, char separator,
 
 
     while (true) {
-#if defined(DEBUG) || defined(_DEBUG)
-        cout << "Iteration: " << iterations << endl;
-#endif
         int *offset;
         Entity *join_result;
         checkCuda(cudaMalloc((void **) &offset, t_delta_rows * sizeof(int)));
@@ -176,11 +170,6 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.join_time += spent_time;
-#if defined(DEBUG) || defined(_DEBUG)
-        cout << "join_result_rows: " << join_result_rows << endl;
-#endif
-//        show_entity_array(t_delta, t_delta_rows, "Reverse");
-//        show_entity_array(join_result, join_result_rows, "Join result");
 
         // deduplication of projection
         // first sort the array and then remove consecutive duplicated elements
@@ -201,9 +190,6 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.deduplication_time += spent_time;
-#if defined(DEBUG) || defined(_DEBUG)
-        cout << "projection_rows: " << projection_rows << endl;
-#endif
         // show_entity_array(join_result, projection_rows, "join_result");
         time_point_begin = chrono::high_resolution_clock::now();
         cudaFree(t_delta);
@@ -221,9 +207,6 @@ void gpu_tc(const char *data_path, char separator,
         Entity *concatenated_result;
         long int concatenated_rows = projection_rows + result_rows;
         checkCuda(cudaMalloc((void **) &concatenated_result, concatenated_rows * sizeof(Entity)));
-#if defined(DEBUG) || defined(_DEBUG)
-        cout << "concatenated_rows: " << concatenated_rows << endl;
-#endif
         temp_time_begin = chrono::high_resolution_clock::now();
         // merge two sorted array: previous result and join result
         thrust::merge(thrust::device,
@@ -264,9 +247,6 @@ void gpu_tc(const char *data_path, char separator,
         time_point_end = chrono::high_resolution_clock::now();
         spent_time = get_time_spent("", time_point_begin, time_point_end);
         output.union_time += spent_time; // changed this time from deduplication to union
-#if defined(DEBUG) || defined(_DEBUG)
-        cout << "deduplicated_result_rows:" << deduplicated_result_rows << "\n" << endl;
-#endif
         t_delta_rows = projection_rows;
 //        show_entity_array(concatenated_result, concatenated_rows, "concatenated_result");
         time_point_begin = chrono::high_resolution_clock::now();
