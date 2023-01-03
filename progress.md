@@ -9,6 +9,40 @@
 - Included string graph in benchmark
 - Cleaned the project: [https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda](https://github.com/harp-lab/GPUJoin/tree/main/tc_cuda)
 
+## Impact of graph size
+```shell
+Benchmark for usroads
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| usroads | 165,435 | 871,365,688 | 606 | 3,456 x 512 | 364.5549 |
+
+
+Initialization: 0.0024, Read: 0.0330, reverse: 0.0000
+Hashtable rate: 6,602,346,649 keys/s, time: 0.0000
+Join: 47.9190
+Projection: 0.0000
+Deduplication: 118.1086 (sort: 98.3867, unique: 19.7213)
+Memory clear: 27.8654
+Union: 170.6265 (merge: 9.7994)
+Total: 364.5549
+
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda$ cd ../datalog_related/
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp usroads.txt edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ module use ~/spack/share/spack/modules/linux-ubuntu20.04-zen2
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ module load gcc-11.3.0-gcc-9.4.0-tqxatvi
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ g++ tc_dl.cpp -I . -O3 -fopenmp
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	871365688
+
+real	3m42.761s  222.761
+user	16m0.472s
+sys	0m16.772s
+
+```
+
 ## Impact of cudaHostAlloc
 ```shell
 make run

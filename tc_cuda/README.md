@@ -113,6 +113,43 @@ Memory clear: 1.5815
 Union: 2.1101 (merge: 0.9040)
 Total: 48.8223
 
+make run
+nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
+./tc_cuda.out
+Benchmark for delaunay_n16
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 3.6124 |
+
+
+Initialization: 1.5354, Read: 0.0383, reverse: 0.0000
+Hashtable rate: 4,840,914,128 keys/s, time: 0.0000
+Join: 0.5634
+Projection: 0.0000
+Deduplication: 0.6591 (sort: 0.2570, unique: 0.4020)
+Memory clear: 0.3872
+Union: 0.4289 (merge: 0.1919)
+Total: 3.6124
+
+Benchmark for usroads
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| usroads | 165,435 | 871,365,688 | 606 | 3,456 x 512 | 364.5549 |
+
+
+Initialization: 0.0024, Read: 0.0330, reverse: 0.0000
+Hashtable rate: 6,602,346,649 keys/s, time: 0.0000
+Join: 47.9190
+Projection: 0.0000
+Deduplication: 118.1086 (sort: 98.3867, unique: 19.7213)
+Memory clear: 27.8654
+Union: 170.6265 (merge: 9.7994)
+Total: 364.5549
+
 
 make run
 nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
