@@ -351,7 +351,10 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "p2p-Gnutella04", "../data/data_39994.txt",
 //            "cal.cedge", "../data/data_21693.txt",
 //            "TG.cedge", "../data/data_23874.txt",
-            "OL.cedge", "../data/data_7035.txt",
+//            "OL.cedge", "../data/data_7035.txt",
+//            "luxembourg_osm", "../data/data_119666.txt",
+//            "fe_sphere", "../data/data_49152.txt",
+            "fe_body", "../data/data_163734.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",

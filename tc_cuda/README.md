@@ -129,6 +129,18 @@ CUDA memcpy HtoD: 25.983us
 CUDA memcpy DtoH: 28.998ms
 ```
 
+### SuiteSparse Data Collection
+- Go to [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
+- Select Undirected Graph type
+- See the Nonzeros column, number of edges will be half on Nonzeros in actual graph
+- Click on the graph link and download Matrix Markey format (open the Matrix Market as new window and then reload)
+- Open a text editor and delete the meta data
+- Replace space with \t using regular expression and save it
+
+### Sparse graphs
+- [fe_sphere: data_49152](https://sparse.tamu.edu/DIMACS10/fe_sphere)
+- [fe_body: data_163734](https://sparse.tamu.edu/DIMACS10/fe_body)
+
 ### References
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)
 - [CUDA — Memory Model blog](https://medium.com/analytics-vidhya/cuda-memory-model-823f02cef0bf)
