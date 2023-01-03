@@ -357,9 +357,9 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "fe_body", "../data/data_163734.txt",
 //            "wing", "../data/data_121544.txt",
 //            "loc-Brightkite", "../data/data_214078.txt",
-            "HEP-th-new", "../data/data_352807.txt",
+            "delaunay_n16", "../data/data_196575.txt",
+            "usroads", "../data/data_165435.txt",
 //            "String 9990", "../data/data_9990.txt",
-//            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
 //            "string 4", "../data/data_4.txt",
 //            "talk 5", "../data/data_5.txt",
