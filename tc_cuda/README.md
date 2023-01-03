@@ -10,6 +10,8 @@ ssh USERNAME@theta.alcf.anl.gov
 ssh thetagpusn1
 qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
+git fetch
+git reset --hard origin/main
 make run
 
 # debug
@@ -77,6 +79,27 @@ terminate called after throwing an instance of 'thrust::system::detail::bad_allo
 
 ### Optimization
 ````shell
+make run
+nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
+./tc_cuda.out
+Benchmark for fe_body
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 48.8223 |
+
+
+Initialization: 1.6223, Read: 0.0322, reverse: 0.0000
+Hashtable rate: 4,248,086,552 keys/s, time: 0.0000
+Join: 9.2351
+Projection: 0.0000
+Deduplication: 34.2409 (sort: 31.5139, unique: 2.7269)
+Memory clear: 1.5815
+Union: 2.1101 (merge: 0.9040)
+Total: 48.8223
+
+
 make run
 nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
 ./tc_cuda.out

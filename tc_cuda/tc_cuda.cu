@@ -354,7 +354,9 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "OL.cedge", "../data/data_7035.txt",
 //            "luxembourg_osm", "../data/data_119666.txt",
 //            "fe_sphere", "../data/data_49152.txt",
-            "fe_body", "../data/data_163734.txt",
+//            "fe_body", "../data/data_163734.txt",
+//            "wing", "../data/data_121544.txt",
+            "loc-Brightkite", "../data/data_214078.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "roadNet-TX", "../data/data_3843320.txt"
 //            "String 2990", "../data/data_2990.txt",
