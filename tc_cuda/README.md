@@ -79,9 +79,23 @@ terminate called after throwing an instance of 'thrust::system::detail::bad_allo
 
 ### Optimization
 ````shell
-make run
-nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
-./tc_cuda.out
+Benchmark for loc-Brightkite
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 17.2650 |
+
+
+Initialization: 1.4291, Read: 0.0419, reverse: 0.0000
+Hashtable rate: 1,553,304,648 keys/s, time: 0.0001
+Join: 3.2349
+Projection: 0.0000
+Deduplication: 11.9648 (sort: 11.3530, unique: 0.6118)
+Memory clear: 0.3764
+Union: 0.2177 (merge: 0.0985)
+Total: 17.2650
+
 Benchmark for fe_body
 ----------------------------------------------------------
 
@@ -163,6 +177,7 @@ CUDA memcpy DtoH: 28.998ms
 ### Sparse graphs
 - [fe_sphere: data_49152](https://sparse.tamu.edu/DIMACS10/fe_sphere)
 - [fe_body: data_163734](https://sparse.tamu.edu/DIMACS10/fe_body)
+- [loc-Brightkite: data_214078](https://sparse.tamu.edu/SNAP/loc-Brightkite)
 
 ### References
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)
