@@ -79,6 +79,40 @@ terminate called after throwing an instance of 'thrust::system::detail::bad_allo
 
 ### Optimization
 ````shell
+Benchmark for cti
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 1.7847 |
+
+
+Initialization: 1.4517, Read: 0.0098, reverse: 0.0000
+Hashtable rate: 2,199,261,319 keys/s, time: 0.0000
+Join: 0.0556
+Projection: 0.0000
+Deduplication: 0.0801 (sort: 0.0523, unique: 0.0277)
+Memory clear: 0.0847
+Union: 0.1028 (merge: 0.0124)
+Total: 1.7847
+
+Benchmark for fe_ocean
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_ocean | 409,593 | 1,669,750,513 | 247 | 3,456 x 512 | 138.2379 |
+
+
+Initialization: 0.0027, Read: 0.0834, reverse: 0.0000
+Hashtable rate: 8,780,505,059 keys/s, time: 0.0000
+Join: 1.7682
+Projection: 0.0000
+Deduplication: 8.4588 (sort: 1.5890, unique: 6.8697)
+Memory clear: 23.5094
+Union: 104.4153 (merge: 4.3427)
+Total: 138.2379
+
 Benchmark for loc-Brightkite
 ----------------------------------------------------------
 
@@ -148,45 +182,158 @@ Union: 170.6265 (merge: 9.7994)
 Total: 364.5549
 
 
-make run
-nvcc tc_cuda.cu -o tc_cuda.out -O3 -w
-./tc_cuda.out
-Benchmark for p2p-Gnutella04
+Benchmark for ego-Facebook
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 320 x 512 | 22.4288 |
+| ego-Facebook | 88,234 | 2,508,102 | 17 | 3,456 x 512 | 2.0358 |
 
 
-Initialization: 0.1246, Read: 0.0058, reverse: 0.0000
-Hashtable rate: 177,779,555 keys/s, time: 0.0002
-Join: 4.0716
+Initialization: 1.4296, Read: 0.0977, reverse: 0.0000
+Hashtable rate: 84,842,097 keys/s, time: 0.0010
+Join: 0.1403
 Projection: 0.0000
-Deduplication: 14.1725 (sort: 13.5698, unique: 0.6026)
-Memory clear: 1.8730
-Union: 2.1811 (merge: 1.5030)
-Total: 22.4288
+Deduplication: 0.2710 (sort: 0.2194, unique: 0.0516)
+Memory clear: 0.0364
+Union: 0.0597 (merge: 0.0226)
+Total: 2.0358
 
-make exp
-nvcc tc_cuda_exp.cu -o tc_cuda_exp.out -O3 -w
-./tc_cuda_exp.out
-Benchmark for p2p-Gnutella04
+Benchmark for wiki-Vote
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 320 x 512 | 22.2674 |
+| wiki-Vote | 103,689 | 11,947,132 | 10 | 3,456 x 512 | 1.1372 |
 
 
-Initialization: 0.1164, Read: 0.0058, reverse: 0.0000
-Hashtable rate: 144,539,734 keys/s, time: 0.0003
-Join: 4.2524
+Initialization: 0.0048, Read: 0.0517, reverse: 0.0000
+Hashtable rate: 122,209,047 keys/s, time: 0.0008
+Join: 0.2521
 Projection: 0.0000
-Deduplication: 13.8838 (sort: 13.2636, unique: 0.6202)
-Memory clear: 1.8596
-Union: 2.1491 (merge: 1.4007)
-Total: 22.2674
+Deduplication: 0.7359 (sort: 0.6678, unique: 0.0680)
+Memory clear: 0.0440
+Union: 0.0478 (merge: 0.0210)
+Total: 1.1372
+
+Benchmark for luxembourg_osm
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| luxembourg_osm | 119,666 | 5,022,084 | 426 | 3,456 x 512 | 1.3222 |
+
+
+Initialization: 0.0061, Read: 0.0567, reverse: 0.0000
+Hashtable rate: 5,960,055,782 keys/s, time: 0.0000
+Join: 0.0464
+Projection: 0.0000
+Deduplication: 0.1033 (sort: 0.0339, unique: 0.0694)
+Memory clear: 0.3447
+Union: 0.7649 (merge: 0.0374)
+Total: 1.3222
+
+Benchmark for fe_sphere
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_sphere | 49,152 | 78,557,912 | 188 | 3,456 x 512 | 13.1590 |
+
+
+Initialization: 0.0017, Read: 0.0433, reverse: 0.0000
+Hashtable rate: 2,462,771,820 keys/s, time: 0.0000
+Join: 2.7856
+Projection: 0.0000
+Deduplication: 7.9807 (sort: 6.8207, unique: 1.1599)
+Memory clear: 0.7604
+Union: 1.5873 (merge: 0.5068)
+Total: 13.1590
+
+Benchmark for fe_body
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 47.7587 |
+
+
+Initialization: 0.0072, Read: 0.0746, reverse: 0.0000
+Hashtable rate: 4,876,809,435 keys/s, time: 0.0000
+Join: 9.6052
+Projection: 0.0000
+Deduplication: 34.3856 (sort: 31.6446, unique: 2.7409)
+Memory clear: 1.5691
+Union: 2.1170 (merge: 0.9125)
+Total: 47.7587
+
+Benchmark for cti
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.4388 |
+
+
+Initialization: 0.0061, Read: 0.0105, reverse: 0.0000
+Hashtable rate: 2,487,852,684 keys/s, time: 0.0000
+Join: 0.1077
+Projection: 0.0000
+Deduplication: 0.1031 (sort: 0.0721, unique: 0.0309)
+Memory clear: 0.0823
+Union: 0.1291 (merge: 0.0194)
+Total: 0.4388
+
+Benchmark for wing
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| wing | 121,544 | 329,438 | 11 | 3,456 x 512 | 0.0857 |
+
+
+Initialization: 0.0051, Read: 0.0586, reverse: 0.0000
+Hashtable rate: 5,052,544,063 keys/s, time: 0.0000
+Join: 0.0011
+Projection: 0.0000
+Deduplication: 0.0037 (sort: 0.0027, unique: 0.0009)
+Memory clear: 0.0088
+Union: 0.0083 (merge: 0.0004)
+Total: 0.0857
+
+Benchmark for loc-Brightkite
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 15.8805 |
+
+
+Initialization: 0.0023, Read: 0.0789, reverse: 0.0000
+Hashtable rate: 1,889,729,443 keys/s, time: 0.0001
+Join: 3.2403
+Projection: 0.0000
+Deduplication: 11.9471 (sort: 11.3324, unique: 0.6147)
+Memory clear: 0.3906
+Union: 0.2211 (merge: 0.0994)
+Total: 15.8805
+
+Benchmark for delaunay_n16
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 1.1374 |
+
+
+Initialization: 0.0058, Read: 0.0767, reverse: 0.0000
+Hashtable rate: 5,844,532,318 keys/s, time: 0.0000
+Join: 0.2650
+Projection: 0.0000
+Deduplication: 0.3765 (sort: 0.1692, unique: 0.2073)
+Memory clear: 0.1823
+Union: 0.2310 (merge: 0.0837)
+Total: 1.1374
 
 ````
 - Pageable memory vs pinned memory:

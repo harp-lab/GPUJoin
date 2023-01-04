@@ -11,23 +11,72 @@
 
 ## Impact of new graphs
 ```shell
+Benchmark for cti
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.4388 |
+
+
+Initialization: 0.0061, Read: 0.0105, reverse: 0.0000
+Hashtable rate: 2,487,852,684 keys/s, time: 0.0000
+Join: 0.1077
+Projection: 0.0000
+Deduplication: 0.1031 (sort: 0.0721, unique: 0.0309)
+Memory clear: 0.0823
+Union: 0.1291 (merge: 0.0194)
+Total: 0.4388
+
+
+time ./a.out -j 128
+path	6859653
+
+real	0m1.496s
+
+Benchmark for fe_ocean
+----------------------------------------------------------
+
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- | --- |
+| fe_ocean | 409,593 | 1,669,750,513 | 247 | 3,456 x 512 | 138.2379 |
+
+
+Initialization: 0.0027, Read: 0.0834, reverse: 0.0000
+Hashtable rate: 8,780,505,059 keys/s, time: 0.0000
+Join: 1.7682
+Projection: 0.0000
+Deduplication: 8.4588 (sort: 1.5890, unique: 6.8697)
+Memory clear: 23.5094
+Union: 104.4153 (merge: 4.3427)
+Total: 138.2379
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp fe_ocean.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ g++ tc_dl.cpp -I . -O3 -fopenmp
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	1669750513
+
+real	8m56.233s  536.233
+user	38m47.310s
+sys	0m33.124s
+
 
 Benchmark for loc-Brightkite
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 17.2650 |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 15.8805 |
 
 
-Initialization: 1.4291, Read: 0.0419, reverse: 0.0000
-Hashtable rate: 1,553,304,648 keys/s, time: 0.0001
-Join: 3.2349
+Initialization: 0.0023, Read: 0.0789, reverse: 0.0000
+Hashtable rate: 1,889,729,443 keys/s, time: 0.0001
+Join: 3.2403
 Projection: 0.0000
-Deduplication: 11.9648 (sort: 11.3530, unique: 0.6118)
-Memory clear: 0.3764
-Union: 0.2177 (merge: 0.0985)
-Total: 17.2650
+Deduplication: 11.9471 (sort: 11.3324, unique: 0.6147)
+Memory clear: 0.3906
+Union: 0.2211 (merge: 0.0994)
+Total: 15.8805
 
 time ./a.out -j 128
 path	138269412
@@ -39,17 +88,17 @@ Benchmark for fe_body
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 48.8223 |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 47.7587 |
 
 
-Initialization: 1.6223, Read: 0.0322, reverse: 0.0000
-Hashtable rate: 4,248,086,552 keys/s, time: 0.0000
-Join: 9.2351
+Initialization: 0.0072, Read: 0.0746, reverse: 0.0000
+Hashtable rate: 4,876,809,435 keys/s, time: 0.0000
+Join: 9.6052
 Projection: 0.0000
-Deduplication: 34.2409 (sort: 31.5139, unique: 2.7269)
-Memory clear: 1.5815
-Union: 2.1101 (merge: 0.9040)
-Total: 48.8223
+Deduplication: 34.3856 (sort: 31.6446, unique: 2.7409)
+Memory clear: 1.5691
+Union: 2.1170 (merge: 0.9125)
+Total: 47.7587
 
 
 time ./a.out -j 128
@@ -63,17 +112,17 @@ Benchmark for delaunay_n16
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 3.6124 |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 1.1374 |
 
 
-Initialization: 1.5354, Read: 0.0383, reverse: 0.0000
-Hashtable rate: 4,840,914,128 keys/s, time: 0.0000
-Join: 0.5634
+Initialization: 0.0058, Read: 0.0767, reverse: 0.0000
+Hashtable rate: 5,844,532,318 keys/s, time: 0.0000
+Join: 0.2650
 Projection: 0.0000
-Deduplication: 0.6591 (sort: 0.2570, unique: 0.4020)
-Memory clear: 0.3872
-Union: 0.4289 (merge: 0.1919)
-Total: 3.6124
+Deduplication: 0.3765 (sort: 0.1692, unique: 0.2073)
+Memory clear: 0.1823
+Union: 0.2310 (merge: 0.0837)
+Total: 1.1374
 
 time ./a.out -j 128
 path	6137959
@@ -135,6 +184,49 @@ real	3m42.761s  222.761
 user	16m0.472s
 sys	0m16.772s
 
+
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp fe_body.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	156120489
+
+real	0m29.551s
+user	2m58.052s
+sys	0m3.259s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp fe_sphere.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	78557912
+
+real	0m20.008s
+user	2m7.979s
+sys	0m2.055s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp delaunay_n16.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	6137959
+
+real	0m1.652s
+user	0m14.711s
+sys	0m0.391s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp wing.txt edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	329438
+
+real	0m0.193s
+user	0m2.749s
+sys	0m0.141s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp usroads.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	871365688
+
+real	3m42.783s
+user	15m31.485s
+sys	0m15.430s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp luxembourg_osm.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	5022084
+
+real	0m2.548s
+user	0m24.525s
+sys	0m1.051s
 ```
 
 ## Impact of cudaHostAlloc
