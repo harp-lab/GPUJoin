@@ -21,17 +21,14 @@
 
 using namespace std;
 
-
 void gpu_tc(const char *data_path, char separator,
             long int relation_rows, double load_factor,
-            int preferred_grid_size, int preferred_block_size, const char *dataset_name) {
+            int preferred_grid_size, int preferred_block_size, const char *dataset_name, int number_of_sm) {
     int relation_columns = 2;
     std::chrono::high_resolution_clock::time_point time_point_begin;
     std::chrono::high_resolution_clock::time_point time_point_end;
     std::chrono::high_resolution_clock::time_point temp_time_begin;
     std::chrono::high_resolution_clock::time_point temp_time_end;
-    std::cout << std::fixed;
-    std::cout << std::setprecision(4);
     time_point_begin = chrono::high_resolution_clock::now();
     double spent_time;
     output.initialization_time = 0;
@@ -46,13 +43,6 @@ void gpu_tc(const char *data_path, char separator,
     double merge_time = 0.0;
     double temp_spent_time = 0.0;
 
-    // Added to display comma separated integer values
-    std::locale loc("");
-    std::cout.imbue(loc);
-    int device_id;
-    int number_of_sm;
-    cudaGetDevice(&device_id);
-    cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     int block_size, grid_size;
     int *relation;
     int *relation_host;
@@ -69,14 +59,11 @@ void gpu_tc(const char *data_path, char separator,
 //    relation_host = (int *) malloc(relation_rows * relation_columns * sizeof(int));
 // pinned memory
     checkCuda(cudaMallocHost((void **) &relation_host, relation_rows * relation_columns * sizeof(int)));
-
     checkCuda(cudaMalloc((void **) &relation, relation_rows * relation_columns * sizeof(int)));
     checkCuda(cudaMalloc((void **) &result, result_rows * sizeof(Entity)));
     checkCuda(cudaMalloc((void **) &t_delta, relation_rows * sizeof(Entity)));
     checkCuda(cudaMalloc((void **) &hash_table, hash_table_rows * sizeof(Entity)));
 //    checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
-//    checkCuda(cudaOccupancyMaxPotentialBlockSize(&min_grid_size, &block_size,
-//                                                 build_hash_table, 0, 0));
     block_size = 512;
     grid_size = 32 * number_of_sm;
     if (preferred_grid_size != 0) {
@@ -106,8 +93,6 @@ void gpu_tc(const char *data_path, char separator,
     time_point_begin = chrono::high_resolution_clock::now();
     thrust::fill(thrust::device, hash_table, hash_table + hash_table_rows, negative_entity);
     time_point_end = chrono::high_resolution_clock::now();
-
-
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
@@ -317,25 +302,30 @@ void gpu_tc(const char *data_path, char separator,
 
 
 void run_benchmark(int grid_size, int block_size, double load_factor) {
+    int device_id;
+    int number_of_sm;
+    cudaGetDevice(&device_id);
+    cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
+    std::locale loc("");
+    std::cout.imbue(loc);
+    std::cout << std::fixed;
+    std::cout << std::setprecision(4);
     char separator = '\t';
     string datasets[] = {
-//            "CA-HepTh", "../data/data_51971.txt",
-//            "SF.cedge", "../data/data_223001.txt",
+            "CA-HepTh", "../data/data_51971.txt",
+            "SF.cedge", "../data/data_223001.txt",
             "ego-Facebook", "../data/data_88234.txt",
             "wiki-Vote", "../data/data_103689.txt",
-//            "p2p-Gnutella30", "../data/data_88328.txt",
-//            "p2p-Gnutella25", "../data/data_54705.txt",
-//            "p2p-Gnutella24", "../data/data_65369.txt",
-//            "p2p-Gnutella09", "../data/data_26013.txt",
-//            "p2p-Gnutella04", "../data/data_39994.txt",
-//            "cal.cedge", "../data/data_21693.txt",
-//            "TG.cedge", "../data/data_23874.txt",
-//            "OL.cedge", "../data/data_7035.txt",
+            "p2p-Gnutella09", "../data/data_26013.txt",
+            "p2p-Gnutella04", "../data/data_39994.txt",
+            "cal.cedge", "../data/data_21693.txt",
+            "TG.cedge", "../data/data_23874.txt",
+            "OL.cedge", "../data/data_7035.txt",
             "luxembourg_osm", "../data/data_119666.txt",
             "fe_sphere", "../data/data_49152.txt",
             "fe_body", "../data/data_163734.txt",
             "cti", "../data/data_48232.txt",
-//            "fe_ocean", "../data/data_409593.txt",
+            "fe_ocean", "../data/data_409593.txt",
             "wing", "../data/data_121544.txt",
             "loc-Brightkite", "../data/data_214078.txt",
             "delaunay_n16", "../data/data_196575.txt",
@@ -356,7 +346,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
         cout << "----------------------------------------------------------" << endl;
         gpu_tc(data_path, separator,
                row_size, load_factor,
-               grid_size, block_size, dataset_name);
+               grid_size, block_size, dataset_name, number_of_sm);
         cout << endl;
 
     }

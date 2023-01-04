@@ -84,17 +84,18 @@ Benchmark for cti
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 1.7847 |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.2953 |
 
 
-Initialization: 1.4517, Read: 0.0098, reverse: 0.0000
-Hashtable rate: 2,199,261,319 keys/s, time: 0.0000
-Join: 0.0556
+Initialization: 0.0036, Read: 0.0099, reverse: 0.0000
+Hashtable rate: 2,637,934,806 keys/s, time: 0.0000
+Join: 0.0500
 Projection: 0.0000
-Deduplication: 0.0801 (sort: 0.0523, unique: 0.0277)
-Memory clear: 0.0847
-Union: 0.1028 (merge: 0.0124)
-Total: 1.7847
+Deduplication: 0.0693 (sort: 0.0432, unique: 0.0261)
+Memory clear: 0.0790
+Union: 0.0834 (merge: 0.0120)
+Total: 0.2953
+
 
 Benchmark for fe_ocean
 ----------------------------------------------------------
@@ -113,56 +114,40 @@ Memory clear: 23.5094
 Union: 104.4153 (merge: 4.3427)
 Total: 138.2379
 
-Benchmark for loc-Brightkite
-----------------------------------------------------------
-
-| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
-| --- | --- | --- | --- | --- | --- |
-| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 17.2650 |
-
-
-Initialization: 1.4291, Read: 0.0419, reverse: 0.0000
-Hashtable rate: 1,553,304,648 keys/s, time: 0.0001
-Join: 3.2349
-Projection: 0.0000
-Deduplication: 11.9648 (sort: 11.3530, unique: 0.6118)
-Memory clear: 0.3764
-Union: 0.2177 (merge: 0.0985)
-Total: 17.2650
 
 Benchmark for fe_body
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 48.8223 |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 47.7587 |
 
 
-Initialization: 1.6223, Read: 0.0322, reverse: 0.0000
-Hashtable rate: 4,248,086,552 keys/s, time: 0.0000
-Join: 9.2351
+Initialization: 0.0072, Read: 0.0746, reverse: 0.0000
+Hashtable rate: 4,876,809,435 keys/s, time: 0.0000
+Join: 9.6052
 Projection: 0.0000
-Deduplication: 34.2409 (sort: 31.5139, unique: 2.7269)
-Memory clear: 1.5815
-Union: 2.1101 (merge: 0.9040)
-Total: 48.8223
+Deduplication: 34.3856 (sort: 31.6446, unique: 2.7409)
+Memory clear: 1.5691
+Union: 2.1170 (merge: 0.9125)
+Total: 47.7587
 
 Benchmark for delaunay_n16
 ----------------------------------------------------------
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 3.6124 |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 1.1374 |
 
 
-Initialization: 1.5354, Read: 0.0383, reverse: 0.0000
-Hashtable rate: 4,840,914,128 keys/s, time: 0.0000
-Join: 0.5634
+Initialization: 0.0058, Read: 0.0767, reverse: 0.0000
+Hashtable rate: 5,844,532,318 keys/s, time: 0.0000
+Join: 0.2650
 Projection: 0.0000
-Deduplication: 0.6591 (sort: 0.2570, unique: 0.4020)
-Memory clear: 0.3872
-Union: 0.4289 (merge: 0.1919)
-Total: 3.6124
+Deduplication: 0.3765 (sort: 0.1692, unique: 0.2073)
+Memory clear: 0.1823
+Union: 0.2310 (merge: 0.0837)
+Total: 1.1374
 
 Benchmark for usroads
 ----------------------------------------------------------
@@ -187,17 +172,17 @@ Benchmark for ego-Facebook
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| ego-Facebook | 88,234 | 2,508,102 | 17 | 3,456 x 512 | 2.0358 |
+| ego-Facebook | 88,234 | 2,508,102 | 17 | 3,456 x 512 | 0.5442 |
 
 
-Initialization: 1.4296, Read: 0.0977, reverse: 0.0000
-Hashtable rate: 84,842,097 keys/s, time: 0.0010
-Join: 0.1403
+Initialization: 0.0068, Read: 0.0168, reverse: 0.0000
+Hashtable rate: 110,439,799 keys/s, time: 0.0008
+Join: 0.1416
 Projection: 0.0000
-Deduplication: 0.2710 (sort: 0.2194, unique: 0.0516)
-Memory clear: 0.0364
-Union: 0.0597 (merge: 0.0226)
-Total: 2.0358
+Deduplication: 0.2786 (sort: 0.2271, unique: 0.0515)
+Memory clear: 0.0376
+Union: 0.0620 (merge: 0.0223)
+Total: 0.5442
 
 Benchmark for wiki-Vote
 ----------------------------------------------------------
@@ -267,22 +252,7 @@ Memory clear: 1.5691
 Union: 2.1170 (merge: 0.9125)
 Total: 47.7587
 
-Benchmark for cti
-----------------------------------------------------------
 
-| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
-| --- | --- | --- | --- | --- | --- |
-| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.4388 |
-
-
-Initialization: 0.0061, Read: 0.0105, reverse: 0.0000
-Hashtable rate: 2,487,852,684 keys/s, time: 0.0000
-Join: 0.1077
-Projection: 0.0000
-Deduplication: 0.1031 (sort: 0.0721, unique: 0.0309)
-Memory clear: 0.0823
-Union: 0.1291 (merge: 0.0194)
-Total: 0.4388
 
 Benchmark for wing
 ----------------------------------------------------------

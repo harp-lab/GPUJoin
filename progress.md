@@ -16,17 +16,17 @@ Benchmark for cti
 
 | Dataset | Number of rows | TC size | Iterations | Blocks x Threads | Time (s) |
 | --- | --- | --- | --- | --- | --- |
-| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.4388 |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.2953 |
 
 
-Initialization: 0.0061, Read: 0.0105, reverse: 0.0000
-Hashtable rate: 2,487,852,684 keys/s, time: 0.0000
-Join: 0.1077
+Initialization: 0.0036, Read: 0.0099, reverse: 0.0000
+Hashtable rate: 2,637,934,806 keys/s, time: 0.0000
+Join: 0.0500
 Projection: 0.0000
-Deduplication: 0.1031 (sort: 0.0721, unique: 0.0309)
-Memory clear: 0.0823
-Union: 0.1291 (merge: 0.0194)
-Total: 0.4388
+Deduplication: 0.0693 (sort: 0.0432, unique: 0.0261)
+Memory clear: 0.0790
+Union: 0.0834 (merge: 0.0120)
+Total: 0.2953
 
 
 time ./a.out -j 128
@@ -227,6 +227,20 @@ path	5022084
 real	0m2.548s
 user	0m24.525s
 sys	0m1.051s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp wiki-Vote.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	11947132
+
+real	0m3.172s
+user	0m39.264s
+sys	0m0.411s
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ cp ego-Facebook.data edge.facts 
+arsho@thetagpu06:/lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/datalog_related$ time ./a.out -j 128
+path	2508102
+
+real	0m0.606s
+user	0m8.287s
+
 ```
 
 ## Impact of cudaHostAlloc
@@ -643,16 +657,27 @@ Total: 212.0866
 ## Comparing CUDA versions with Souffle
 - Souffle vs CUDA(MallocHost) vs CUDA(Malloc) vs CUDA(MallocManaged) vs cuDF:
 
-| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Blocks x Threads(CUDA) | Souffle(s) | CUDAMallocHost(s) | CUDAMalloc(s)           | CUDAMallocManaged(s) | cuDF(s)       |
-| --- | --- | --- |------------|------------------| --- |------------|-------------------|---------------------|---------------|---| 
-| CA-HepTh | 51,971 | 74,619,885 | 18         | 128              | 3,456 x 512 | 15.206 | 4.3180      | 4.1433            | 11.4198             | 26.115098     |
-| SF.cedge | 223,001 | 80,498,014 | 287        | 128              | 3,456 x 512      | 17.073 | 11.2749      | 11.2582           | 45.7082             | 64.417961     |
-| p2p-Gnutella31 | 147,892 | 884,179,859 | 31         | 128              | 3,456 x 512      | 128.917    | Out of Memory    | Out of Memory     | 219.7610            | Out of memory |
-| p2p-Gnutella09 | 26,013 | 21,402,960 | 20         | 128              | 3,456 x 512      | 3.094 | 0.7202       | 0.5640            | 2.2018                  | 3.906619      |
-| p2p-Gnutella04 | 39,994 | 47,059,527 | 26         | 128              | 3,456 x 512      | 7.537 | 2.0920  | 2.2445            | 7.3043                  | 14.005228     |
-| cal.cedge | 21,693 | 501,755 | 195        | 128              | 3,456 x 512      | 0.455 | 0.4894  | 0.4455            | 1.1011                  | 2.756417      |
-| TG.cedge | 23,874 | 481,121 | 58         | 128              | 3,456 x 512      | 0.219 | 0.1989  | 0.2342            | 0.3776                  | 0.857208      |
-| OL.cedge | 7,035 | 146,120 | 64 | 128              | 3,456 x 512      | 0.181 | 0.1481  | 0.1574            | 0.3453                  | 0.523132      |
+| Dataset | Number of rows | TC size | Iterations | Threads(Souffle) | Blocks x Threads(CUDA) | Souffle(s) | CUDAMallocHost(s) | CUDAMalloc(s) | CUDAMallocManaged(s) | cuDF(s) |
+| --- | --- | --- |------------|------------------| --- |------------|-------------------|---------------|----------------------|---------| 
+| cti | 48,232 | 6,859,653 | 53 | 128              | 3,456 x 512 | 1.496      | 0.2953            | x             | x                    | x       |
+| fe_ocean | 409,593 | 1,669,750,513 | 247 | 128              | 3,456 x 512 | 536.233    | 138.2379          | x             | x                    | x       |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 128              | 3,456 x 512 | 29.184     | 15.8805           | x             | x                    | x       |
+| fe_body | 163,734 | 156,120,489 | 188 | 128              | 3,456 x 512 | 29.070     | 47.7587           | x             | x                    | x       |
+| fe_sphere | 49,152 | 78,557,912 | 188 | 128              | 3,456 x 512 | 20.008     | 13.1590           | x             | x                    | x       |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 128              | 3,456 x 512 | 1.612      | 1.1374            | x             | x                    | x       |
+| usroads | 165,435 | 871,365,688 | 606 | 128              | 3,456 x 512 | 222.761    | 364.5549          | x             | x                    | x       |
+| ego-Facebook | 88,234 | 2,508,102 | 17 | 128              | 3,456 x 512 | 0.606      | 0.5442            | x             | x                    | x       |
+| wing | 121,544 | 329,438 | 11 | 128              | 3,456 x 512 | 0.193      | 0.0857            | x             | x                    | x       |
+| wiki-Vote | 103,689 | 11,947,132 | 10 | 128              | 3,456 x 512 | 3.172      | 1.1372            | x             | x                    | x       |
+| luxembourg_osm | 119,666 | 5,022,084 | 426 | 128              | 3,456 x 512 | 2.548      | 1.3222            | x             | x                    | x       |
+| CA-HepTh | 51,971 | 74,619,885 | 18         | 128              | 3,456 x 512 | 15.206     | 4.3180            | 4.1433            | 11.4198             | 26.115098     |
+| SF.cedge | 223,001 | 80,498,014 | 287        | 128              | 3,456 x 512      | 17.073     | 11.2749           | 11.2582           | 45.7082             | 64.417961     |
+| p2p-Gnutella31 | 147,892 | 884,179,859 | 31         | 128              | 3,456 x 512      | 128.917    | Out of Memory     | Out of Memory     | 219.7610            | Out of memory |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20         | 128              | 3,456 x 512      | 3.094      | 0.7202            | 0.5640            | 2.2018                  | 3.906619      |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26         | 128              | 3,456 x 512      | 7.537      | 2.0920            | 2.2445            | 7.3043                  | 14.005228     |
+| cal.cedge | 21,693 | 501,755 | 195        | 128              | 3,456 x 512      | 0.455      | 0.4894            | 0.4455            | 1.1011                  | 2.756417      |
+| TG.cedge | 23,874 | 481,121 | 58         | 128              | 3,456 x 512      | 0.219      | 0.1989            | 0.2342            | 0.3776                  | 0.857208      |
+| OL.cedge | 7,035 | 146,120 | 64 | 128              | 3,456 x 512      | 0.181      | 0.1481            | 0.1574            | 0.3453                  | 0.523132      |
 
 
 - Fuse (O3 flag)
