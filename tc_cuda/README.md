@@ -1,3 +1,7 @@
+## Comparison between Souffle, CUDA, and cuDF
+
+![alt comparison](screenshots/comparison.png)
+
 ## Run instructions
 - To build and run:
 ```shell
