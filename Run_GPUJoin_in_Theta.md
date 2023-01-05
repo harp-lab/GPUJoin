@@ -121,12 +121,15 @@ python data_merge.py
 - Login to theta gpu node:
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
-ssh thetagpusn1
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/job_scripts/
 ```
 - Create a job script `single-gpu-job.sh`:
 ```shell
 #!/bin/bash
+#COBALT -n 1
+#COBALT -t 60
+#COBALT -q single-gpu
+#COBALT -A dist_relational_alg
 . /etc/profile
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
 make run
@@ -138,7 +141,7 @@ chmod u+x single-gpu-debug.sh
 ```
 - Submit the job:
 ```shell
-qsub -n 1 -t 30 -q single-gpu -A dist_relational_alg -O single-gpu-job -e single-gpu-job.error single-gpu-job.sh
+qsub -O single-gpu-job -e single-gpu-job.error single-gpu-job.sh
 qsub -O single-gpu-debug -e single-gpu-debug.error single-gpu-debug.sh
 ```
 - Show queue:
