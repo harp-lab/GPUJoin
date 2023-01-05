@@ -18,8 +18,12 @@ make run
 make debug
 cuda-memcheck  ./tc_cuda.out
 cuda-memcheck --leak-check full ./tc_cuda.out
-
 cuda-memcheck --leak-check full ./tc_cuda.out     
+
+# submit job
+qsub -n 1 -t 30 -q single-gpu -A dist_relational_alg single-gpu-job.sh
+qsub -n 1 -t 30 -q single-gpu -A dist_relational_alg single-gpu-debug.sh
+
 ========= CUDA-MEMCHECK
 ========= This tool is deprecated and will be removed in a future release of the CUDA toolkit
 ========= Please use the compute-sanitizer tool as a drop-in replacement

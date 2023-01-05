@@ -1,4 +1,5 @@
 #!/bin/bash
+. /etc/profile
 #COBALT -n 1
 #COBALT -t 60
 #COBALT -q single-gpu

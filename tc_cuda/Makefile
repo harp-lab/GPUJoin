@@ -16,7 +16,7 @@ test:
 run: build test
 
 debug:
-	nvcc $(SRC) -o $(TARGET).out $(COMPILER_FLAGS) $(DEBUG_FLAGS)
+	nvcc $(SRC) -o $(TARGET).out $(COMPILER_FLAGS) $(DEBUG_FLAGS) $(THETA_FLAGS)
 	./$(TARGET).out
 
 clean:
