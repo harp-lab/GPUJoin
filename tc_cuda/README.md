@@ -28,6 +28,7 @@ cuda-memcheck --leak-check full ./tc_cuda.out
 cd job_scripts
 qsub -O single-gpu-job -e single-gpu-job.error single-gpu-job.sh
 qsub -O single-gpu-debug -e single-gpu-debug.error single-gpu-debug.sh
+qsub -O hashjoin-job -e hashjoin-job.error hashjoin-job.sh
 
 ========= CUDA-MEMCHECK
 ========= This tool is deprecated and will be removed in a future release of the CUDA toolkit

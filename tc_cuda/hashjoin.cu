@@ -34,9 +34,7 @@ void gpu_hashjoin(const char *data_path, char separator,
     output.initialization_time = 0;
     output.join_time = 0;
     output.projection_time = 0;
-    output.deduplication_time = 0;
     output.memory_clear_time = 0;
-    output.union_time = 0;
     output.total_time = 0;
     double sort_time = 0.0;
     double unique_time = 0.0;
@@ -49,7 +47,6 @@ void gpu_hashjoin(const char *data_path, char separator,
     Entity *result_host;
     long int join_result_rows;
     long int t_delta_rows = relation_rows;
-    long int result_rows = relation_rows;
     long int iterations = 0;
     long int hash_table_rows = (long int) relation_rows / load_factor;
     hash_table_rows = pow(2, ceil(log(hash_table_rows) / log(2)));
@@ -58,7 +55,6 @@ void gpu_hashjoin(const char *data_path, char separator,
     checkCuda(cudaMalloc((void **) &relation, relation_rows * relation_columns * sizeof(int)));
     checkCuda(cudaMalloc((void **) &t_delta, relation_rows * sizeof(Entity)));
     checkCuda(cudaMalloc((void **) &hash_table, hash_table_rows * sizeof(Entity)));
-//    checkCuda(cudaMemPrefetchAsync(relation, relation_rows * relation_columns * sizeof(int), device_id));
     block_size = 512;
     grid_size = 32 * number_of_sm;
     if (preferred_grid_size != 0) {
@@ -88,6 +84,7 @@ void gpu_hashjoin(const char *data_path, char separator,
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
+
     build_hash_table<<<grid_size, block_size>>>
             (hash_table, hash_table_rows,
              relation, relation_rows,
@@ -95,6 +92,7 @@ void gpu_hashjoin(const char *data_path, char separator,
     checkCuda(cudaDeviceSynchronize());
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
+
 //    cout << "Hash table build time: " << spent_time << endl;
     output.hashtable_build_time = spent_time;
     output.hashtable_build_rate = (double) relation_rows / spent_time;
@@ -131,32 +129,16 @@ void gpu_hashjoin(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.join_time += spent_time;
-    // deduplication of projection
-    // first sort the array and then remove consecutive duplicated elements
-    temp_time_begin = chrono::high_resolution_clock::now();
-    thrust::stable_sort(thrust::device, join_result, join_result + join_result_rows, cmp());
-    temp_time_end = chrono::high_resolution_clock::now();
-    temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
-    sort_time += temp_spent_time;
-    output.deduplication_time += temp_spent_time;
-    temp_time_begin = chrono::high_resolution_clock::now();
-    long int projection_rows = (thrust::unique(thrust::device,
-                                               join_result, join_result + join_result_rows,
-                                               is_equal())) - join_result;
-    temp_time_end = chrono::high_resolution_clock::now();
-    temp_spent_time = get_time_spent("", temp_time_begin, temp_time_end);
-    unique_time += temp_spent_time;
-    output.deduplication_time += temp_spent_time;
-    // show_entity_array(join_result, projection_rows, "join_result");
+
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(t_delta);
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.memory_clear_time += spent_time;
-    checkCuda(cudaMallocHost((void **) &result_host, projection_rows * sizeof(Entity)));
-    cudaMemcpy(result_host, join_result, projection_rows * sizeof(Entity),
+    checkCuda(cudaMallocHost((void **) &result_host, join_result_rows * sizeof(Entity)));
+    cudaMemcpy(result_host, join_result, join_result_rows * sizeof(Entity),
                cudaMemcpyDeviceToHost);
-    show_entity_array(result_host, projection_rows, "Deduplicated Join Result");
+//    show_entity_array(result_host, join_result_rows, "Join Result");
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(t_delta);
     cudaFree(hash_table);
@@ -169,10 +151,9 @@ void gpu_hashjoin(const char *data_path, char separator,
                              output.projection_time +
                              output.union_time + output.deduplication_time + output.memory_clear_time;
     cout << endl;
-    cout << "| Dataset | Number of rows | #Join | #Unique Join | Blocks x Threads | Time (s) |" << endl;
-    cout << "| --- | --- | --- | --- | --- | --- |" << endl;
-    cout << "| " << dataset_name << " | " << relation_rows << " | " << join_result_rows;
-    cout << " | " << projection_rows << " | ";
+    cout << "| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |" << endl;
+    cout << "| --- | --- | --- | --- | --- |" << endl;
+    cout << "| " << dataset_name << " | " << relation_rows << " | " << join_result_rows << " | ";
     cout << fixed << grid_size << " x " << block_size << " | " << calculated_time << " |\n" << endl;
     output.block_size = block_size;
     output.grid_size = grid_size;
@@ -182,14 +163,11 @@ void gpu_hashjoin(const char *data_path, char separator,
     output.dataset_name = dataset_name;
     output.total_time = calculated_time;
 
-    cout << endl;
     cout << "Initialization: " << output.initialization_time;
     cout << ", Read: " << output.read_time << endl;
     cout << "Hashtable rate: " << output.hashtable_build_rate << " keys/s, time: ";
     cout << output.hashtable_build_time << endl;
     cout << "Join: " << output.join_time << endl;
-    cout << "Deduplication: " << output.deduplication_time;
-    cout << " (sort: " << sort_time << ", unique: " << unique_time << ")" << endl;
     cout << "Memory clear: " << output.memory_clear_time << endl;
     cout << "Total: " << output.total_time << endl;
 }
@@ -202,35 +180,33 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     cudaDeviceGetAttribute(&number_of_sm, cudaDevAttrMultiProcessorCount, device_id);
     std::locale loc("");
     std::cout.imbue(loc);
-//    std::cout << std::fixed;
-//    std::cout << std::setprecision(4);
     char separator = '\t';
     string datasets[] = {
-            // "OL.cedge", "../data/data_7035.txt",
-            // "CA-HepTh", "../data/data_51971.txt",
-            // "SF.cedge", "../data/data_223001.txt",
-            // "ego-Facebook", "../data/data_88234.txt",
-            // "wiki-Vote", "../data/data_103689.txt",
-            // "p2p-Gnutella09", "../data/data_26013.txt",
-            // "p2p-Gnutella04", "../data/data_39994.txt",
-            // "cal.cedge", "../data/data_21693.txt",
-            // "TG.cedge", "../data/data_23874.txt",
-            // "OL.cedge", "../data/data_7035.txt",
-            // "luxembourg_osm", "../data/data_119666.txt",
-            // "fe_sphere", "../data/data_49152.txt",
-            // "fe_body", "../data/data_163734.txt",
-            // "cti", "../data/data_48232.txt",
-            // "fe_ocean", "../data/data_409593.txt",
-            // "wing", "../data/data_121544.txt",
-            // "loc-Brightkite", "../data/data_214078.txt",
-            // "delaunay_n16", "../data/data_196575.txt",
-            // "usroads", "../data/data_165435.txt",
+             "OL.cedge_initial", "../data/data_7035.txt",
+             "CA-HepTh", "../data/data_51971.txt",
+             "SF.cedge", "../data/data_223001.txt",
+             "ego-Facebook", "../data/data_88234.txt",
+             "wiki-Vote", "../data/data_103689.txt",
+             "p2p-Gnutella09", "../data/data_26013.txt",
+             "p2p-Gnutella04", "../data/data_39994.txt",
+             "cal.cedge", "../data/data_21693.txt",
+             "TG.cedge", "../data/data_23874.txt",
+             "OL.cedge", "../data/data_7035.txt",
+             "luxembourg_osm", "../data/data_119666.txt",
+             "fe_sphere", "../data/data_49152.txt",
+             "fe_body", "../data/data_163734.txt",
+             "cti", "../data/data_48232.txt",
+             "fe_ocean", "../data/data_409593.txt",
+             "wing", "../data/data_121544.txt",
+             "loc-Brightkite", "../data/data_214078.txt",
+             "delaunay_n16", "../data/data_196575.txt",
+             "usroads", "../data/data_165435.txt",
 //            "usroads-48", "../data/data_161950.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "String 2990", "../data/data_2990.txt",
-//            "string 4", "../data/data_4.txt",
             "talk 5", "../data/data_5.txt",
-//            "cyclic 3", "../data/data_3.txt",
+            "string 4", "../data/data_4.txt",
+            "cyclic 3", "../data/data_3.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
