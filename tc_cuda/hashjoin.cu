@@ -10,8 +10,6 @@
 #include <thrust/execution_policy.h>
 #include <thrust/functional.h>
 #include <thrust/device_ptr.h>
-#include <thrust/unique.h>
-#include <thrust/copy.h>
 #include <thrust/fill.h>
 #include <thrust/set_operations.h>
 #include "common/error_handler.cu"
@@ -23,7 +21,8 @@ using namespace std;
 
 void gpu_hashjoin(const char *data_path, char separator,
                   long int relation_rows, double load_factor,
-                  int preferred_grid_size, int preferred_block_size, const char *dataset_name, int number_of_sm) {
+                  int preferred_grid_size, int preferred_block_size, const char *dataset_name,
+                  int number_of_sm, int random_category) {
     KernelTimer timer;
     int relation_columns = 2;
     std::chrono::high_resolution_clock::time_point time_point_begin;
@@ -58,9 +57,15 @@ void gpu_hashjoin(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
+    if (random_category == -1) {
+        get_relation_from_file_gpu(relation_host, data_path, relation_rows, relation_columns, separator);
+    } else if (random_category == 1) {
+        get_random_relation(relation_host, relation_rows, relation_columns);
+    } else if (random_category == 2) {
+        get_string_relation(relation_host, relation_rows, relation_columns);
+    }
+//    show_relation(relation_host, relation_rows, 2, "relation", 10, -1);
     time_point_begin = chrono::high_resolution_clock::now();
-    get_relation_from_file_gpu(relation_host, data_path,
-                               relation_rows, relation_columns, separator);
     cudaMemcpy(relation, relation_host, relation_rows * relation_columns * sizeof(int),
                cudaMemcpyHostToDevice);
     time_point_end = chrono::high_resolution_clock::now();
@@ -157,7 +162,7 @@ void gpu_hashjoin(const char *data_path, char separator,
 }
 
 
-void run_benchmark(int grid_size, int block_size, double load_factor) {
+void run_benchmark(int grid_size, int block_size, double load_factor, int random) {
     int device_id;
     int number_of_sm;
     cudaGetDevice(&device_id);
@@ -192,27 +197,67 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 //            "string 4", "../data/data_4.txt",
 //            "cyclic 3", "../data/data_3.txt",
     };
-    for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
-        const char *data_path, *dataset_name;
-        dataset_name = datasets[i].c_str();
-        data_path = datasets[i + 1].c_str();
-        long int row_size = get_row_size(data_path);
-        cout << "Benchmark for " << dataset_name << endl;
-        cout << "----------------------------------------------------------" << endl;
-        gpu_hashjoin(data_path, separator,
-                     row_size, load_factor,
-                     grid_size, block_size, dataset_name, number_of_sm);
-        cout << endl;
 
+    string random_datasets[] = {
+//            "random 1000",
+//            "random 2000",
+//            "string 4000",
+//            "string 5000",
+            "random 10000000",
+            "random 20000000",
+            "random 30000000",
+            "random 40000000",
+            "random 50000000",
+            "string 10000000",
+            "string 20000000",
+            "string 30000000",
+            "string 40000000",
+            "string 50000000",
+            "random 100000000",
+            "string 100000000",
+    };
+
+
+    if (random == 1) {
+        for (int i = 0; i < sizeof(random_datasets) / sizeof(random_datasets[0]); i++) {
+            int random_category = 1;
+            if (random_datasets[i].compare(0, 6, "string") == 0)
+                random_category = 2;
+            const char *dataset_name;
+            dataset_name = random_datasets[i].c_str();
+            long int row_size = get_row_size(dataset_name);
+            cout << "Benchmark for " << dataset_name << endl;
+            cout << "----------------------------------------------------------" << endl;
+            gpu_hashjoin("", separator,
+                         row_size, load_factor,
+                         grid_size, block_size, dataset_name, number_of_sm, random_category);
+            cout << endl;
+        }
+    } else {
+        for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
+            const char *data_path, *dataset_name;
+            dataset_name = datasets[i].c_str();
+            data_path = datasets[i + 1].c_str();
+            long int row_size = get_row_size(data_path);
+            cout << "Benchmark for " << dataset_name << endl;
+            cout << "----------------------------------------------------------" << endl;
+            gpu_hashjoin(data_path, separator,
+                         row_size, load_factor,
+                         grid_size, block_size, dataset_name, number_of_sm, -1);
+            cout << endl;
+
+        }
     }
+
 }
 
 int main() {
-    run_benchmark(0, 0, 0.1);
+    // set the last parameter to 1 for random graphs
+    run_benchmark(0, 0, 0.1, 1);
     return 0;
 }
 
 // Benchmark
 // nvcc hashjoin.cu -run -o hashjoin.out
 // or
-// make run
+// make hashjoin

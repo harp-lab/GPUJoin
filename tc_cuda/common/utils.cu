@@ -1,5 +1,7 @@
 #include <string>
 #include <chrono>
+#include <stdlib.h>
+
 using namespace std;
 struct Entity {
     int key;
@@ -26,35 +28,29 @@ struct Output {
     const char *dataset_name;
 } output;
 
-struct KernelTimer
-{
+struct KernelTimer {
     cudaEvent_t start;
     cudaEvent_t stop;
 
-    KernelTimer()
-    {
+    KernelTimer() {
         cudaEventCreate(&start);
         cudaEventCreate(&stop);
     }
 
-    ~KernelTimer()
-    {
+    ~KernelTimer() {
         cudaEventDestroy(start);
         cudaEventDestroy(stop);
     }
 
-    void start_timer()
-    {
+    void start_timer() {
         cudaEventRecord(start, 0);
     }
 
-    void stop_timer()
-    {
+    void stop_timer() {
         cudaEventRecord(stop, 0);
     }
 
-    float get_spent_time()
-    {
+    float get_spent_time() {
         float elapsed;
         cudaEventSynchronize(stop);
         cudaEventElapsedTime(&elapsed, start, stop);
@@ -173,6 +169,22 @@ void get_relation_from_file_gpu(int *data, const char *file_path, int total_rows
 }
 
 
+void get_random_relation(int *data, int total_rows, int total_columns) {
+    for (int i = 0; i < total_rows; i++) {
+        for (int j = 0; j < total_columns; j++) {
+            data[(i * total_columns) + j] = (rand() % (32767 - 0 + 1)) + 0;
+        }
+    }
+}
+
+void get_string_relation(int *data, int total_rows, int total_columns) {
+    int x = 1, y = 2;
+    for (int i = 0; i < total_rows; i++) {
+        data[(i * total_columns) + 0] = x++;
+        data[(i * total_columns) + 1] = y++;
+    }
+}
+
 void get_reverse_relation_gpu(int *reverse_data, int *data, int total_rows, int total_columns) {
     for (int i = 0; i < total_rows; i++) {
         int pos = total_columns - 1;
@@ -182,8 +194,6 @@ void get_reverse_relation_gpu(int *reverse_data, int *data, int total_rows, int 
         }
     }
 }
-
-
 
 
 void show_hash_table(Entity *hash_table, long int hash_table_row_size, const char *hash_table_name) {
