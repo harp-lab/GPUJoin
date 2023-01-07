@@ -134,10 +134,10 @@ void gpu_tc(const char *data_path, char separator,
 #ifdef DEBUG
         cout << "| " << iterations+1 << " | "<< t_delta_rows << " | ";
 #endif
+        time_point_begin = chrono::high_resolution_clock::now();
         int *offset;
         Entity *join_result;
         checkCuda(cudaMalloc((void **) &offset, t_delta_rows * sizeof(int)));
-        time_point_begin = chrono::high_resolution_clock::now();
         get_join_result_size<<<grid_size, block_size>>>(hash_table, hash_table_rows, t_delta, t_delta_rows,
                                                         offset);
         checkCuda(cudaDeviceSynchronize());
@@ -267,9 +267,13 @@ void gpu_tc(const char *data_path, char separator,
         iterations++;
     }
 //    show_entity_array(result, result_rows, "Result");
+    time_point_begin = chrono::high_resolution_clock::now();
     checkCuda(cudaMallocHost((void **) &result_host, result_rows * sizeof(Entity)));
     cudaMemcpy(result_host, result, result_rows * sizeof(Entity),
                cudaMemcpyDeviceToHost);
+    time_point_end = chrono::high_resolution_clock::now();
+    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    output.union_time += spent_time;
     time_point_begin = chrono::high_resolution_clock::now();
     cudaFree(t_delta);
     cudaFree(result);
