@@ -11,7 +11,7 @@ make run
 ## Run instructions for theta
 ```shell
 ssh USERNAME@theta.alcf.anl.gov
-ssh thetagpusn1
+ssh thetagpusn1 # or module load cobalt/cobalt-gpu
 qsub -I -n 1 -t 60 -q single-gpu -A dist_relational_alg
 cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
 git fetch
@@ -25,7 +25,11 @@ cuda-memcheck --leak-check full ./tc_cuda.out
 cuda-memcheck --leak-check full ./tc_cuda.out     
 
 # submit job
-cd job_scripts
+ssh USERNAME@theta.alcf.anl.gov
+module load cobalt/cobalt-gpu
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/job_scripts
+git fetch
+git reset --hard origin/main
 chmod +x single-gpu-job.sh
 chmod +x single-gpu-debug.sh
 chmod +x hashjoin-job.sh
@@ -104,25 +108,25 @@ CUDA memcpy DtoH: 28.998ms
 ### Comparison between cuDF and CUDA for isolocate join
 
 | Dataset | Number of rows | #Join    | Blocks x Threads | CUDA(s) | cuDF(s)   | 
-| --- | --- |----------| --- | --- |-----------|
-| CA-HepTh | 51971 | 651469   | 3,456 x 512 | 0.084499 | 0.011729  |
-| SF.cedge | 223001 | 273550   | 3,456 x 512 | 0.096335 | 0.014935  |
-| ego-Facebook | 88234 | 2690019  | 3,456 x 512 | 0.054298 | 0.016591  |
-| wiki-Vote | 103689 | 4542805  | 3,456 x 512 | 0.061611  | 0.019290  |
-| p2p-Gnutella09 | 26013 | 108864 | 3,456 x 512 | 0.055015    | 0.008280  |
-| p2p-Gnutella04 | 39994 | 180230 | 3,456 x 512 | 0.042918    | 0.009489  |
-| cal.cedge | 21693 | 19836    | 3,456 x 512 | 0.040097 |  0.004164 |
-| TG.cedge | 23874 | 24274 | 3,456 x 512 | 0.031184     | 0.004714 |
-| OL.cedge | 7035 | 7445 | 3,456 x 512 | 0.003511      | 0.004074 |
-| luxembourg_osm | 119666 | 114532 | 3,456 x 512 | 0.073037    | 0.008111 |
-| fe_sphere | 49152 | 146350 | 3,456 x 512 | 0.037946    | 0.009437 |
-| fe_body | 163734 | 609957 | 3,456 x 512 | 0.066874    | 0.014670 |
-| cti | 48232 | 130492 | 3,456 x 512 | 0.047991    | 0.007038 |
-| fe_ocean | 409593 | 1175076 | 3,456 x 512 | 0.175052   | 0.019214 |
-| wing | 121544 | 116371 | 3,456 x 512 | 0.065173    | 0.008459 |
-| loc-Brightkite | 214078 | 3368451 | 3,456 x 512 | 0.094573   | 0.025354 |
-| delaunay_n16 | 196575 | 393028 | 3,456 x 512 | 0.095909    | 0.014754 |
-| usroads | 165435 | 206898  | 3,456 x 512 | 0.084612   | 0.013676 |
+| --- |----------------|----------| --- | --- |-----------|
+| CA-HepTh | 51,971         | 651,469 | 3,456 x 512 | 0.046798 | 0.011729  |
+| SF.cedge | 2,23,001       | 273,550 | 3,456 x 512 | 0.098917 | 0.014935  |
+| ego-Facebook | 88,234         | 2,690,019 | 3,456 x 512 | 0.087055 | 0.016591  |
+| wiki-Vote | 1,03,689       | 4,542,805 | 3,456 x 512 | 0.075709 | 0.019290  |
+| p2p-Gnutella09 | 26,013 | 108,864 | 3,456 x 512 | 0.035585 | 0.008280  |
+| p2p-Gnutella04 | 39,994 | 180,230 | 3,456 x 512 | 0.044338 | 0.009489  |
+| cal.cedge | 21,693 | 19,836 | 3,456 x 512 | 0.037094 |  0.004164 |
+| TG.cedge | 23,874 | 24,274 | 3,456 x 512 | 0.045365 | 0.004714 |
+| OL.cedge | 7,035 | 7,445 | 3,456 x 512 | 0.002734 | 0.004074 |
+| luxembourg_osm | 119,666 | 114,532 | 3,456 x 512 | 0.055933 | 0.008111 |
+| fe_sphere | 49,152 | 146,350 | 3,456 x 512 | 0.043725 | 0.009437 |
+| fe_body | 163,734 | 609,957 | 3,456 x 512 | 0.071094 | 0.014670 |
+| cti | 48,232 | 130,492 | 3,456 x 512 | 0.036796 | 0.007038 |
+| fe_ocean | 409,593 | 1,175,076 | 3,456 x 512 | 0.175138 | 0.019214 |
+| wing | 121,544 | 116,371 | 3,456 x 512 | 0.067559 | 0.008459 |
+| loc-Brightkite | 214,078 | 3,368,451 | 3,456 x 512 | 0.098373 | 0.025354 |
+| delaunay_n16 | 196,575 | 393,028 | 3,456 x 512 | 0.086225 | 0.014754 |
+| usroads | 165,435 | 206,898 | 3,456 x 512 | 0.083588 | 0.013676 |
 
 
 ### SuiteSparse Data Collection

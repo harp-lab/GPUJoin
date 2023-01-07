@@ -26,6 +26,43 @@ struct Output {
     const char *dataset_name;
 } output;
 
+struct KernelTimer
+{
+    cudaEvent_t start;
+    cudaEvent_t stop;
+
+    KernelTimer()
+    {
+        cudaEventCreate(&start);
+        cudaEventCreate(&stop);
+    }
+
+    ~KernelTimer()
+    {
+        cudaEventDestroy(start);
+        cudaEventDestroy(stop);
+    }
+
+    void start_timer()
+    {
+        cudaEventRecord(start, 0);
+    }
+
+    void stop_timer()
+    {
+        cudaEventRecord(stop, 0);
+    }
+
+    float get_spent_time()
+    {
+        float elapsed;
+        cudaEventSynchronize(stop);
+        cudaEventElapsedTime(&elapsed, start, stop);
+        elapsed /= 1000.0;
+        return elapsed;
+    }
+};
+
 struct is_equal {
     __host__ __device__
     bool operator()(const Entity &lhs, const Entity &rhs) {

@@ -29,6 +29,7 @@ void gpu_tc(const char *data_path, char separator,
     std::chrono::high_resolution_clock::time_point time_point_end;
     std::chrono::high_resolution_clock::time_point temp_time_begin;
     std::chrono::high_resolution_clock::time_point temp_time_end;
+    KernelTimer timer;
     time_point_begin = chrono::high_resolution_clock::now();
     double spent_time;
     output.initialization_time = 0;
@@ -89,25 +90,25 @@ void gpu_tc(const char *data_path, char separator,
     time_point_end = chrono::high_resolution_clock::now();
     spent_time = get_time_spent("", time_point_begin, time_point_end);
     output.initialization_time += spent_time;
-    time_point_begin = chrono::high_resolution_clock::now();
+    timer.start_timer();
     build_hash_table<<<grid_size, block_size>>>
             (hash_table, hash_table_rows,
              relation, relation_rows,
              relation_columns);
     checkCuda(cudaDeviceSynchronize());
-    time_point_end = chrono::high_resolution_clock::now();
-    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    timer.stop_timer();
+    spent_time = timer.get_spent_time();
 //    cout << "Hash table build time: " << spent_time << endl;
     output.hashtable_build_time = spent_time;
     output.hashtable_build_rate = (double) relation_rows / spent_time;
     output.join_time += spent_time;
 
-    time_point_begin = chrono::high_resolution_clock::now();
+    timer.start_timer();
     // initial result and t delta both are same as the input relation
     initialize_result_t_delta<<<grid_size, block_size>>>(result, t_delta, relation, relation_rows, relation_columns);
     checkCuda(cudaDeviceSynchronize());
-    time_point_end = chrono::high_resolution_clock::now();
-    spent_time = get_time_spent("", time_point_begin, time_point_end);
+    timer.stop_timer();
+    spent_time = timer.get_spent_time();
     output.union_time += spent_time;
     temp_time_begin = chrono::high_resolution_clock::now();
     thrust::stable_sort(thrust::device, result, result + relation_rows, cmp());
@@ -138,17 +139,32 @@ void gpu_tc(const char *data_path, char separator,
         int *offset;
         Entity *join_result;
         checkCuda(cudaMalloc((void **) &offset, t_delta_rows * sizeof(int)));
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_join += spent_time;
+        output.join_time += spent_time;
+        timer.start_timer();
         get_join_result_size<<<grid_size, block_size>>>(hash_table, hash_table_rows, t_delta, t_delta_rows,
                                                         offset);
         checkCuda(cudaDeviceSynchronize());
+        timer.stop_timer();
+        spent_time = timer.get_spent_time();
+        temp_join += spent_time;
+        output.join_time += spent_time;
+        time_point_begin = chrono::high_resolution_clock::now();
         join_result_rows = thrust::reduce(thrust::device, offset, offset + t_delta_rows, 0);
         thrust::exclusive_scan(thrust::device, offset, offset + t_delta_rows, offset);
         checkCuda(cudaMalloc((void **) &join_result, join_result_rows * sizeof(Entity)));
+        time_point_end = chrono::high_resolution_clock::now();
+        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        temp_join += spent_time;
+        output.join_time += spent_time;
+        timer.start_timer();
         get_join_result<<<grid_size, block_size>>>(hash_table, hash_table_rows,
                                                    t_delta, t_delta_rows, offset, join_result);
         checkCuda(cudaDeviceSynchronize());
-        time_point_end = chrono::high_resolution_clock::now();
-        spent_time = get_time_spent("", time_point_begin, time_point_end);
+        timer.stop_timer();
+        spent_time = timer.get_spent_time();
         temp_join += spent_time;
         output.join_time += spent_time;
 #ifdef DEBUG
@@ -325,25 +341,25 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
     std::cout << std::setprecision(4);
     char separator = '\t';
     string datasets[] = {
-            "OL.cedge", "../data/data_7035.txt",
-            "CA-HepTh", "../data/data_51971.txt",
-            "SF.cedge", "../data/data_223001.txt",
-            "ego-Facebook", "../data/data_88234.txt",
-            "wiki-Vote", "../data/data_103689.txt",
-            "p2p-Gnutella09", "../data/data_26013.txt",
+//            "OL.cedge", "../data/data_7035.txt",
+//            "CA-HepTh", "../data/data_51971.txt",
+//            "SF.cedge", "../data/data_223001.txt",
+//            "ego-Facebook", "../data/data_88234.txt",
+//            "wiki-Vote", "../data/data_103689.txt",
+//            "p2p-Gnutella09", "../data/data_26013.txt",
             "p2p-Gnutella04", "../data/data_39994.txt",
-            "cal.cedge", "../data/data_21693.txt",
-            "TG.cedge", "../data/data_23874.txt",
-            "OL.cedge", "../data/data_7035.txt",
-            "luxembourg_osm", "../data/data_119666.txt",
-            "fe_sphere", "../data/data_49152.txt",
-            "fe_body", "../data/data_163734.txt",
-            "cti", "../data/data_48232.txt",
-            "fe_ocean", "../data/data_409593.txt",
-            "wing", "../data/data_121544.txt",
-            "loc-Brightkite", "../data/data_214078.txt",
-            "delaunay_n16", "../data/data_196575.txt",
-            "usroads", "../data/data_165435.txt",
+//            "cal.cedge", "../data/data_21693.txt",
+//            "TG.cedge", "../data/data_23874.txt",
+//            "OL.cedge", "../data/data_7035.txt",
+//            "luxembourg_osm", "../data/data_119666.txt",
+//            "fe_sphere", "../data/data_49152.txt",
+//            "fe_body", "../data/data_163734.txt",
+//            "cti", "../data/data_48232.txt",
+//            "fe_ocean", "../data/data_409593.txt",
+//            "wing", "../data/data_121544.txt",
+//            "loc-Brightkite", "../data/data_214078.txt",
+//            "delaunay_n16", "../data/data_196575.txt",
+//            "usroads", "../data/data_165435.txt",
 //            "usroads-48", "../data/data_161950.txt",
 //            "String 9990", "../data/data_9990.txt",
 //            "String 2990", "../data/data_2990.txt",
