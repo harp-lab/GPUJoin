@@ -1,3 +1,128 @@
+Benchmark for random 1000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| random 1000000 | 1,000,000 | 30,511,908 | 3,456 x 512 | 0.118800 |
+
+Initialization: 0.003516, Read: 0.000452
+Hashtable rate: 905,114,949 keys/s, time: 0.001105
+Join: 0.086287
+Memory clear: 0.027440
+Total: 0.118800
+
+Benchmark for random 2000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| random 2000000 | 2,000,000 | 122,065,482 | 3,456 x 512 | 0.443422 |
+
+Initialization: 0.005974, Read: 0.000872
+Hashtable rate: 461,967,203 keys/s, time: 0.004329
+Join: 0.325866
+Memory clear: 0.106380
+Total: 0.443422
+
+Benchmark for random 3000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| random 3000000 | 3,000,000 | 274,633,933 | 3,456 x 512 | 0.986914 |
+
+Initialization: 0.008218, Read: 0.001308
+Hashtable rate: 307,958,636 keys/s, time: 0.009742
+Join: 0.729421
+Memory clear: 0.238226
+Total: 0.986914
+
+Benchmark for random 4000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| random 4000000 | 4,000,000 | 488,266,157 | 3,456 x 512 | 1.727381 |
+
+Initialization: 0.010703, Read: 0.001733
+Hashtable rate: 231,690,875 keys/s, time: 0.017264
+Join: 1.283241
+Memory clear: 0.414439
+Total: 1.727381
+
+Benchmark for random 5000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| random 5000000 | 5,000,000 | 762,962,523 | 3,456 x 512 | 2.640382 |
+
+Initialization: 0.013112, Read: 0.002058
+Hashtable rate: 236,218,801 keys/s, time: 0.021167
+Join: 1.961875
+Memory clear: 0.642171
+Total: 2.640382
+
+Benchmark for string 1000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| string 1000000 | 1,000,000 | 999,999 | 3,456 x 512 | 0.014831 |
+
+Initialization: 0.005044, Read: 0.000463
+Hashtable rate: 4,295,532,426 keys/s, time: 0.000233
+Join: 0.006254
+Memory clear: 0.002837
+Total: 0.014831
+
+Benchmark for string 2000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| string 2000000 | 2,000,000 | 1,999,999 | 3,456 x 512 | 0.022604 |
+
+Initialization: 0.006602, Read: 0.000876
+Hashtable rate: 4,132,777,725 keys/s, time: 0.000484
+Join: 0.009639
+Memory clear: 0.005003
+Total: 0.022604
+
+Benchmark for string 3000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| string 3000000 | 3,000,000 | 2,999,999 | 3,456 x 512 | 0.031009 |
+
+Initialization: 0.009622, Read: 0.001289
+Hashtable rate: 4,008,980,336 keys/s, time: 0.000748
+Join: 0.012381
+Memory clear: 0.006969
+Total: 0.031009
+
+Benchmark for string 4000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| string 4000000 | 4,000,000 | 3,999,999 | 3,456 x 512 | 0.038893 |
+
+Initialization: 0.012064, Read: 0.001720
+Hashtable rate: 3,901,494,725 keys/s, time: 0.001025
+Join: 0.015481
+Memory clear: 0.008604
+Total: 0.038893
+
+Benchmark for string 5000000
+----------------------------------------------------------
+
+| Dataset | Number of rows | #Join | Blocks x Threads | Time (s) |
+| --- | --- | --- | --- | --- |
+| string 5000000 | 5,000,000 | 4,999,999 | 3,456 x 512 | 0.049386 |
+
+
 Benchmark for CA-HepTh
 ----------------------------------------------------------
 

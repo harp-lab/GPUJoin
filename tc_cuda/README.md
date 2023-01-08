@@ -36,6 +36,7 @@ chmod +x hashjoin-job.sh
 qsub -O single-gpu-job -e single-gpu-job.error single-gpu-job.sh
 qsub -O single-gpu-debug -e single-gpu-debug.error single-gpu-debug.sh
 qsub -O hashjoin-job -e hashjoin-job.error hashjoin-job.sh
+qsub hashjoin-job.sh
 
 ========= CUDA-MEMCHECK
 ========= This tool is deprecated and will be removed in a future release of the CUDA toolkit
@@ -109,6 +110,16 @@ CUDA memcpy DtoH: 28.998ms
 
 | Dataset | Number of rows | #Join    | Blocks x Threads | CUDA(s)  | cuDF(s)   | 
 | --- |----------------|----------| --- |----------|-----------|
+| random 1000000 | 1,000,000 | 30,511,908 | 3,456 x 512 | 0.118800 | 1.009139 |
+| random 2000000 | 2,000,000 | 122,065,482 | 3,456 x 512 | 0.443422 | 3.559351 |
+| random 3000000 | 3,000,000 | 274,633,933 | 3,456 x 512 | 0.986914 | 7.486542 |
+| random 4000000 | 4,000,000 | 488,266,157 | 3,456 x 512 | 1.727381 | 13.013476 |
+| random 5000000 | 5,000,000 | 762,962,523 | 3,456 x 512 | 2.640382 | 20.446236 |
+| string 1000000 | 1,000,000 | 999,999 | 3,456 x 512 | 0.014831 | 0.144650 |
+| string 2000000 | 2,000,000 | 1,999,999 | 3,456 x 512 | 0.022604 | 0.363000 |
+| string 3000000 | 3,000,000 | 2,999,999 | 3,456 x 512 | 0.031009 | 0.577207 |
+| string 4000000 | 4,000,000 | 3,999,999 | 3,456 x 512 | 0.038893 | 0.826158 |
+| string 5000000 | 5,000,000 | 4,999,999 | 3,456 x 512 | 0.049386 | 1.062329 |
 | CA-HepTh | 51,971         | 651,469 | 3,456 x 512 | 0.019241 | 0.011729  |
 | SF.cedge | 2,23,001       | 273,550 | 3,456 x 512 | 0.050398 | 0.014935  |
 | ego-Facebook | 88,234         | 2,690,019 | 3,456 x 512 | 0.031749 | 0.016591  |
