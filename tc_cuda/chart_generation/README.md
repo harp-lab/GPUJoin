@@ -12,8 +12,20 @@
 - Bar charts generated comparing memory model: [output/pinned_vs_unified.png](output/pinned_vs_unified.png)
 
 ### Demo 
+#### Comparison between CUDA and Souffle
+![alt CUDA vs souffle](output/cuda_vs_souffle.png)
+
+#### Comparison between CUDA and cuDF
+![alt CUDA vs cuDF](output/cuda_vs_cudf.png)
+
+#### Comparison between CUDA and Souffle and cuDF
+![alt CUDA vs souffle vs cuDF](output/cuda_vs_souffle_vs_cudf.png)
+
 #### Comparison between CUDA pinned memory and CUDA unified memory
 ![alt memory model comparison](output/pinned_vs_unified.png)
+
+#### Comparison between isolated join operation on CUDA and cuDF
+![alt JOIN comparison](output/cuda_vs_cudf_join.png)
 
 #### Iteration level operation breakdown
 - SF.cedge:
