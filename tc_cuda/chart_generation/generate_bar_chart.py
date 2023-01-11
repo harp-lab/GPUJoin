@@ -9,8 +9,6 @@ def draw_bar_chart(xtick_labels, datasets, dataset_titles,
                    y_label=None,
                    title=None, figure_path=None, figure_width=10, figure_height=5):
     total_width = 0.9
-    # if len(datasets[0]) > 7:
-    #     total_width = 0.5
 
     single_width = total_width / len(datasets)
 
@@ -49,6 +47,7 @@ def draw_bar_chart(xtick_labels, datasets, dataset_titles,
     plt.yscale("log")
     plt.gca().yaxis.set_major_formatter(ScalarFormatter())
 
+
     fig.tight_layout()
     if figure_path == None:
         figure_path = 'output/bar.png'
@@ -62,6 +61,11 @@ def show_cuda_pinned_unified():
     pinned_dataset_title = "Pinned memory"
     unified_dataset = [11.4198, 45.7082, 2.2018, 7.3043, 1.1011, 0.3776, 0.3453]
     unified_dataset_title = "Unified memory"
+    dataset_labels = ['CA-HepTh', 'SF.cedge', 'p2p-Gnutella09', 'p2p-Gnutella04']
+    pinned_dataset = [4.3180, 11.2749, 0.7202, 2.0920]
+    pinned_dataset_title = "Pinned memory"
+    unified_dataset = [11.4198, 45.7082, 2.2018, 7.3043]
+    unified_dataset_title = "Unified memory"
     x_label = "Datasets"
     y_label = "Execution Time (seconds in log scale)"
     output_filename = os.path.join("output", "pinned_vs_unified.png")
@@ -74,7 +78,7 @@ def show_cuda_cudf_join():
     dataset_labels = ['random 1000000', 'random 2000000', 'random 3000000', 'random 4000000', 'random 5000000',
                       'string 1000000', 'string 2000000', 'string 3000000', 'string 4000000', 'string 5000000']
     cuda_dataset = [0.118800, 0.443422, 0.986914, 1.727381, 2.640382, 0.014831, 0.022604, 0.031009, 0.038893, 0.049386]
-    cuda_dataset_title = "CUDA"
+    cuda_dataset_title = "CUDA Hashjoin (our implementation)"
     cudf_dataset = [1.009139, 3.559351, 7.486542, 13.013476, 20.446236, 0.144650, 0.363000, 0.577207, 0.826158,
                     1.062329]
     cudf_dataset_title = "cuDF"
@@ -92,7 +96,7 @@ def show_cuda_souffle():
                       'fe_sphere', 'loc-Brightkite', 'fe_ocean', 'cti', 'fe_body', 'usroads']
     cuda_dataset = [4.3180, 11.2749, 0.7202, 2.0920, 0.4894, 0.1989, 0.1481, 1.3222, 1.1372, 0.0857,
                     0.5442, 1.1374, 13.1590, 15.8805, 138.2379, 0.2953, 47.7587, 364.5549]
-    cuda_dataset_title = "CUDA"
+    cuda_dataset_title = "CUDA Hashjoin (our implementation)"
     souffle_dataset = [15.206, 17.073, 3.094, 7.537, 0.455, 0.219, 0.181, 2.548, 3.172, 0.193,
                        0.606, 1.612, 20.008, 29.184, 536.233, 1.496, 29.070, 222.761]
     souffle_dataset_title = "Souffle"
@@ -111,7 +115,7 @@ def show_cuda_cudf():
                       'fe_sphere', 'loc-Brightkite', 'fe_ocean', 'cti', 'fe_body', 'usroads']
     cuda_dataset = [4.3180, 11.2749, 0.7202, 2.0920, 0.4894, 0.1989, 0.1481, 1.3222, 1.1372, 0.0857,
                     0.5442, 1.1374, 13.1590, 15.8805, 138.2379, 0.2953, 47.7587, 364.5549]
-    cuda_dataset_title = "CUDA"
+    cuda_dataset_title = "CUDA Hashjoin (our implementation)"
     cudf_dataset = [26.115098, 64.417961, 3.906619, 14.005228, 2.756417, 0.857208, 0.523132,
                     8.194708, 6.841340, 0.905852, 3.719607, 5.596315, 80.077607, 0, 0, 3.181488, 0, 0]
     cudf_dataset_title = "cuDF"
@@ -129,7 +133,7 @@ def show_cuda_souffle_cudf():
                       'fe_sphere', 'loc-Brightkite', 'fe_ocean', 'cti', 'fe_body', 'usroads']
     cuda_dataset = [4.3180, 11.2749, 0.7202, 2.0920, 0.4894, 0.1989, 0.1481, 1.3222, 1.1372, 0.0857,
                     0.5442, 1.1374, 13.1590, 15.8805, 138.2379, 0.2953, 47.7587, 364.5549]
-    cuda_dataset_title = "CUDA"
+    cuda_dataset_title = "CUDA Hashjoin (our implementation)"
     souffle_dataset = [15.206, 17.073, 3.094, 7.537, 0.455, 0.219, 0.181, 2.548, 3.172, 0.193,
                        0.606, 1.612, 20.008, 29.184, 536.233, 1.496, 29.070, 222.761]
     souffle_dataset_title = "Souffle"
@@ -147,8 +151,8 @@ def show_cuda_souffle_cudf():
 
 
 if __name__ == "__main__":
-    # show_cuda_cudf_join()
-    # show_cuda_pinned_unified()
+    show_cuda_cudf_join()
+    show_cuda_pinned_unified()
     show_cuda_souffle()
     show_cuda_cudf()
     show_cuda_souffle_cudf()
