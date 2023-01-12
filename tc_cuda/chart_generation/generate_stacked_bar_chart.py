@@ -34,10 +34,10 @@ def draw_stacked_bar(data, dataset_name):
     ax.bar(labels, data[2], width, bottom=data[1], label='Union')
     ax.bar(labels, data[3], width, bottom=data[1] + data[2], label='Deduplication')
     ax.bar(labels, data[4], width, bottom=data[1] + data[2] + data[3], label='Memory clear')
-    ax.set_xlabel('Iteration')
-    ax.set_ylabel('Time(s)')
+    ax.set_xlabel('Iteration', fontsize=16)
+    ax.set_ylabel('Time(s)', fontsize=16)
     # ax.set_title(f'Time breakdown for {dataset_name}')
-    ax.legend()
+    ax.legend(fontsize=16)
     ax.xaxis.get_major_locator().set_params(integer=True)
     plt.xlim([0, data[0][-1] + 1])
     plt.gcf().set_size_inches(8, 4)
@@ -50,7 +50,7 @@ def draw_stacked_bar(data, dataset_name):
 
 if __name__ == "__main__":
     file_directory = "data"
-    filenames = [filename for filename in os.listdir(file_directory) if filename.endswith(".txt")]
+    filenames = [filename for filename in os.listdir(file_directory) if filename.endswith(".txt")] #
     for filename in filenames:
         file_path = os.path.join(file_directory, filename)
         data = read_data(file_path)

@@ -30,23 +30,22 @@ def draw_bar_chart(xtick_labels, datasets, dataset_titles,
             rect = ax.bar(label_locations + (i - mid) * single_width + (single_width / 2),
                           datasets[i], single_width,
                           label=dataset_titles[i])
-        ax.bar_label(rect, fmt='%.2f')
+        ax.bar_label(rect, fmt='%.2f', fontsize=12)
 
     if x_label:
-        ax.set_xlabel(x_label)
+        ax.set_xlabel(x_label, fontsize=16)
     if y_label:
-        ax.set_ylabel(y_label)
+        ax.set_ylabel(y_label, fontsize=16)
     if title:
         ax.set_title(title)
     if len(datasets[0]) > 7:
-        ax.set_xticks(label_locations, xtick_labels, rotation='vertical')
+        ax.set_xticks(label_locations, xtick_labels, rotation='vertical', fontsize=16)
     else:
-        ax.set_xticks(label_locations, xtick_labels)
-    ax.legend()
+        ax.set_xticks(label_locations, xtick_labels, fontsize=16)
+    ax.legend(fontsize=16)
 
     plt.yscale("log")
     plt.gca().yaxis.set_major_formatter(ScalarFormatter())
-
 
     fig.tight_layout()
     if figure_path == None:
@@ -67,7 +66,7 @@ def show_cuda_pinned_unified():
     unified_dataset = [11.4198, 45.7082, 2.2018, 7.3043]
     unified_dataset_title = "Unified memory"
     x_label = "Datasets"
-    y_label = "Execution Time (seconds in log scale)"
+    y_label = "Execution Time(s) (log scale)"
     output_filename = os.path.join("output", "pinned_vs_unified.png")
     draw_bar_chart(dataset_labels, [pinned_dataset, unified_dataset], [pinned_dataset_title, unified_dataset_title],
                    x_label, y_label,
@@ -78,12 +77,12 @@ def show_cuda_cudf_join():
     dataset_labels = ['random 1000000', 'random 2000000', 'random 3000000', 'random 4000000', 'random 5000000',
                       'string 1000000', 'string 2000000', 'string 3000000', 'string 4000000', 'string 5000000']
     cuda_dataset = [0.118800, 0.443422, 0.986914, 1.727381, 2.640382, 0.014831, 0.022604, 0.031009, 0.038893, 0.049386]
-    cuda_dataset_title = "CUDA Hashjoin (our implementation)"
+    cuda_dataset_title = "CUDA Single Hashjoin"
     cudf_dataset = [1.009139, 3.559351, 7.486542, 13.013476, 20.446236, 0.144650, 0.363000, 0.577207, 0.826158,
                     1.062329]
     cudf_dataset_title = "cuDF"
     x_label = "Datasets"
-    y_label = "Execution Time (seconds in log scale)"
+    y_label = "Execution Time(s) (log scale)"
     output_filename = os.path.join("output", "cuda_vs_cudf_join.png")
     draw_bar_chart(dataset_labels, [cuda_dataset, cudf_dataset], [cuda_dataset_title, cudf_dataset_title],
                    x_label, y_label,
@@ -101,7 +100,7 @@ def show_cuda_souffle():
                        0.606, 1.612, 20.008, 29.184, 536.233, 1.496, 29.070, 222.761]
     souffle_dataset_title = "Souffle"
     x_label = "Datasets"
-    y_label = "Execution Time (seconds in log scale)"
+    y_label = "Execution Time(s) (log scale)"
     output_filename = os.path.join("output", "cuda_vs_souffle.png")
     draw_bar_chart(dataset_labels, [cuda_dataset, souffle_dataset],
                    [cuda_dataset_title, souffle_dataset_title],
@@ -120,12 +119,13 @@ def show_cuda_cudf():
                     8.194708, 6.841340, 0.905852, 3.719607, 5.596315, 80.077607, 0, 0, 3.181488, 0, 0]
     cudf_dataset_title = "cuDF"
     x_label = "Datasets"
-    y_label = "Execution Time (seconds in log scale)"
+    y_label = "Execution Time(s) (log scale)"
     output_filename = os.path.join("output", "cuda_vs_cudf.png")
     draw_bar_chart(dataset_labels, [cuda_dataset, cudf_dataset],
                    [cuda_dataset_title, cudf_dataset_title],
                    x_label, y_label,
                    figure_path=output_filename, figure_width=14, figure_height=6)
+
 
 def show_cuda_souffle_cudf():
     dataset_labels = ['CA-HepTh', 'SF.cedge', 'p2p-Gnutella09', 'p2p-Gnutella04', 'cal.cedge', 'TG.cedge', 'OL.cedge',
@@ -141,7 +141,7 @@ def show_cuda_souffle_cudf():
                     8.194708, 6.841340, 0.905852, 3.719607, 5.596315, 80.077607, 0, 0, 3.181488, 0, 0]
     cudf_dataset_title = "cuDF"
     x_label = "Datasets"
-    y_label = "Execution Time (seconds in log scale)"
+    y_label = "Execution Time(s) (log scale)"
     output_filename = os.path.join("output", "cuda_vs_souffle_vs_cudf.png")
     draw_bar_chart(dataset_labels, [cuda_dataset, souffle_dataset, cudf_dataset],
                    [cuda_dataset_title, souffle_dataset_title, cudf_dataset_title],
@@ -149,10 +149,9 @@ def show_cuda_souffle_cudf():
                    figure_path=output_filename, figure_width=16, figure_height=6)
 
 
-
 if __name__ == "__main__":
     show_cuda_cudf_join()
     show_cuda_pinned_unified()
-    show_cuda_souffle()
-    show_cuda_cudf()
-    show_cuda_souffle_cudf()
+    # show_cuda_souffle()
+    # show_cuda_cudf()
+    # show_cuda_souffle_cudf()
