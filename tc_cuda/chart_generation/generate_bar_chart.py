@@ -74,8 +74,8 @@ def show_cuda_pinned_unified():
 
 
 def show_cuda_cudf_join():
-    dataset_labels = ['random 1000000', 'random 2000000', 'random 3000000', 'random 4000000', 'random 5000000',
-                      'string 1000000', 'string 2000000', 'string 3000000', 'string 4000000', 'string 5000000']
+    dataset_labels = ['R 1000000', 'R 2000000', 'R 3000000', 'R 4000000', 'R 5000000',
+                      'S 1000000', 'S 2000000', 'S 3000000', 'S 4000000', 'S 5000000']
     cuda_dataset = [0.118800, 0.443422, 0.986914, 1.727381, 2.640382, 0.014831, 0.022604, 0.031009, 0.038893, 0.049386]
     cuda_dataset_title = "CUDA Single Hashjoin"
     cudf_dataset = [1.009139, 3.559351, 7.486542, 13.013476, 20.446236, 0.144650, 0.363000, 0.577207, 0.826158,
@@ -151,7 +151,7 @@ def show_cuda_souffle_cudf():
 
 if __name__ == "__main__":
     show_cuda_cudf_join()
-    show_cuda_pinned_unified()
+    # show_cuda_pinned_unified()
     # show_cuda_souffle()
     # show_cuda_cudf()
     # show_cuda_souffle_cudf()

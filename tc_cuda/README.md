@@ -36,6 +36,7 @@ chmod +x hashjoin-job.sh
 qsub -O single-gpu-job -e single-gpu-job.error single-gpu-job.sh
 qsub -O single-gpu-debug -e single-gpu-debug.error single-gpu-debug.sh
 qsub -O hashjoin-job -e hashjoin-job.error hashjoin-job.sh
+qsub single-gpu-job.sh
 qsub hashjoin-job.sh
 
 ========= CUDA-MEMCHECK
@@ -105,6 +106,30 @@ CUDA memcpy DtoH: 180.32ms
 CUDA memcpy HtoD: 25.983us
 CUDA memcpy DtoH: 28.998ms
 ```
+
+### Comparison between load factor 0.1 to 0.4 for transitive closure
+| Dataset | Number of rows | TC size | Iterations | Blocks x Threads | LF 0.1 (s) | LF 0.4 (s) |
+| --- | --- | --- | --- | --- | --- |------------|
+| CA-HepTh | 51,971 | 74,619,885 | 18 | 3,456 x 512 | 3.1588 | 3.0651 |
+| SF.cedge | 223,001 | 80,498,014 | 287 | 3,456 x 512 | 11.8883 |11.7513 |
+| ego-Facebook | 88,234 | 2,508,102 | 17 | 3,456 x 512 | 0.6426 | 0.6051 |
+| wiki-Vote | 103,689 | 11,947,132 | 10 | 3,456 x 512 | 1.2424 | 1.2527 |
+| p2p-Gnutella09 | 26,013 | 21,402,960 | 20 | 3,456 x 512 | 0.8389 | 0.7525 |
+| p2p-Gnutella04 | 39,994 | 47,059,527 | 26 | 3,456 x 512 | 2.1293 | 2.1292 |
+| cal.cedge | 21,693 | 501,755 | 195 | 3,456 x 512 | 0.4825 | 0.4371 |
+| TG.cedge | 23,874 | 481,121 | 58 | 3,456 x 512 | 0.1625 | 0.1227 |
+| OL.cedge | 7,035 | 146,120 | 64 | 3,456 x 512 | 0.0969 | 0.0546 |
+| luxembourg_osm | 119,666 | 5,022,084 | 426 | 3,456 x 512 | 1.4788 | 1.3063 |
+| fe_sphere | 49,152 | 78,557,912 | 188 | 3,456 x 512 | 13.5965 | 13.3869 |
+| fe_body | 163,734 | 156,120,489 | 188 | 3,456 x 512 | 48.4381 | 48.4559 |
+| cti | 48,232 | 6,859,653 | 53 | 3,456 x 512 | 0.4786 | 0.4248 |
+| fe_ocean | 409,593 | 1,669,750,513 | 247 | 3,456 x 512 | 146.4821 | 145.0205 |
+| wing | 121,544 | 329,438 | 11 | 3,456 x 512 | 0.0950 | 0.0681 |
+| loc-Brightkite | 214,078 | 138,269,412 | 24 | 3,456 x 512 | 16.5086 | 16.4641 |
+| delaunay_n16 | 196,575 | 6,137,959 | 101 | 3,456 x 512 | 1.3421 | 1.3160 |
+| usroads | 165,435 | 871,365,688 | 606 | 3,456 x 512 | 367.2879 | 369.8636 |
+
+
 
 ### Comparison between CUDA and cuDF for isolated join operation
 
