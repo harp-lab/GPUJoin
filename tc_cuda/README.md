@@ -178,6 +178,12 @@ CUDA memcpy DtoH: 28.998ms
 - [fe_body: data_163734](https://sparse.tamu.edu/DIMACS10/fe_body)
 - [loc-Brightkite: data_214078](https://sparse.tamu.edu/SNAP/loc-Brightkite)
 
+### Running NCCL
+```
+nvcc -o nccl_example nccl_example.cu -lnccl
+./nccl_example
+```
+
 ### References
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)
 - [CUDA — Memory Model blog](https://medium.com/analytics-vidhya/cuda-memory-model-823f02cef0bf)

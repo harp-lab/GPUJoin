@@ -360,12 +360,12 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
             "loc-Brightkite", "../data/data_214078.txt",
             "delaunay_n16", "../data/data_196575.txt",
             "usroads", "../data/data_165435.txt",
-//            "usroads-48", "../data/data_161950.txt",
-//            "String 9990", "../data/data_9990.txt",
-//            "String 2990", "../data/data_2990.txt",
-//            "string 4", "../data/data_4.txt",
-//            "talk 5", "../data/data_5.txt",
-//            "cyclic 3", "../data/data_3.txt",
+            "usroads-48", "../data/data_161950.txt",
+            "String 9990", "../data/data_9990.txt",
+            "String 2990", "../data/data_2990.txt",
+            "string 4", "../data/data_4.txt",
+            "talk 5", "../data/data_5.txt",
+            "cyclic 3", "../data/data_3.txt",
     };
     for (int i = 0; i < sizeof(datasets) / sizeof(datasets[0]); i += 2) {
         const char *data_path, *dataset_name;
