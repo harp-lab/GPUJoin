@@ -383,7 +383,7 @@ void run_benchmark(int grid_size, int block_size, double load_factor) {
 }
 
 int main() {
-    run_benchmark(0, 0, 0.1);
+    run_benchmark(0, 0, 0.4);
     return 0;
 }
 

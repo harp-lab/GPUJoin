@@ -2,7 +2,11 @@
 
 ![alt comparison](screenshots/comparison.png)
 
-## Run instructions 
+## Datasets
+- Datasets are listed in [root data folder](../data).
+
+
+## CUDA implementation run instructions 
 - To build and run:
 ```shell
 make run
@@ -19,7 +23,7 @@ git fetch
 git reset --hard origin/main
 make run
 ```
-- Run using job script:
+- Run using job scripts listed in [job_scripts folder](job_scripts):
 ```
 # submit job
 ssh USERNAME@theta.alcf.anl.gov
@@ -63,18 +67,8 @@ Benchmark for talk 5
 ========= ERROR SUMMARY: 0 errors
 ```
 
-### SuiteSparse Data Collection
-- Go to [https://sparse.tamu.edu/?per_page=All](https://sparse.tamu.edu/?per_page=All)
-- Select Undirected Graph type
-- See the Nonzeros column, number of edges will be half on Nonzeros in actual graph
-- Click on the graph link and download Matrix Markey format (open the Matrix Market as new window and then reload)
-- Open a text editor and delete the meta data
-- Replace space with \t using regular expression and save it
-
-### Sparse graphs
-- [fe_sphere: data_49152](https://sparse.tamu.edu/DIMACS10/fe_sphere)
-- [fe_body: data_163734](https://sparse.tamu.edu/DIMACS10/fe_body)
-- [loc-Brightkite: data_214078](https://sparse.tamu.edu/SNAP/loc-Brightkite)
+## Souffle code and instructions
+- To run benchmark using Souffle, please follow [datalog_related README file](datalog_related/README.md).
 
 ### References
 - [Getting Started on ThetaGPU](https://docs.alcf.anl.gov/theta-gpu/getting-started/)

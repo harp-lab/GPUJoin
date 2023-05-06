@@ -4,6 +4,18 @@
 
 # IA3 2022
 - Please open [IA3_2022 folder](IA3_2022) that contains code, data, and instructions for **IA3 2022** paper.
+- BibTeX to cite this work:
+```
+@INPROCEEDINGS{10027548,
+  author={Shovon, Ahmedur Rahman and Dyken, Landon Richard and Green, Oded and Gilray, Thomas and Kumar, Sidharth},
+  booktitle={2022 IEEE/ACM Workshop on Irregular Applications: Architectures and Algorithms (IA3)}, 
+  title={Accelerating Datalog applications with cuDF}, 
+  year={2022},
+  volume={},
+  number={},
+  pages={41-45},
+  doi={10.1109/IA356718.2022.00012}}
+```
 
 ### Configuration
 
