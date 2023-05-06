@@ -6,5 +6,5 @@
 #COBALT -O single-gpu-job
 #COBALT -e single-gpu-job.error
 . /etc/profile
-cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/USENIXATC_2023/
 make run

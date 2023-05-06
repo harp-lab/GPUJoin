@@ -4,5 +4,5 @@
 #COBALT -q single-gpu
 #COBALT -A dist_relational_alg
 . /etc/profile
-cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/tc_cuda/
+cd /lus/theta-fs0/projects/dist_relational_alg/shovon/GPUJoin/USENIXATC_2023/
 make debug
