@@ -1,9 +1,5 @@
-# USENIX ATC 2023
-- Please open [USENIXATC_2023 folder](USENIXATC_2023) that contains code, data, and instructions for **USENIXATC 2023** paper.
-
-
 # IA3 2022
-- Please open [IA3_2022 folder](IA3_2022) that contains code, data, and instructions for **IA3 2022** paper.
+- Please open [IA3_2022 folder](IA3_2022) that contains code and instructions for **IA3 2022** paper.
 - BibTeX to cite this work:
 ```
 @INPROCEEDINGS{10027548,
